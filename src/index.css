@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0b;
+  --bg-elevated: #121214;
+  --bg-subtle: #1a1a1e;
+  --fg: #f4f4f5;
+  --fg-muted: #a1a1aa;
+  --fg-subtle: #71717a;
+  --border: #2a2a30;
+  --border-strong: #3f3f48;
+  --accent: #d4d4d8;
+  --accent-fg: #0a0a0b;
+  --ok: #6ee7b7;
+  --warn: #fcd34d;
+  --danger: #fca5a5;
+  --ring: #c8ccd4;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-xl: 24px;
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button:not(:disabled), [role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}

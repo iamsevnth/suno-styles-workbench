@@ -1,0 +1,6 @@
+{
+  "name": "Suno Workbench",
+  "description": "Client-side Suno Styles compiler and Skills Studio. Turn creative briefs into 925–975 character production prompts with integer BPM and instrumentation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
