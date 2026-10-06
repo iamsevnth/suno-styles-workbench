@@ -41,6 +41,21 @@ const uiJs = `
     skillFields: {},
     skillReport: null,
     skillError: "",
+    // Lyrics Studio state
+    lyricsSubTab: "creator",
+    lyricsTheme: "",
+    lyricsGenre: "Hybrid Bass / Trapstep",
+    lyricsDelivery: "Sung Melodic to High Belt",
+    lyricsRhyme: "AABB",
+    lyricsDraft: "",
+    lyricsInstructions: "",
+    lyricsIncludeTags: true,
+    lyricsStructure: JSON.parse(JSON.stringify(S.DEFAULT_STRUCTURE)),
+    lyricsResult: null,
+    lyricsFullText: "",
+    phoneticInput: "",
+    phoneticResult: null,
+    phoneticDisplayMode: "pure",
   };
 
   function $(sel, root) {
@@ -103,6 +118,18 @@ const uiJs = `
     $("#modal-body").textContent = body;
     $("#modal-ok").textContent = kind === "ok" ? "OK" : "Got It";
     m.classList.remove("hidden");
+  }
+
+  function downloadText(filename, text) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   function downloadJson(filename, data) {
@@ -168,7 +195,7 @@ const uiJs = `
 
   function setView(v) {
     state.view = v;
-    location.hash = v === "skills" ? "skills" : "styles";
+    location.hash = v;
     render();
   }
 
@@ -276,16 +303,7 @@ const uiJs = `
     if (!state.prompts.length) return;
     const text = S.formatAllPromptsTxt(state.prompts);
     const filename = "suno-styles-" + S.historyFileStamp() + ".txt";
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadText(filename, text);
     copyText(text).then((ok) => {
       showDialog(
         "ok",
@@ -341,6 +359,28 @@ const uiJs = `
     render();
   }
 
+  function runLyricsGen() {
+    const th = state.lyricsTheme.trim() || state.lyricsDraft.trim().slice(0, 60) || "Midnight Heavy Bass Resonance";
+    try {
+      const res = S.generateLyrics({
+        theme: th,
+        genre: state.lyricsGenre,
+        mood: state.lyricsDelivery,
+        delivery: state.lyricsDelivery,
+        rhymeScheme: state.lyricsRhyme,
+        draftLyrics: state.lyricsDraft.trim(),
+        instructions: state.lyricsInstructions.trim(),
+        includePerformanceTags: state.lyricsIncludeTags,
+        structure: state.lyricsStructure,
+      });
+      state.lyricsResult = res;
+      state.lyricsFullText = res.fullText;
+      render();
+    } catch (err) {
+      showDialog("error", "Lyrics Generation Failed", "Could not generate lyrics. Try adjusting section counts.");
+    }
+  }
+
   function reportText(r) {
     const bits = ["# " + r.title, "", r.exclusion, "", ...r.sections.flatMap((s) => ["## " + s.heading, s.body, ""])];
     if (r.sliders?.length) {
@@ -360,7 +400,8 @@ const uiJs = `
 
   function navHtml() {
     return \`<nav class="nav" aria-label="Primary">
-      <a href="#styles" class="\${state.view === "styles" ? "on" : ""}" data-view="styles">Styles Compiler</a>
+      <a href="#styles" class="\${state.view === "styles" ? "on" : ""}" data-view="styles">Tab 1: Suno Workbench</a>
+      <a href="#lyrics" class="\${state.view === "lyrics" ? "on" : ""}" data-view="lyrics">Tab 2: Lyrics Studio</a>
       <a href="#skills" class="\${state.view === "skills" ? "on" : ""}" data-view="skills">Skills Studio</a>
     </nav>\`;
   }
@@ -461,9 +502,9 @@ const uiJs = `
     return \`
       <header class="header"><div class="wrap header-inner">
         <div>
-          <div class="eyebrow">Styles Field Compiler</div>
+          <div class="eyebrow">Tab #1 · Styles Field Compiler</div>
           <h1>Suno Styles Generator</h1>
-          <p class="lede">Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Covers, lyrics, Editor, and Studio live in Skills Studio.</p>
+          <p class="lede">Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Lyrics and American phonetics live in Tab #2 Lyrics Studio.</p>
         </div>
         <div class="header-actions">
           \${navHtml()}
@@ -556,12 +597,173 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
           \${state.historyOpen ? hist : ""}
         </div>
       </section>
-      <footer class="wrap footer">Paste each Styles block into the Suno Styles field. Lyrics stay independent. BPM and character counts are verified before display.</footer>
+      <footer class="wrap footer">Tab #1 compiles 925–975 character Styles prompts. Tab #2 designs, finishes, and converts lyrics to American phonetics for Suno's Lyrics field. Lyrics stay independent.</footer>
     \`;
   }
 
   function planRow(k, v) {
     return \`<div class="plan-cell"><div class="k">\${esc(k)}</div><div class="v">\${esc(v)}</div></div>\`;
+  }
+
+  function lyricsView() {
+    const sTypes = ["intro", "verse", "buildup", "drop", "chorus", "breakdown", "bridge", "outro"];
+    const structHtml = sTypes.map((st) => {
+      const cfg = state.lyricsStructure[st];
+      const title = st === "buildup" ? "Build Up" : st.charAt(0).toUpperCase() + st.slice(1);
+      return \`<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.5rem;border-radius:var(--r-sm);border:1px solid var(--border);background:\${cfg.enabled ? "var(--bg-elevated)" : "transparent"};font-size:0.75rem">
+        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin:0;font-weight:500;color:var(--fg)">
+          <input type="checkbox" data-ly-sec-en="\${st}" \${cfg.enabled ? "checked" : ""} />
+          <span>\${title}</span>
+        </label>
+        \${cfg.enabled ? \`<div style="display:flex;align-items:center;gap:0.5rem;font-family:var(--mono);font-size:11px">
+          <label style="margin:0;display:flex;align-items:center;gap:2px">
+            <span style="color:var(--fg-subtle);font-size:10px">#:</span>
+            <select data-ly-sec-cnt="\${st}" style="height:1.5rem;padding:0 4px;font-size:11px">
+              \${[1, 2, 3, 4].map((n) => \`<option value="\${n}" \${cfg.count === n ? "selected" : ""}>\${n}</option>\`).join("")}
+            </select>
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:2px">
+            <span style="color:var(--fg-subtle);font-size:10px">lines:</span>
+            <select data-ly-sec-ln="\${st}" style="height:1.5rem;padding:0 4px;font-size:11px">
+              \${[2, 4, 6, 8, 12, 16].map((l) => \`<option value="\${l}" \${cfg.lines === l ? "selected" : ""}>\${l}</option>\`).join("")}
+            </select>
+          </label>
+        </div>\` : \`<span style="color:var(--fg-subtle);font-size:10px;font-style:italic">disabled</span>\`}
+      </div>\`;
+    }).join("");
+
+    return \`
+      <header class="header"><div class="wrap header-inner">
+        <div>
+          <div class="eyebrow">Tab #2 · Lyrics Lab & Phonetics</div>
+          <h1>Lyrics Studio</h1>
+          <p class="lede">Complete and expand your lyrics with exact section counts & line lengths for intro, verse, buildup, drop, chorus, breakdown, bridge, and outro — plus convert to American English phonetics.</p>
+        </div>
+        <div class="header-actions">\${navHtml()}</div>
+      </div></header>
+      <main class="wrap" style="padding-top:1.5rem">
+        <div class="row" style="margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem">
+          <button type="button" class="btn \${state.lyricsSubTab === "creator" ? "btn-primary" : "btn-ghost"}" id="ly-tab-creator">Lyrics Creator & Remixer</button>
+          <button type="button" class="btn \${state.lyricsSubTab === "phonetics" ? "btn-primary" : "btn-ghost"}" id="ly-tab-phonetics">American Phonetics Converter</button>
+        </div>
+        \${state.lyricsSubTab === "creator" ? \`
+        <div class="grid">
+          <section class="panel panel-pad">
+            <div>
+              <label for="ly-theme">Song Theme & Core Narrative</label>
+              <input type="text" id="ly-theme" value="\${esc(state.lyricsTheme)}" placeholder="e.g. Nocturnal cyberpunk chase through neon rain" />
+            </div>
+            <div>
+              <label for="ly-draft">Draft Lyrics (Optional — App will finish & expand them)</label>
+              <textarea id="ly-draft" rows="4" placeholder="Paste your rough verses, hook ideas, or fragments. The app will preserve your words, match meter/rhyme, and complete the full song structure.">\${esc(state.lyricsDraft)}</textarea>
+            </div>
+            <div class="two">
+              <div>
+                <label for="ly-genre">Genre Vibe</label>
+                <select id="ly-genre">
+                  \${["Hybrid Bass / Trapstep", "Melodic Future Bass", "Dark R&B / Soul", "Trap / Street Drill", "Baile Funk / Latin Club", "Cinematic / Ritual Bass", "Pop / Radio Topline", "Lo-Fi / Bedroom Soul"].map((g) => \`<option value="\${g}" \${state.lyricsGenre === g ? "selected" : ""}>\${g}</option>\`).join("")}
+                </select>
+              </div>
+              <div>
+                <label for="ly-delivery">Vocal Delivery</label>
+                <select id="ly-delivery">
+                  \${["Sung Melodic to High Belt", "Melodic Rap / Sing-Rap Hybrid", "Rhythmic Fast Rap Cadence", "Talk-Rap / Conversational Spoken", "Intimate Breathy Whisper", "Anthemic Group Chant"].map((d) => \`<option value="\${d}" \${state.lyricsDelivery === d ? "selected" : ""}>\${d}</option>\`).join("")}
+                </select>
+              </div>
+            </div>
+            <div class="two">
+              <div>
+                <label for="ly-rhyme">Rhyme Scheme</label>
+                <select id="ly-rhyme">
+                  <option value="AABB" \${state.lyricsRhyme === "AABB" ? "selected" : ""}>AABB (Couplets - punchy & catchy)</option>
+                  <option value="ABAB" \${state.lyricsRhyme === "ABAB" ? "selected" : ""}>ABAB (Alternating - classic flow)</option>
+                  <option value="Freeform" \${state.lyricsRhyme === "Freeform" ? "selected" : ""}>Freeform / Cadence-Driven</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end">
+                <label class="profile" style="width:100%">
+                  <span>Suno Performance Tags</span>
+                  <input type="checkbox" id="ly-tags" \${state.lyricsIncludeTags ? "checked" : ""} />
+                </label>
+              </div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:0.75rem;background:var(--bg)">
+              <div class="row-between" style="border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
+                <span class="eyebrow" style="font-size:10px">Structure Builder (# and length of each section)</span>
+                <div class="row" style="gap:4px">
+                  <button type="button" class="tiny" id="ly-pre-std">Standard</button>
+                  <button type="button" class="tiny" id="ly-pre-club">Club</button>
+                  <button type="button" class="tiny" id="ly-pre-pop">Pop</button>
+                  <button type="button" class="tiny" id="ly-pre-min">Minimal</button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                \${structHtml}
+              </div>
+            </div>
+            <div>
+              <label for="ly-inst">Special Instructions (Metaphors, Cues)</label>
+              <input type="text" id="ly-inst" value="\${esc(state.lyricsInstructions)}" placeholder="e.g. Leave dramatic silence before drop, mention broken glass" />
+            </div>
+            <div class="row">
+              <button type="button" class="btn btn-primary grow" id="ly-gen-btn">\${state.lyricsDraft.trim() ? "Finish & Complete My Lyrics" : "Generate Full Lyrics"}</button>
+              <button type="button" class="btn" id="ly-reset-btn">Reset</button>
+            </div>
+          </section>
+          <section style="display:flex;flex-direction:column;gap:1rem">
+            <div class="row-between">
+              <h2 style="font-size:0.875rem;font-weight:500;color:var(--fg)">\${state.lyricsResult ? esc(state.lyricsResult.title) : "Lyrics Output"}</h2>
+              \${state.lyricsFullText ? \`<div class="row">
+                <button type="button" class="btn btn-ghost" id="ly-copy-btn">Copy Lyrics</button>
+                <button type="button" class="btn btn-ghost" id="ly-dl-btn">Download .txt</button>
+                <button type="button" class="btn btn-ghost" id="ly-send-phon">Convert to Phonetics →</button>
+              </div>\` : ""}
+            </div>
+            \${state.lyricsFullText ? \`<div class="panel panel-pad">
+              <div class="row-between" style="font-size:11px;color:var(--fg-subtle)">
+                <span>Suno-Ready Lyrics Editor (Edit any line directly)</span>
+                <span>\${state.lyricsResult ? state.lyricsResult.totalLines + " lines · " + state.lyricsResult.sections.length + " sections" : ""}</span>
+              </div>
+              <textarea id="ly-editor" rows="20" style="font-family:var(--mono);font-size:12px;line-height:1.6">\${esc(state.lyricsFullText)}</textarea>
+            </div>\` : \`<div class="panel empty">
+              <strong>Lyrics Canvas Ready</strong>
+              <p>Set your narrative theme, adjust section counts & lengths, or paste a draft, then press <span style="color:var(--fg)">Generate Full Lyrics</span>.</p>
+            </div>\`}
+          </section>
+        </div>
+        \` : \`
+        <div class="grid">
+          <section class="panel panel-pad">
+            <div>
+              <label for="phon-in">Paste Lyrics (English, Foreign Syllables, Slang)</label>
+              <textarea id="phon-in" rows="16" placeholder="Paste lyrics here. Converts into American phonetic spelling using standard American English alphabet characters (A-Z) with stressed syllables capitalized.">\${esc(state.phoneticInput)}</textarea>
+            </div>
+            <div class="row-between">
+              <button type="button" class="btn btn-primary" id="phon-conv-btn">Convert to American Phonetics</button>
+              <button type="button" class="tiny" id="phon-demo-btn">Load Sample Lyrics</button>
+            </div>
+            <p class="status">Why American Phonetics? Suno's vocal engines respond accurately to phonetic spelling. Converting non-English words (Baile → "BY-lee", Favela → "fah-VEL-ah") or tricky English words locks the desired pronunciation.</p>
+          </section>
+          <section class="panel panel-pad">
+            <div class="row-between" style="border-bottom:1px solid var(--border);padding-bottom:0.5rem">
+              <h2 style="font-size:0.875rem;font-weight:500;color:var(--fg)">American Phonetic Output</h2>
+              \${state.phoneticResult ? \`<div class="row">
+                <button type="button" class="tiny" data-phon-mode="pure">Pure</button>
+                <button type="button" class="tiny" data-phon-mode="interlinear">Interlinear</button>
+                <button type="button" class="btn btn-ghost" id="phon-copy-btn">Copy Phonetic</button>
+              </div>\` : ""}
+            </div>
+            \${state.phoneticResult ? \`<div>
+              \${state.phoneticDisplayMode === "pure" ? \`<textarea rows="16" readonly style="font-family:var(--mono);font-size:12px;color:var(--ok)">\${esc(state.phoneticResult.fullPhonetic)}</textarea>\` : \`<div style="font-family:var(--mono);font-size:11px;max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+                \${state.phoneticResult.lines.map((l) => l.isTag ? \`<span style="color:var(--accent);font-weight:600">\${esc(l.original)}</span>\` : \`<div><span style="color:var(--fg-muted)">\${esc(l.original)}</span><br/><span style="color:var(--ok);font-weight:500;padding-left:8px">↳ \${esc(l.phonetic)}</span></div>\`).join("")}
+              </div>\`}
+            </div>\` : \`<div class="empty"><strong>No Phonetic Conversion Yet</strong><p>Paste lyrics on the left and click Convert to American Phonetics.</p></div>\`}
+          </section>
+        </div>
+        \`}
+      </main>
+      <footer class="wrap footer">Tab #1 compiles 925–975 character Styles prompts. Tab #2 designs, finishes, and converts lyrics to American phonetics for Suno's Lyrics field. Lyrics stay independent.</footer>
+    \`;
   }
 
   function skillsView() {
@@ -752,6 +954,155 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
           );
         });
       });
+    } else if (state.view === "lyrics") {
+      $("#ly-tab-creator")?.addEventListener("click", () => {
+        state.lyricsSubTab = "creator";
+        render();
+      });
+      $("#ly-tab-phonetics")?.addEventListener("click", () => {
+        state.lyricsSubTab = "phonetics";
+        render();
+      });
+      $("#ly-theme")?.addEventListener("input", (e) => {
+        state.lyricsTheme = e.target.value;
+      });
+      $("#ly-draft")?.addEventListener("input", (e) => {
+        state.lyricsDraft = e.target.value;
+      });
+      $("#ly-genre")?.addEventListener("change", (e) => {
+        state.lyricsGenre = e.target.value;
+      });
+      $("#ly-delivery")?.addEventListener("change", (e) => {
+        state.lyricsDelivery = e.target.value;
+      });
+      $("#ly-rhyme")?.addEventListener("change", (e) => {
+        state.lyricsRhyme = e.target.value;
+      });
+      $("#ly-tags")?.addEventListener("change", (e) => {
+        state.lyricsIncludeTags = e.target.checked;
+      });
+      $("#ly-inst")?.addEventListener("input", (e) => {
+        state.lyricsInstructions = e.target.value;
+      });
+      document.querySelectorAll("[data-ly-sec-en]").forEach((cb) => {
+        cb.addEventListener("change", (e) => {
+          const st = cb.getAttribute("data-ly-sec-en");
+          state.lyricsStructure[st].enabled = e.target.checked;
+          render();
+        });
+      });
+      document.querySelectorAll("[data-ly-sec-cnt]").forEach((sel) => {
+        sel.addEventListener("change", (e) => {
+          const st = sel.getAttribute("data-ly-sec-cnt");
+          state.lyricsStructure[st].count = parseInt(e.target.value, 10);
+        });
+      });
+      document.querySelectorAll("[data-ly-sec-ln]").forEach((sel) => {
+        sel.addEventListener("change", (e) => {
+          const st = sel.getAttribute("data-ly-sec-ln");
+          state.lyricsStructure[st].lines = parseInt(e.target.value, 10);
+        });
+      });
+      $("#ly-pre-std")?.addEventListener("click", () => {
+        state.lyricsStructure = JSON.parse(JSON.stringify(S.DEFAULT_STRUCTURE));
+        render();
+      });
+      $("#ly-pre-club")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 1, lines: 4 },
+          buildup: { enabled: true, count: 2, lines: 2 },
+          drop: { enabled: true, count: 3, lines: 2 },
+          chorus: { enabled: true, count: 1, lines: 4 },
+          breakdown: { enabled: true, count: 1, lines: 2 },
+          bridge: { enabled: false, count: 0, lines: 0 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-pre-pop")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 3, lines: 4 },
+          buildup: { enabled: true, count: 2, lines: 2 },
+          drop: { enabled: false, count: 0, lines: 0 },
+          chorus: { enabled: true, count: 3, lines: 4 },
+          breakdown: { enabled: false, count: 0, lines: 0 },
+          bridge: { enabled: true, count: 1, lines: 4 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-pre-min")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 1, lines: 4 },
+          buildup: { enabled: false, count: 0, lines: 0 },
+          drop: { enabled: true, count: 1, lines: 2 },
+          chorus: { enabled: true, count: 1, lines: 4 },
+          breakdown: { enabled: false, count: 0, lines: 0 },
+          bridge: { enabled: false, count: 0, lines: 0 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-gen-btn")?.addEventListener("click", runLyricsGen);
+      $("#ly-reset-btn")?.addEventListener("click", () => {
+        state.lyricsTheme = "";
+        state.lyricsDraft = "";
+        state.lyricsInstructions = "";
+        state.lyricsResult = null;
+        state.lyricsFullText = "";
+        render();
+      });
+      $("#ly-editor")?.addEventListener("input", (e) => {
+        state.lyricsFullText = e.target.value;
+      });
+      $("#ly-copy-btn")?.addEventListener("click", async () => {
+        if (!state.lyricsFullText) return;
+        const ok = await copyText(state.lyricsFullText);
+        showDialog(ok ? "ok" : "error", ok ? "Lyrics Copied" : "Clipboard Blocked", ok ? "Lyrics copied to clipboard!" : "Copy failed.");
+      });
+      $("#ly-dl-btn")?.addEventListener("click", () => {
+        if (!state.lyricsFullText) return;
+        downloadText("suno-lyrics-" + S.historyFileStamp() + ".txt", state.lyricsFullText);
+        showDialog("ok", "Downloaded", "Lyrics file downloaded.");
+      });
+      $("#ly-send-phon")?.addEventListener("click", () => {
+        if (!state.lyricsFullText) return;
+        state.phoneticInput = state.lyricsFullText;
+        state.phoneticResult = S.convertToPhonetics(state.lyricsFullText);
+        state.lyricsSubTab = "phonetics";
+        render();
+      });
+      $("#phon-in")?.addEventListener("input", (e) => {
+        state.phoneticInput = e.target.value;
+      });
+      $("#phon-conv-btn")?.addEventListener("click", () => {
+        if (!state.phoneticInput.trim()) {
+          showDialog("error", "Empty", "Please paste or type lyrics to convert.");
+          return;
+        }
+        state.phoneticResult = S.convertToPhonetics(state.phoneticInput);
+        render();
+      });
+      $("#phon-demo-btn")?.addEventListener("click", () => {
+        const demo = "[Verse 1]\\nWalking in the shadows through the city haze\\nFeel the sub bass dropping in a heavy maze\\nBaile funk in the favela rhythm\\n\\n[Chorus]\\nFold the floor before the morning comes";
+        state.phoneticInput = demo;
+        state.phoneticResult = S.convertToPhonetics(demo);
+        render();
+      });
+      document.querySelectorAll("[data-phon-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.phoneticDisplayMode = btn.getAttribute("data-phon-mode");
+          render();
+        });
+      });
+      $("#phon-copy-btn")?.addEventListener("click", async () => {
+        if (!state.phoneticResult) return;
+        const ok = await copyText(state.phoneticResult.fullPhonetic);
+        showDialog(ok ? "ok" : "error", ok ? "Copied" : "Clipboard Blocked", ok ? "American phonetics copied to clipboard!" : "Copy failed.");
+      });
     } else {
       document.querySelectorAll("[data-skill]").forEach((b) => {
         b.addEventListener("click", () => {
@@ -811,12 +1162,19 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
 
   function render() {
     const root = $("#app");
-    root.innerHTML = state.view === "skills" ? skillsView() : stylesView();
+    if (state.view === "skills") {
+      root.innerHTML = skillsView();
+    } else if (state.view === "lyrics") {
+      root.innerHTML = lyricsView();
+    } else {
+      root.innerHTML = stylesView();
+    }
     bind();
   }
 
   window.addEventListener("hashchange", () => {
-    const v = location.hash.replace("#", "") === "skills" ? "skills" : "styles";
+    const raw = location.hash.replace("#", "");
+    const v = raw === "skills" ? "skills" : raw === "lyrics" ? "lyrics" : "styles";
     if (v !== state.view) {
       state.view = v;
       render();
@@ -824,7 +1182,8 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
   });
 
   hydrate();
-  if (location.hash.replace("#", "") === "skills") state.view = "skills";
+  const initHash = location.hash.replace("#", "");
+  if (initHash === "skills" || initHash === "lyrics") state.view = initHash;
   render();
 })();
 `;
@@ -834,8 +1193,8 @@ const html = `<!DOCTYPE html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Suno Workbench (Offline)</title>
-  <meta name="description" content="Offline Suno Styles compiler and Skills Studio. Open this file in any browser." />
+  <title>Suno Workbench & Lyrics Studio (Offline)</title>
+  <meta name="description" content="Offline Suno Styles compiler, Lyrics Studio with structure builder and American English phonetics, and Skills Studio." />
   <style>
 :root {
   --bg: #0a0a0b;
@@ -995,7 +1354,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .hist-item .meta { font-size: 0.75rem; color: var(--fg-subtle); margin-top: 2px; }
 .grow { flex: 1; }
 h3.title { font-size: 0.95rem; font-weight: 600; }
-.tiny { font-size: 11px; color: var(--fg-muted); background: none; border: 0; }
+.tiny { font-size: 11px; color: var(--fg-muted); background: none; border: 0; cursor: pointer; }
 .tiny:hover { color: var(--fg); }
   </style>
 </head>
@@ -1028,4 +1387,4 @@ if (!fs.existsSync('public')) {
 }
 fs.writeFileSync('public/suno-workbench.html', html, 'utf8');
 fs.writeFileSync('suno-workbench.html', html, 'utf8');
-console.log('Successfully packed public/suno-workbench.html & suno-workbench.html!');
+console.log('Successfully packed public/suno-workbench.html & suno-workbench.html with Lyrics Studio & Phonetics!');

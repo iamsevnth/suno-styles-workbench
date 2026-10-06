@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import LyricsStudio from "./components/LyricsStudio.tsx";
 import { generateStylesPrompts } from "./lib/suno/generate.ts";
 import { parseUserInput } from "./lib/suno/parse.ts";
 import { SKILLS, skillById } from "./lib/suno/skills/catalog.ts";
@@ -21,7 +22,7 @@ interface ModalState {
 }
 
 export default function App() {
-  const [view, setView] = useState<"styles" | "skills">("styles");
+  const [view, setView] = useState<"styles" | "lyrics" | "skills">("styles");
   const [input, setInput] = useState<string>("");
   const [count, setCount] = useState<number>(DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState<boolean>(true);
@@ -53,6 +54,103 @@ export default function App() {
   });
 
   const briefRef = useRef<HTMLTextAreaElement>(null);
+  const workbenchRef = useRef<HTMLDivElement>(null);
+
+  // User Resizable Interface Dimensions (Width & Height)
+  const [workbenchWidth, setWorkbenchWidth] = useState<number | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("suno_wb_width");
+      return saved ? parseInt(saved, 10) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [workbenchHeight, setWorkbenchHeight] = useState<number | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("suno_wb_height");
+      return saved ? parseInt(saved, 10) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isResizing, setIsResizing] = useState<"width-right" | "width-left" | "height" | "both" | null>(null);
+
+  const startResize = (mode: "width-right" | "width-left" | "height" | "both", e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const container = workbenchRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const startW = rect.width;
+    const startH = rect.height;
+
+    setIsResizing(mode);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor =
+      mode === "height" ? "ns-resize" : mode === "both" ? "nwse-resize" : "ew-resize";
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      if (mode === "width-right" || mode === "both") {
+        const deltaX = moveEvent.clientX - startX;
+        const newWidth = Math.max(680, Math.min(window.innerWidth - 24, Math.round(startW + deltaX * 2)));
+        setWorkbenchWidth(newWidth);
+      } else if (mode === "width-left") {
+        const deltaX = startX - moveEvent.clientX;
+        const newWidth = Math.max(680, Math.min(window.innerWidth - 24, Math.round(startW + deltaX * 2)));
+        setWorkbenchWidth(newWidth);
+      }
+
+      if (mode === "height" || mode === "both") {
+        const deltaY = moveEvent.clientY - startY;
+        const newHeight = Math.max(500, Math.round(startH + deltaY));
+        setWorkbenchHeight(newHeight);
+      }
+    };
+
+    const onPointerUp = () => {
+      setIsResizing(null);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+
+      if (workbenchRef.current) {
+        const finalRect = workbenchRef.current.getBoundingClientRect();
+        if (mode.startsWith("width") || mode === "both") {
+          sessionStorage.setItem("suno_wb_width", Math.round(finalRect.width).toString());
+        }
+        if (mode === "height" || mode === "both") {
+          sessionStorage.setItem("suno_wb_height", Math.round(finalRect.height).toString());
+        }
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  };
+
+  const handleResetSize = () => {
+    setWorkbenchWidth(null);
+    setWorkbenchHeight(null);
+    sessionStorage.removeItem("suno_wb_width");
+    sessionStorage.removeItem("suno_wb_height");
+  };
+
+  const handleToggleFullWidth = () => {
+    if (workbenchWidth && workbenchWidth > window.innerWidth - 60) {
+      handleResetSize();
+    } else {
+      const full = window.innerWidth - 32;
+      setWorkbenchWidth(full);
+      sessionStorage.setItem("suno_wb_width", full.toString());
+    }
+  };
 
   // Initialize from storage
   useEffect(() => {
@@ -105,7 +203,8 @@ export default function App() {
     const handleHash = () => {
       const h = window.location.hash.replace("#", "");
       if (h === "skills") setView("skills");
-      else if (h === "styles") setView("styles");
+      else if (h === "lyrics") setView("lyrics");
+      else setView("styles");
     };
     handleHash();
     window.addEventListener("hashchange", handleHash);
@@ -454,83 +553,55 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--fg)] flex flex-col font-sans">
-      {/* Header */}
-      <header className="border-b border-[var(--border)]">
-        <div className="max-w-[72rem] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-[var(--fg-muted)] text-xs font-semibold uppercase tracking-wider">
-              {view === "styles" ? "Styles Field Compiler" : "Suno Expert Packs"}
+      {/* Studio Masthead Bar */}
+      <header className="border-b border-[var(--border)] bg-[var(--bg-elevated)]/80 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-[76rem] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-black text-xs shadow-md">
+              ⚡
             </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mt-1 text-[var(--fg)]">
-              {view === "styles" ? "Suno Styles Generator" : "Skills Studio"}
-            </h1>
-            <p className="max-w-xl text-[var(--fg-muted)] text-sm mt-2">
-              {view === "styles"
-                ? "Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Covers, lyrics, Editor, and Studio live in Skills Studio."
-                : "Eight installed playbooks: optimize prompts, plan covers and mashups, write lyrics, run Editor/Studio checklists, and gate rights. Styles compilation still lives on the Styles Compiler page."}
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold tracking-tight text-sm text-[var(--fg)]">
+                  SUNO WORKBENCH
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  CLIENT-SIDE ENGINE
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:items-end gap-3">
-            <nav className="flex flex-wrap gap-2" aria-label="Primary">
-              <button
-                type="button"
-                onClick={() => {
-                  setView("styles");
-                  window.location.hash = "styles";
-                }}
-                className={`inline-flex items-center h-10 px-3 rounded-[var(--r-md)] text-sm font-medium border transition-colors ${
-                  view === "styles"
-                    ? "bg-[var(--bg-subtle)] text-[var(--fg)] border-[var(--border)]"
-                    : "text-[var(--fg-muted)] border-transparent hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
-                }`}
-              >
-                Styles Compiler
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setView("skills");
-                  window.location.hash = "skills";
-                }}
-                className={`inline-flex items-center h-10 px-3 rounded-[var(--r-md)] text-sm font-medium border transition-colors ${
-                  view === "skills"
-                    ? "bg-[var(--bg-subtle)] text-[var(--fg)] border-[var(--border)]"
-                    : "text-[var(--fg-muted)] border-transparent hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
-                }`}
-              >
-                Skills Studio
-              </button>
-            </nav>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadOfflineHtml}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--bg-subtle)] text-[var(--fg)] text-xs font-semibold h-8 px-3 transition-colors shadow-sm"
+              title="Download 100% self-contained offline HTML file"
+            >
+              <span>💾</span>
+              <span>Download Offline HTML</span>
+            </button>
 
-            <div className="flex flex-wrap items-center gap-2">
+            {view === "styles" && (
               <button
                 type="button"
-                onClick={handleDownloadOfflineHtml}
-                className="inline-flex items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] text-[var(--fg)] text-xs font-medium h-9 px-3 transition-colors"
-                title="Download 100% self-contained offline HTML file"
+                onClick={() => setCliOpen(!cliOpen)}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-xs font-medium h-8 px-2.5 transition-colors"
               >
-                Download Offline HTML
+                <span>Terminal</span>
+                <span>{cliOpen ? "▴" : "▾"}</span>
               </button>
-
-              {view === "styles" && (
-                <button
-                  type="button"
-                  onClick={() => setCliOpen(!cliOpen)}
-                  className="inline-flex items-center justify-center gap-2 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-xs font-medium h-9 px-3 transition-colors"
-                >
-                  Windows Terminal {cliOpen ? "▴" : "▾"}
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* Windows Terminal Disclosure */}
       {view === "styles" && cliOpen && (
-        <div className="border-b border-[var(--border)] bg-[var(--bg-elevated)]/80 py-4">
-          <div className="max-w-[72rem] mx-auto px-4 sm:px-6">
+        <div className="border-b border-[var(--border)] bg-[var(--bg-elevated)]/90 py-4">
+          <div className="max-w-[76rem] mx-auto px-4 sm:px-6">
             <p className="text-sm text-[var(--fg-muted)] mb-3">
               This offline file is the full app. The Node CLI still exists in the original project if you have it:
             </p>
@@ -544,10 +615,202 @@ node cli/suno-styles.mjs "Trapstep + Deep Dubstep" -n 3`}
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="max-w-[72rem] mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
-        {view === "styles" ? (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
+      {/* Main Content Area */}
+      <main
+        className="mx-auto px-2 sm:px-4 py-4 sm:py-6 flex-1 w-full flex flex-col items-center gap-6"
+        style={{
+          width: workbenchWidth ? `${workbenchWidth}px` : "100%",
+          maxWidth: workbenchWidth ? `${workbenchWidth}px` : "76rem",
+        }}
+      >
+        {/* Built-in Studio Console Deck with Integrated Docked Tabs & Resizable Edge Handles */}
+        <div
+          ref={workbenchRef}
+          className={`rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-2xl flex flex-col relative w-full overflow-hidden ${
+            isResizing ? "select-none ring-2 ring-[var(--accent)]/50" : ""
+          }`}
+          style={{
+            minHeight: workbenchHeight ? `${workbenchHeight}px` : "auto",
+            height: workbenchHeight ? `${workbenchHeight}px` : "auto",
+          }}
+        >
+          {/* Integrated Built-in Docked Tab Strip */}
+          <nav
+            className="flex items-stretch border-b border-[var(--border)] bg-[var(--bg)] overflow-x-auto"
+            aria-label="Integrated Studio Navigation Tabs"
+          >
+            {/* Tab 1: Suno Workbench */}
+            <button
+              type="button"
+              onClick={() => {
+                setView("styles");
+                window.location.hash = "styles";
+              }}
+              className={`flex-1 min-w-[210px] sm:min-w-[250px] px-5 py-3.5 text-left border-r border-[var(--border)] transition-all relative flex items-center justify-between gap-3 ${
+                view === "styles"
+                  ? "bg-[var(--bg-elevated)] text-[var(--fg)] shadow-sm"
+                  : "bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
+              }`}
+            >
+              {view === "styles" && (
+                <span className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--accent)]" />
+              )}
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm text-[var(--fg)]">
+                  Suno Workbench
+                </span>
+                <span className="text-[11px] text-[var(--fg-subtle)] mt-0.5">
+                  Styles Compiler (925–975c)
+                </span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                  view === "styles"
+                    ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30 font-semibold"
+                    : "bg-[var(--bg-subtle)] text-[var(--fg-subtle)]"
+                }`}
+              >
+                258 Genres
+              </span>
+            </button>
+
+            {/* Tab 2: Lyrics Studio */}
+            <button
+              type="button"
+              onClick={() => {
+                setView("lyrics");
+                window.location.hash = "lyrics";
+              }}
+              className={`flex-1 min-w-[230px] sm:min-w-[280px] px-5 py-3.5 text-left border-r border-[var(--border)] transition-all relative flex items-center justify-between gap-3 ${
+                view === "lyrics"
+                  ? "bg-[var(--bg-elevated)] text-[var(--fg)] shadow-sm"
+                  : "bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
+              }`}
+            >
+              {view === "lyrics" && (
+                <span className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--accent)]" />
+              )}
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm text-[var(--fg)]">
+                  Lyrics Studio
+                </span>
+                <span className="text-[11px] text-[var(--fg-subtle)] mt-0.5">
+                  Modular Sequence & American Phonetics
+                </span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                  view === "lyrics"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold"
+                    : "bg-[var(--bg-subtle)] text-[var(--fg-subtle)]"
+                }`}
+              >
+                Lyrics & Vocal
+              </span>
+            </button>
+
+            {/* Tab 3: Skills Studio */}
+            <button
+              type="button"
+              onClick={() => {
+                setView("skills");
+                window.location.hash = "skills";
+              }}
+              className={`flex-1 min-w-[200px] sm:min-w-[240px] px-5 py-3.5 text-left transition-all relative flex items-center justify-between gap-3 ${
+                view === "skills"
+                  ? "bg-[var(--bg-elevated)] text-[var(--fg)] shadow-sm"
+                  : "bg-[var(--bg)] text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
+              }`}
+            >
+              {view === "skills" && (
+                <span className="absolute top-0 left-0 right-0 h-[3px] bg-[var(--accent)]" />
+              )}
+              <div className="flex flex-col">
+                <span className="font-semibold text-sm text-[var(--fg)]">
+                  Skills Studio
+                </span>
+                <span className="text-[11px] text-[var(--fg-subtle)] mt-0.5">
+                  8 Production Playbooks & Sliders
+                </span>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                  view === "skills"
+                    ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30 font-semibold"
+                    : "bg-[var(--bg-subtle)] text-[var(--fg-subtle)]"
+                }`}
+              >
+                Playbooks
+              </span>
+            </button>
+          </nav>
+
+          {/* Integrated Console Deck Sub-header Strip */}
+          <div className="px-5 sm:px-6 py-4 bg-[var(--bg-elevated)] border-b border-[var(--border)] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--fg)]">
+                {view === "styles"
+                  ? "Suno Styles Generator"
+                  : view === "lyrics"
+                  ? "Lyrics Studio"
+                  : "Skills Studio"}
+              </h1>
+              <p className="text-xs text-[var(--fg-muted)] mt-1 max-w-2xl leading-relaxed">
+                {view === "styles"
+                  ? "Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Covers, lyrics, Editor, and Studio live in Skills Studio."
+                  : view === "lyrics"
+                  ? "Complete and expand your lyrics with exact section counts & line lengths for intro, verse, buildup, drop, chorus, breakdown, bridge, and outro — plus convert to American English phonetics with zero hyphens."
+                  : "Eight installed playbooks: optimize prompts, plan covers and mashups, write lyrics, run Editor/Studio checklists, and gate rights. Styles compilation still lives on the Styles Compiler page."}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-[var(--fg-subtle)]">
+              <span className="px-3 py-1 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--fg-muted)]">
+                {view === "styles"
+                  ? "Exact 925–975 Chars"
+                  : view === "lyrics"
+                  ? "Modular Flow & American Phonetics"
+                  : "8 Playbooks Ready"}
+              </span>
+
+              {/* Dynamic Size Indicator & Controls */}
+              {(workbenchWidth || workbenchHeight) && (
+                <span className="px-2.5 py-1 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30 font-semibold flex items-center gap-1.5 text-[11px]">
+                  <span>⤢</span>
+                  <span>
+                    {workbenchWidth ? `${workbenchWidth}w` : "Auto"} × {workbenchHeight ? `${workbenchHeight}h` : "Auto"}
+                  </span>
+                </span>
+              )}
+
+              {(workbenchWidth || workbenchHeight) && (
+                <button
+                  type="button"
+                  onClick={handleResetSize}
+                  className="px-2.5 py-1 rounded-lg bg-[var(--bg)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] border border-[var(--border)] transition-colors flex items-center gap-1 text-[11px]"
+                  title="Reset interface dimensions to default"
+                >
+                  <span>⟲</span>
+                  <span>Reset Size</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleToggleFullWidth}
+                className="px-2.5 py-1 rounded-lg bg-[var(--bg)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] border border-[var(--border)] transition-colors hidden sm:flex items-center gap-1 text-[11px]"
+                title={workbenchWidth && workbenchWidth > window.innerWidth - 60 ? "Restore default width" : "Expand to full screen width"}
+              >
+                <span>{workbenchWidth && workbenchWidth > window.innerWidth - 60 ? "⤡" : "⤢"}</span>
+                <span>{workbenchWidth && workbenchWidth > window.innerWidth - 60 ? "Default Width" : "Full Width"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Content Deck Body */}
+          <div className="p-5 sm:p-6 bg-[var(--bg)] flex-1 overflow-y-auto">
+            {view === "styles" ? (
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
             {/* Left Column: Brief & Controls */}
             <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] p-5 flex flex-col gap-5">
               <div>
@@ -858,6 +1121,9 @@ node cli/suno-styles.mjs "Trapstep + Deep Dubstep" -n 3`}
               )}
             </section>
           </div>
+        ) : view === "lyrics" ? (
+          /* Lyrics Studio */
+          <LyricsStudio onShowDialog={showDialog} copyToClipboard={copyToClipboard} />
         ) : (
           /* Skills Studio View */
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-8">
@@ -1165,11 +1431,81 @@ node cli/suno-styles.mjs "Trapstep + Deep Dubstep" -n 3`}
             </div>
           </section>
         )}
+          </div>
+
+          {/* ============================================================ */}
+          {/* INTERACTIVE RESIZE HANDLES (DRAG EDGES / CORNERS TO RESIZE) */}
+          {/* ============================================================ */}
+          {/* Right Edge Handle (Drag left/right to resize width) */}
+          <div
+            onPointerDown={(e) => startResize("width-right", e)}
+            className="absolute top-0 right-0 bottom-0 w-3.5 cursor-ew-resize hover:bg-[var(--accent)]/30 active:bg-[var(--accent)]/50 transition-colors z-40 group flex items-center justify-center select-none"
+            title="Click and drag horizontally to resize interface width"
+          >
+            <div className="w-1 h-12 rounded-full bg-[var(--border-strong)] group-hover:bg-[var(--accent)] transition-colors opacity-40 group-hover:opacity-100" />
+          </div>
+
+          {/* Left Edge Handle (Drag left/right to resize width) */}
+          <div
+            onPointerDown={(e) => startResize("width-left", e)}
+            className="absolute top-0 left-0 bottom-0 w-3.5 cursor-ew-resize hover:bg-[var(--accent)]/30 active:bg-[var(--accent)]/50 transition-colors z-40 group flex items-center justify-center select-none"
+            title="Click and drag horizontally to resize interface width"
+          >
+            <div className="w-1 h-12 rounded-full bg-[var(--border-strong)] group-hover:bg-[var(--accent)] transition-colors opacity-40 group-hover:opacity-100" />
+          </div>
+
+          {/* Bottom Edge Handle (Drag up/down to resize height) */}
+          <div
+            onPointerDown={(e) => startResize("height", e)}
+            className="absolute bottom-0 left-0 right-0 h-3.5 cursor-ns-resize hover:bg-[var(--accent)]/30 active:bg-[var(--accent)]/50 transition-colors z-40 group flex items-center justify-center select-none"
+            title="Click and drag vertically to resize interface height"
+          >
+            <div className="h-1 w-20 rounded-full bg-[var(--border-strong)] group-hover:bg-[var(--accent)] transition-colors opacity-40 group-hover:opacity-100" />
+          </div>
+
+          {/* Bottom-Right Corner Handle (Drag to resize width and height simultaneously) */}
+          <div
+            onPointerDown={(e) => startResize("both", e)}
+            className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize hover:bg-[var(--accent)]/40 active:bg-[var(--accent)]/60 transition-colors z-50 rounded-br-2xl flex items-end justify-end p-1 select-none group"
+            title="Click and drag corner to resize width and height"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-[var(--fg-subtle)] group-hover:text-[var(--accent)] transition-colors"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="20" y1="8" x2="8" y2="20" />
+              <line x1="20" y1="14" x2="14" y2="20" />
+              <line x1="20" y1="20" x2="20" y2="20" />
+            </svg>
+          </div>
+
+          {/* Bottom-Left Corner Handle */}
+          <div
+            onPointerDown={(e) => startResize("both", e)}
+            className="absolute bottom-0 left-0 w-6 h-6 cursor-nesw-resize hover:bg-[var(--accent)]/40 active:bg-[var(--accent)]/60 transition-colors z-50 rounded-bl-2xl flex items-end justify-start p-1 select-none group"
+            title="Click and drag corner to resize width and height"
+          >
+            <svg
+              className="w-3.5 h-3.5 text-[var(--fg-subtle)] group-hover:text-[var(--accent)] transition-colors"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <line x1="4" y1="8" x2="16" y2="20" />
+              <line x1="4" y1="14" x2="10" y2="20" />
+              <line x1="4" y1="20" x2="4" y2="20" />
+            </svg>
+          </div>
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="max-w-[72rem] mx-auto px-4 sm:px-6 py-6 text-xs text-[var(--fg-subtle)] w-full">
-        Paste each Styles block into the Suno Styles field. Lyrics stay independent. BPM and character counts are verified before display.
+      <footer className="max-w-[76rem] mx-auto px-4 sm:px-6 py-6 text-xs text-[var(--fg-subtle)] w-full">
+        Suno Workbench compiles 925–975 character Styles prompts. Lyrics Studio designs, finishes, and converts lyrics to American phonetics for Suno's Lyrics field. Lyrics stay independent.
       </footer>
 
       {/* Modal Dialog */}

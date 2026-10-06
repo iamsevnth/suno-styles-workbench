@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Suno Workbench (Offline)</title>
-  <meta name="description" content="Offline Suno Styles compiler and Skills Studio. Open this file in any browser." />
+  <title>Suno Workbench & Lyrics Studio (Offline)</title>
+  <meta name="description" content="Offline Suno Styles compiler, Lyrics Studio with structure builder and American English phonetics, and Skills Studio." />
   <style>
 :root {
   --bg: #0a0a0b;
@@ -164,7 +164,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .hist-item .meta { font-size: 0.75rem; color: var(--fg-subtle); margin-top: 2px; }
 .grow { flex: 1; }
 h3.title { font-size: 0.95rem; font-weight: 600; }
-.tiny { font-size: 11px; color: var(--fg-muted); background: none; border: 0; }
+.tiny { font-size: 11px; color: var(--fg-muted); background: none; border: 0; cursor: pointer; }
 .tiny:hover { color: var(--fg); }
   </style>
 </head>
@@ -210,6 +210,8 @@ var Suno = (() => {
     ATMOSPHERE_WORDS: () => ATMOSPHERE_WORDS,
     CLUSTER_OF: () => CLUSTER_OF,
     COMPACT_EXCLUSION: () => COMPACT_EXCLUSION,
+    DEFAULT_MODULAR_SEQUENCE: () => DEFAULT_MODULAR_SEQUENCE,
+    DEFAULT_STRUCTURE: () => DEFAULT_STRUCTURE,
     DEFAULT_V6_CREATE: () => DEFAULT_V6_CREATE,
     GENRES: () => GENRES,
     INSTRUMENT_PATTERNS: () => INSTRUMENT_PATTERNS,
@@ -240,15 +242,19 @@ var Suno = (() => {
     buildPlans: () => buildPlans,
     classifyIssues: () => classifyIssues,
     clusterOf: () => clusterOf,
+    convertToPhonetics: () => convertToPhonetics,
     criticalGatesPass: () => criticalGatesPass,
     expandMood: () => expandMood,
     formatAllPromptsTxt: () => formatAllPromptsTxt,
     formatTitle: () => formatTitle,
+    generateLyrics: () => generateLyrics,
     generateStylesPrompts: () => generateStylesPrompts,
     genreNamesLongestFirst: () => genreNamesLongestFirst,
     historyFileStamp: () => historyFileStamp,
     inferBlendBand: () => inferBlendBand,
     isStructurallyUnique: () => isStructurallyUnique,
+    lineToAmericanPhonetic: () => lineToAmericanPhonetic,
+    lineToPhonetic: () => lineToPhonetic,
     matchGenre: () => matchGenre,
     namedBpmConflict: () => namedBpmConflict,
     namedExclusion: () => namedExclusion,
@@ -275,7 +281,9 @@ var Suno = (() => {
     suggestionPool: () => suggestionPool,
     toTitleCase: () => toTitleCase,
     v6Advice: () => v6Advice,
-    validatePrompt: () => validatePrompt
+    validatePrompt: () => validatePrompt,
+    wordToAmericanPhonetic: () => wordToAmericanPhonetic,
+    wordToPhonetic: () => wordToPhonetic
   });
 
   // src/lib/suno/genre-atlas.ts
@@ -3302,7 +3310,17 @@ var Suno = (() => {
       "Chrome Trap Bloom",
       "Skyline Snare Gap",
       "Voltage Pocket",
-      "Afterhours 808"
+      "Afterhours 808",
+      "Subsonic Atlanta Rumble",
+      "Midnight Rollers Arc",
+      "Distorted Low-End Authority",
+      "Phantom Hi-Hat Roll",
+      "Titan 808 Architecture",
+      "Neon Concrete Drift",
+      "Sub-Bass Heavyweight",
+      "Kinetic Trap Matrix",
+      "Vandal Sub Pulse",
+      "Obsidian Trap Anthem"
     ],
     future: [
       "Supersaw Bloom",
@@ -3312,7 +3330,17 @@ var Suno = (() => {
       "Lush Hybrid Rise",
       "Festival Chord Arc",
       "Gloss Drop",
-      "High Hands Hybrid"
+      "High Hands Hybrid",
+      "Prismatic Sidechain Surge",
+      "Starlight Chord Cascade",
+      "Neon Horizon Lift",
+      "Vivid Emotional Ascent",
+      "Crystal Saw Euphoria",
+      "Atmospheric Skyfall",
+      "Radiant Drop Explosion",
+      "Sunburst Anthem Flow",
+      "Hyper-Melodic Bloom",
+      "Anthemic Festival Peak"
     ],
     kinetic: [
       "Kinetic Club Hybrid",
@@ -3320,49 +3348,157 @@ var Suno = (() => {
       "Body Moving Bass",
       "High Energy Frame",
       "Voltage Dance Pocket",
-      "Live-Wire Drop"
+      "Live-Wire Drop",
+      "Dynamic Floor Ignition",
+      "Frenetic Rhythm Grid",
+      "Peak-Hour Propulsion",
+      "Turbo Sub Cadence",
+      "Unstoppable Club Motion",
+      "Velocity Dance Drive",
+      "High-Tension Overdrive",
+      "Hyper-Syncopated Engine",
+      "Mainstage Impact Circuit",
+      "Pressure Point Release"
     ],
     drill: [
       "Sliding Street Pocket",
       "Cold Drill Pressure",
       "Syncopated 808 Stagger",
-      "Night Bus Drill"
+      "Night Bus Drill",
+      "Gliding Slide Cadence",
+      "Frostbite Sub Glide",
+      "Urban Menace Rhythm",
+      "Sinister Hi-Hat Bounce",
+      "Coldfront 808 Warp",
+      "Staggered Trench Groove",
+      "Shadow Runner Drill",
+      "Drill Velocity Matrix"
     ],
     phonk: [
       "Phonk Haze Cruise",
       "Cowbell Night Drift",
-      "Saturated Street Glow"
+      "Saturated Street Glow",
+      "Drift King Distortion",
+      "Ghost Rider Cowbell",
+      "Memphis Tape Saturator",
+      "Midnight Drift Circuit",
+      "Siren Call Phonk",
+      "Asphalt Phantom Anthem",
+      "Overdriven Cassette Flow",
+      "Smoked Out 808"
     ],
     garage: [
       "Swung Emotional Bass",
       "Garage Hybrid Lift",
       "Elastic Bass Motion",
-      "Skippy Two Step"
+      "Skippy Two Step",
+      "London Night Swung Grid",
+      "Sub-Loaded Two Step",
+      "Shuffle And Chop Flow",
+      "Late Night Garage Bounce",
+      "Whiplash Bass Accent",
+      "Silk And Shuffler",
+      "South London Rhythm Box",
+      "Syncopated Roller Groove"
     ],
     ritual: [
       "Cinematic Ritual Weight",
       "Processional Sub Arc",
-      "Ominous Impact Field"
+      "Ominous Impact Field",
+      "Ancient Percussion Canon",
+      "Temple Sub Resonance",
+      "Primal Ceremonial Descent",
+      "Sacred Horn Echo",
+      "Mystic Sub-Bass Horizon",
+      "Shamanic Drum Protocol",
+      "Obsidian Temple Rise",
+      "Ethereal Drone Threshold"
     ],
     soul: [
       "Warm Nocturnal Soul",
       "Quiet Fire Hybrid",
-      "Late Night Croon"
+      "Late Night Croon",
+      "Velvet Rhodes Serenade",
+      "Sub-Bass Heartbeat",
+      "Dusk Till Dawn Groove",
+      "Neo-Soul Satin Touch",
+      "Intimate Ember Vibe",
+      "Golden Hour Chords",
+      "Smoky Lounge Cadence",
+      "Tender Vinyl Warmth"
     ],
     baile: [
       "Physical Groove Engine",
       "Favela Bass Collision",
-      "Body Moving Bass"
+      "Body Moving Bass",
+      "Rio Tambor Ignition",
+      "Kicking Volt Percussion",
+      "Favela Rhythm Stash",
+      "Bate Forte Sub Shaker",
+      "Baile Electro Impact",
+      "Carnaval Sub Pressure",
+      "Funk Carioca Drive",
+      "Tropical Sub Stomp"
     ],
     bass: [
       "Wub Answer Engine",
       "Half Time Sub Canon",
-      "Deep Wobble Field"
+      "Deep Wobble Field",
+      "Subterranean Pressure Vault",
+      "Heavyweight Sine Drop",
+      "Mutant Neuro Growl",
+      "Seismic Low-End Blast",
+      "Elastic Sub Distortion",
+      "Tearout Half-Time Stomp",
+      "Deep Chamber Wobble",
+      "Monolithic Bass Stash",
+      "Sub-Harmonic Catalyst"
     ],
     rap: [
       "Pocket First Topline",
       "Bar And Sub Engine",
-      "Hook Chant System"
+      "Hook Chant System",
+      "Cadence Locked Verse",
+      "Street Poet Topline",
+      "Syncopated Flow Engine",
+      "Unapologetic Hook Drop",
+      "Mic Presence Authority",
+      "Bar-For-Bar Stash",
+      "Anthemic Call And Answer",
+      "Diamond Tongue Delivery",
+      "Urban Narrative Pulse"
+    ],
+    dark: [
+      "Shadow Realm Frequency",
+      "Ominous Sub-Bass Abyss",
+      "Nocturnal Tension Frame",
+      "Midnight Eclipse Drop",
+      "Blackout Floor Anthem",
+      "Dystopian Sub Voltage"
+    ],
+    heavy: [
+      "Titan Weight Explosion",
+      "Massive Impact Catalyst",
+      "Subquake Protocol",
+      "Earthshaker Low End",
+      "Crushing Sub Pressure",
+      "Monstrous Drop Weight"
+    ],
+    emotional: [
+      "Bittersweet Resonance",
+      "Melodic Heartstrings Drop",
+      "Cathartic Peak Lift",
+      "Tender Vocal Ascent",
+      "Heartfelt Sonic Wave",
+      "Soul-Stirring Release"
+    ],
+    melodic: [
+      "Luminous Harmony Stream",
+      "Cascading Melody Flow",
+      "Starlight Hook Anthem",
+      "Crystalline Motif Lift",
+      "Euphonic Tone Voyage",
+      "Soaring Vocal Arc"
     ],
     general: [
       "Club Translation Engine",
@@ -3372,7 +3508,23 @@ var Suno = (() => {
       "Night Hybrid Design",
       "Weight And Air",
       "Hook Pressure System",
-      "Section Peak Engine"
+      "Section Peak Engine",
+      "Sonic Architecture Matrix",
+      "Sub-Heavy Mainstage Anthem",
+      "Dynamic Tension Release",
+      "Wide Stereo Radiance",
+      "Hypnotic Groove Sequence",
+      "Modern Soundscape Forge",
+      "Peak Dynamic Impact",
+      "Audio Signature Formula",
+      "Precision Low-End Blueprint",
+      "Harmonic Velocity Arc",
+      "Next-Gen Club Translator",
+      "Zero-Gravity Bass Frame",
+      "Infinite Echo Horizon",
+      "Masterclass Drop System",
+      "Pristine Mix Engine",
+      "Resonant Hybrid Wave"
     ]
   };
   var PADDING = [
@@ -3749,56 +3901,128 @@ var Suno = (() => {
       bassFamily: "wub",
       rhythmFamily: "ukg",
       energy: "balanced",
-      titleBank: ["Swung Emotional Bass", "Garage Hybrid Lift", "Elastic Bass Motion"]
+      titleBank: [
+        "Swung Emotional Bass",
+        "Garage Hybrid Lift",
+        "Elastic Bass Motion",
+        "Skippy Two Step",
+        "London Night Swung Grid",
+        "Sub-Loaded Two Step",
+        "Shuffle And Chop Flow",
+        "Late Night Garage Bounce"
+      ]
     },
     {
       axes: ["bass architecture", "atmosphere", "arrangement"],
       bassFamily: "808",
       rhythmFamily: "trap",
       energy: "heavy",
-      titleBank: ["Heavy 808 Pressure", "Monumental Trap Weight", "Sub Authority Drop"]
+      titleBank: [
+        "Heavy 808 Pressure",
+        "Monumental Trap Weight",
+        "Sub Authority Drop",
+        "Subsonic Atlanta Rumble",
+        "Titan 808 Architecture",
+        "Distorted Low-End Authority",
+        "Midnight Rollers Arc",
+        "Chrome Trap Bloom"
+      ]
     },
     {
       axes: ["emotional profile", "vocals", "harmony"],
       bassFamily: "growl",
       rhythmFamily: "half-time",
       energy: "emotional",
-      titleBank: ["Bittersweet Release", "Intimate Peak Drop", "Melodic Bass Bloom"]
+      titleBank: [
+        "Bittersweet Release",
+        "Intimate Peak Drop",
+        "Melodic Bass Bloom",
+        "Prismatic Sidechain Surge",
+        "Vivid Emotional Ascent",
+        "Radiant Drop Explosion",
+        "Lush Hybrid Rise",
+        "Supersaw Bloom"
+      ]
     },
     {
       axes: ["rhythm donor", "percussion", "mix"],
       bassFamily: "reese",
       rhythmFamily: "drill",
       energy: "kinetic",
-      titleBank: ["Syncopated Street Pulse", "Drill Pocket Engine", "Sliding Bass Tension"]
+      titleBank: [
+        "Syncopated Street Pulse",
+        "Drill Pocket Engine",
+        "Sliding Bass Tension",
+        "Cold Drill Pressure",
+        "Gliding Slide Cadence",
+        "Frostbite Sub Glide",
+        "Urban Menace Rhythm",
+        "Coldfront 808 Warp"
+      ]
     },
     {
       axes: ["atmosphere", "sound design", "dynamic arc"],
       bassFamily: "neuro",
       rhythmFamily: "ritual",
       energy: "cinematic",
-      titleBank: ["Cinematic Ritual Weight", "Processional Sub Arc", "Ominous Impact Field"]
+      titleBank: [
+        "Cinematic Ritual Weight",
+        "Processional Sub Arc",
+        "Ominous Impact Field",
+        "Ancient Percussion Canon",
+        "Temple Sub Resonance",
+        "Primal Ceremonial Descent",
+        "Sacred Horn Echo",
+        "Mystic Sub-Bass Horizon"
+      ]
     },
     {
       axes: ["genre hierarchy", "instrumentation", "vocals"],
       bassFamily: "wub",
       rhythmFamily: "baile",
       energy: "club",
-      titleBank: ["Kinetic Club Hybrid", "Physical Groove Engine", "Global Percussion Bass"]
+      titleBank: [
+        "Kinetic Club Hybrid",
+        "Physical Groove Engine",
+        "Global Percussion Bass",
+        "Rio Tambor Ignition",
+        "Dynamic Floor Ignition",
+        "Favela Bass Collision",
+        "Kicking Volt Percussion",
+        "Favela Rhythm Stash"
+      ]
     },
     {
       axes: ["harmony", "vocals", "groove"],
       bassFamily: "808",
       rhythmFamily: "trap",
       energy: "emotional",
-      titleBank: ["Warm Nocturnal Soul", "Quiet Fire Hybrid", "Late Night Croon"]
+      titleBank: [
+        "Warm Nocturnal Soul",
+        "Quiet Fire Hybrid",
+        "Late Night Croon",
+        "Velvet Rhodes Serenade",
+        "Sub-Bass Heartbeat",
+        "Dusk Till Dawn Groove",
+        "Neo-Soul Satin Touch",
+        "Golden Hour Chords"
+      ]
     },
     {
       axes: ["rhythm", "atmosphere", "mix"],
       bassFamily: "808",
       rhythmFamily: "ukg",
       energy: "kinetic",
-      titleBank: ["Skippy Two Step", "Garage Hybrid Lift", "Elastic Bass Motion"]
+      titleBank: [
+        "Skippy Two Step",
+        "Garage Hybrid Lift",
+        "Elastic Bass Motion",
+        "South London Rhythm Box",
+        "Late Night Garage Bounce",
+        "Whiplash Bass Accent",
+        "Silk And Shuffler",
+        "Syncopated Roller Groove"
+      ]
     }
   ];
   function buildPlans(parsed, seed, count, options = {}) {
@@ -6165,6 +6389,1122 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
         return runOptimizer(input);
     }
   }
+
+  // src/lib/lyrics/types.ts
+  var DEFAULT_STRUCTURE = {
+    intro: { enabled: true, count: 1, lines: 2 },
+    verse: { enabled: true, count: 2, lines: 4 },
+    buildup: { enabled: true, count: 2, lines: 2 },
+    drop: { enabled: true, count: 2, lines: 2 },
+    chorus: { enabled: true, count: 2, lines: 4 },
+    breakdown: { enabled: true, count: 1, lines: 2 },
+    bridge: { enabled: true, count: 1, lines: 4 },
+    outro: { enabled: true, count: 1, lines: 2 }
+  };
+  var DEFAULT_MODULAR_SEQUENCE = [
+    { id: "s-intro-1", type: "intro", lines: 2 },
+    { id: "s-verse-1", type: "verse", lines: 4 },
+    { id: "s-buildup-1", type: "buildup", lines: 2 },
+    { id: "s-drop-1", type: "drop", lines: 2 },
+    { id: "s-chorus-1", type: "chorus", lines: 4 },
+    { id: "s-verse-2", type: "verse", lines: 4 },
+    { id: "s-buildup-2", type: "buildup", lines: 2 },
+    { id: "s-drop-2", type: "drop", lines: 2 },
+    { id: "s-breakdown-1", type: "breakdown", lines: 2 },
+    { id: "s-bridge-1", type: "bridge", lines: 4 },
+    { id: "s-chorus-2", type: "chorus", lines: 4 },
+    { id: "s-outro-1", type: "outro", lines: 2 }
+  ];
+
+  // src/lib/lyrics/generator.ts
+  var RHYME_POOLS = {
+    darkBass: {
+      a: [
+        "In the red-line glow where the streetlights freeze",
+        "Counting every breath on these cold concrete keys",
+        "Shadows in the mirror cutting down the speed",
+        "Down inside the canyon where the sub-bass bleeds",
+        "Watch the city crumble like an autumn leaf",
+        "Static in the signal, silence in the teeth"
+      ],
+      b: [
+        "Hold the frequency until the glass begins to crack",
+        "Walking through the fire with no road leading back",
+        "Heavy in the chest like an 808 attack",
+        "Caught between the lightning and the fading of the black",
+        "Keep the dial turning on a broken audio track",
+        "Standing in the epicenter, never cutting slack"
+      ],
+      c: [
+        "Whisper to the dark before the siren starts to wail",
+        "Walking on the razor's edge across a narrow trail",
+        "Counting every secret that was never up for sale",
+        "Steel against the shadow when the promises derail",
+        "Heavy is the hammer that will drive the final nail",
+        "Breathing through the static as the neon lights turn pale"
+      ],
+      d: [
+        "Nothing left to lose when the floor begins to drop",
+        "Spinning in the pocket that is never gonna stop",
+        "Waiting for the second that the pressure hits the top",
+        "Sweeping up the ashes of a dream that had to pop",
+        "Running through the wreckage with a vision on the lock",
+        "Standing on the rooftop while the sirens ring the clock"
+      ]
+    },
+    futureEmotional: {
+      a: [
+        "I saw you standing where the sky turns gold",
+        "Holding on to stories that were never told",
+        "Even in the darkness when the night grew cold",
+        "You were the only promise that I wanted to hold",
+        "Letters in the water that the waves unfold",
+        "Breathing in the silence as the stars turn bold"
+      ],
+      b: [
+        "Now the chord stacks rise until we leave the floor",
+        "I don't need a map if you are at the door",
+        "Listen to the supersaws asking for more",
+        "Everything we wanted on this glowing shore",
+        "Washing all the sorrow that we carried before",
+        "Every single heartbeat that we can't ignore"
+      ],
+      c: [
+        "Take my hand before the daylight starts to fade",
+        "Look at every castle in the clouds we made",
+        "Never gonna hide behind the promises delayed",
+        "Step into the river that we already crossed and weighed",
+        "Singing in the open where we used to be afraid",
+        "Every single color that will never be betrayed"
+      ],
+      d: [
+        "And when the drop comes down like a rushing sea",
+        "I feel the whole world opening in front of me",
+        "Finally awake and exactly where I wanna be",
+        "Nothing in the mirror but the truth set free",
+        "Echoing across the sky in major key",
+        "Lifting up the spirit for eternity"
+      ]
+    },
+    trapStreet: {
+      a: [
+        "Sliding in the whip, late night on the dash",
+        "Pocket full of vision, wasn't built for the flash",
+        "Hit the corner clean, never waiting for the crash",
+        "Count the whole sequence, let the snare rim smash",
+        "Talk is always cheap when the pressure brings the cash",
+        "Moving through the alley with the low-end stash"
+      ],
+      b: [
+        "808 kicking with a slide in the lane",
+        "Wrote it in the blood, never felt the same pain",
+        "Standing in the drizzle, turning ice into rain",
+        "Everything to lose, but we double up the gain",
+        "Heavy is the link hanging off the silver chain",
+        "Running down the track like a runaway train"
+      ],
+      c: [
+        "Yeah they saw the come-up, now they wanna act close",
+        "Step inside the circle, Strike the final pose",
+        "Only real ones standing when the iron gate blows",
+        "Watch the way the money and the frequency grows",
+        "Coming out the concrete, blooming like a rose",
+        "Keep it on the lock, that's just how the story goes"
+      ],
+      d: [
+        "Drop the beat once, let the whole room shake",
+        "Real recognize real, we don't tolerate the fake",
+        "Look at every promise that we had to go and make",
+        "Counting every dollar that was never for their take",
+        "Wide awake at 4 AM, standing by the lake",
+        "Everything we risked for the legacy at stake"
+      ]
+    },
+    rnbSoul: {
+      a: [
+        "Touch of your shadow on my velvet sheets",
+        "Muted Rhodes chords playing on the empty streets",
+        "Listening to the rhythm as my heart repeats",
+        "Gentle conversation that the morning meets",
+        "Every little whisper that your soul completes",
+        "Sugar in the coffee, tasting bittersweet"
+      ],
+      b: [
+        "Tell me that you feel the low-end slow groove sway",
+        "We don't need to hurry toward another day",
+        "Say it in the silence that we keep at bay",
+        "Drifting in the warmth that will never fade away",
+        "Caught between the truth and the games we play",
+        "Hold me in the pocket where the lovers stay"
+      ],
+      c: [
+        "Baby put your phone down, listen to the rain",
+        "We can wash away every memory of pain",
+        "Nothing that we lost was ever lost in vain",
+        "Tie me to your love like a golden chain",
+        "Everything is easy when you say my name",
+        "Playing in a fire that we can't explain"
+      ],
+      d: [
+        "Close-mic whispers in the midnight air",
+        "Fingerstyle guitar running through your hair",
+        "Knowing that you're with me even when you're there",
+        "Heaven isn't distant, it's the love we share",
+        "Standing in the groove without a single care",
+        "Purest kind of feeling, beautiful and rare"
+      ]
+    }
+  };
+  var SECTION_TEMPLATES = {
+    intro: {
+      tags: ["[Intro]", "[Intro - Ambient Bed]", "[Intro - Filtered Vocals]"],
+      performanceNotes: [
+        "(spoken softly, dry room)",
+        "(low count in: one, two, breathe)",
+        "(distant filtered vocals, reverb swell)",
+        "(sparse piano and vinyl crackle)",
+        "(haunting whisper over sub hum)"
+      ],
+      defaultCount: 1,
+      defaultLines: 2,
+      openers: [
+        "Yeah, listen...",
+        "Turn the lights down low",
+        "Can you hear that sub?",
+        "In the beginning...",
+        "Late night, 2 AM..."
+      ],
+      phrases: [
+        "Watch the skyline fade into the dark.",
+        "Just a heartbeat and a fading spark.",
+        "Step into the circle before the drums start.",
+        "Feel the cold air tearing through the heart.",
+        "One last breath before the ground divides.",
+        "Where the bass and the holy ghost collides."
+      ]
+    },
+    verse: {
+      tags: ["[Verse 1]", "[Verse 2]", "[Verse 3]"],
+      performanceNotes: [
+        "(in the pocket, rhythmic flow)",
+        "(close-mic, intimate delivery)",
+        "(swung cadence, leaves air for the 808)",
+        "(building intensity, syllable precision)",
+        "(talk-rap phrasing, conversational)"
+      ],
+      defaultCount: 2,
+      defaultLines: 4,
+      openers: [
+        "First step out the door, the pavement wet with rain",
+        "I remember when we used to laugh through the pain",
+        "Another late flight crossing through the timezone",
+        "They talk about the glory, but they leave you all alone",
+        "Cold steel railings by the midnight bridge"
+      ],
+      phrases: [
+        "Shadows stretching long across the empty avenue.",
+        "Checking on the mirrors for a trace of what was true.",
+        "Keep the tempo steady while the world accelerates.",
+        "Nothing left behind except the dreams that came too late.",
+        "Hands upon the steering wheel, knuckles turning white.",
+        "Searching for a signal in the middle of the night.",
+        "Footprints on the asphalt washed away before dawn.",
+        "Still chasing the horizon after everyone has gone."
+      ]
+    },
+    buildup: {
+      tags: ["[Build Up]", "[Pre-Chorus]", "[Rise]"],
+      performanceNotes: [
+        "(snare roll accelerates, filter opening)",
+        "(rising melody, stacked harmonies)",
+        "(increasing urgency, double-time hats)",
+        "(vocals soaring, white-noise riser)"
+      ],
+      defaultCount: 2,
+      defaultLines: 2,
+      openers: [
+        "Here it comes now, feel the tension rise",
+        "Can you see the fire burning in our eyes?",
+        "Hold your breath, the air is getting thin",
+        "Stand right there, let the tide rush in"
+      ],
+      phrases: [
+        "Hold the bar, then give it back / Leave a rest where the hats attack.",
+        "The ceiling is shaking, the floor gives way / We got ten seconds left to say what we say.",
+        "Count it down from four to one / Look what we've become.",
+        "Higher and higher until the speakers blow / Ready or not, let it go!"
+      ]
+    },
+    drop: {
+      tags: ["[Drop]", "[Bass Drop]", "[Drop - High Octane]"],
+      performanceNotes: [
+        "(explosive bass drop - 808 glide and growls)",
+        "(monumental sub impact, half-time heavy drums)",
+        "(vocal chop repeats, crowd energy)",
+        "(silence gap, then full drop)"
+      ],
+      defaultCount: 2,
+      defaultLines: 2,
+      openers: [
+        "LET IT DROP!",
+        "FOLD THE FLOOR!",
+        "TAKE IT DOWN!",
+        "BREAK THE FRAME!"
+      ],
+      phrases: [
+        "HOLD THAT BASS! / (vocal chop: hold it, hold it!)",
+        "DOWN TO THE WIRE! / (808 slide screams through the floor)",
+        "CAN YOU FEEL IT NOW? / (wobble answers the open snare)",
+        "NEVER BACK DOWN! / (crowd chant: HEY! HEY! HEY!)"
+      ]
+    },
+    chorus: {
+      tags: ["[Chorus]", "[Chorus - Anthemic]", "[Chorus - Full Lift]"],
+      performanceNotes: [
+        "(anthemic belt, wide stereo harmonies)",
+        "(soaring topline, crowd chant on the backbeat)",
+        "(emotional release, supersaws wide)",
+        "(layered doubles, stadium reverb)"
+      ],
+      defaultCount: 2,
+      defaultLines: 4,
+      openers: [
+        "Say my name across the sky tonight",
+        "We were made to burn in the blinding light",
+        "Hold on to the frequency that sets us free",
+        "I found redemption in the melody"
+      ],
+      phrases: [
+        "We don't need tomorrow when the midnight calls.",
+        "Writing our redemption on the stadium walls.",
+        "Take my hand and never look behind.",
+        "Leave the heavy sorrow of the past in mind.",
+        "Every single heartbeat singing in the clear.",
+        "Nothing left to fear when the bass is here.",
+        "Lifting up our voices till the dawn breaks in.",
+        "This is where the real life will begin."
+      ]
+    },
+    breakdown: {
+      tags: ["[Breakdown]", "[Breakdown - Stripped]", "[Acoustic Break]"],
+      performanceNotes: [
+        "(drums cut out, solo electric guitar or piano)",
+        "(intimate whisper, dry room presence)",
+        "(sub rumble underneath, fragile vocal)",
+        "(atmospheric filter closes down)"
+      ],
+      defaultCount: 1,
+      defaultLines: 2,
+      openers: [
+        "Strip it down to the wire...",
+        "Just you and me in the quiet...",
+        "Listen to the silence breathe...",
+        "When the smoke clears away..."
+      ],
+      phrases: [
+        "All the noise is gone, and the truth remains.",
+        "Nothing in our hands but the love in our veins.",
+        "Just a single note floating in the space.",
+        "Seeing every contour of your face."
+      ]
+    },
+    bridge: {
+      tags: ["[Bridge]", "[Bridge - Key Shift]", "[Emotional Pivot]"],
+      performanceNotes: [
+        "(dramatic vocal climb, unexpected harmonic shift)",
+        "(soulful ad-libs building to high belt)",
+        "(half-time swagger, storytelling peak)",
+        "(stacked vocal counter-melody)"
+      ],
+      defaultCount: 1,
+      defaultLines: 4,
+      openers: [
+        "And if the night is a tunnel, I've learned the walls",
+        "They said we'd break, but we caught the falls",
+        "Look at every scar that we turned to gold",
+        "Every little story that our heart has told"
+      ],
+      phrases: [
+        "If the bass is a question, I answer in falls.",
+        "Standing in the echo of the empty halls.",
+        "I won't apologize for reaching for the sun.",
+        "After all the battles that we fought and won.",
+        "Now the curtain's lifting on the final scene.",
+        "Stronger than we ever could have dreamed or been."
+      ]
+    },
+    outro: {
+      tags: ["[Outro]", "[Outro - Fade to Sub]", "[Outro - Spoken Word]"],
+      performanceNotes: [
+        "(drums fade, lingering synth tails)",
+        "(whispered title motif repeating to fade)",
+        "(solo 808 thud into silence)",
+        "(vocal delay throws into the dark)"
+      ],
+      defaultCount: 1,
+      defaultLines: 2,
+      openers: [
+        "Yeah... let it ride out...",
+        "Fade to black...",
+        "Just the sub left...",
+        "Until next time..."
+      ],
+      phrases: [
+        "Hold the last note till the morning breaks.",
+        "Every single choice that a dreamer makes.",
+        "Silence in the speaker, peace in the chest.",
+        "Let the heavy heartbeat finally rest."
+      ]
+    }
+  };
+  function parseDraftLyrics(draft) {
+    if (!draft || !draft.trim()) {
+      return { userLines: [], userStanzas: [], hasSectionTags: false };
+    }
+    const rawLines = draft.split("\n").map((l) => l.trim()).filter((l) => Boolean(l));
+    const hasSectionTags = rawLines.some((l) => /^\[.*\]$/.test(l));
+    const userLines = rawLines.filter((l) => !/^\[.*\]$/.test(l));
+    const userStanzas = [];
+    let current = [];
+    for (const line of rawLines) {
+      if (/^\[.*\]$/.test(line)) {
+        if (current.length) {
+          userStanzas.push(current);
+          current = [];
+        }
+      } else {
+        current.push(line);
+      }
+    }
+    if (current.length) userStanzas.push(current);
+    return { userLines, userStanzas, hasSectionTags };
+  }
+  function generateLyrics(params) {
+    const seed = params.seed ?? (Math.floor(Math.random() * 1e9) ^ Date.now()) >>> 0;
+    const rng = mulberry32(seed);
+    const theme = params.theme.trim() || "Midnight Drive Through the Heavy Bass City";
+    const genre = (params.genre || "Hybrid Bass / Trapstep").toLowerCase();
+    const delivery = params.delivery || "Sung Melodic to Belt";
+    const scheme = params.rhymeScheme || "AABB";
+    const includeTags = params.includePerformanceTags !== false;
+    let rhymePoolKey = "darkBass";
+    if (genre.includes("future") || genre.includes("melodic") || genre.includes("pop")) {
+      rhymePoolKey = "futureEmotional";
+    } else if (genre.includes("r&b") || genre.includes("soul") || genre.includes("lo-fi")) {
+      rhymePoolKey = "rnbSoul";
+    } else if (genre.includes("trap") || genre.includes("drill") || genre.includes("rap")) {
+      rhymePoolKey = "trapStreet";
+    }
+    const rhymePool = RHYME_POOLS[rhymePoolKey] ?? RHYME_POOLS.darkBass;
+    const draftInfo = parseDraftLyrics(params.draftLyrics);
+    let userStanzaIdx = 0;
+    const sections = [];
+    const plan = [];
+    if (params.sectionSequence && params.sectionSequence.length > 0) {
+      const totalTypeCounts = {};
+      for (const item of params.sectionSequence) {
+        totalTypeCounts[item.type] = (totalTypeCounts[item.type] || 0) + 1;
+      }
+      const currentTypeIndices = {};
+      for (const item of params.sectionSequence) {
+        currentTypeIndices[item.type] = (currentTypeIndices[item.type] || 0) + 1;
+        plan.push({
+          type: item.type,
+          index: currentTypeIndices[item.type],
+          lines: item.lines,
+          customLabel: item.customLabel
+        });
+      }
+    } else {
+      const structure = params.structure || {
+        intro: { enabled: true, count: 1, lines: 2 },
+        verse: { enabled: true, count: 2, lines: 4 },
+        buildup: { enabled: true, count: 2, lines: 2 },
+        drop: { enabled: true, count: 2, lines: 2 },
+        chorus: { enabled: true, count: 2, lines: 4 },
+        breakdown: { enabled: true, count: 1, lines: 2 },
+        bridge: { enabled: true, count: 1, lines: 4 },
+        outro: { enabled: true, count: 1, lines: 2 }
+      };
+      if (structure.intro.enabled) {
+        for (let i = 0; i < structure.intro.count; i++) {
+          plan.push({ type: "intro", index: i + 1, lines: structure.intro.lines });
+        }
+      }
+      const maxCycles = Math.max(
+        structure.verse.enabled ? structure.verse.count : 1,
+        structure.chorus.enabled ? structure.chorus.count : 1
+      );
+      let verseIssued = 0;
+      let buildupIssued = 0;
+      let dropIssued = 0;
+      let chorusIssued = 0;
+      for (let c = 0; c < maxCycles; c++) {
+        if (structure.verse.enabled && verseIssued < structure.verse.count) {
+          verseIssued++;
+          plan.push({ type: "verse", index: verseIssued, lines: structure.verse.lines });
+        }
+        if (structure.buildup.enabled && buildupIssued < structure.buildup.count) {
+          buildupIssued++;
+          plan.push({ type: "buildup", index: buildupIssued, lines: structure.buildup.lines });
+        }
+        if (structure.drop.enabled && dropIssued < structure.drop.count) {
+          dropIssued++;
+          plan.push({ type: "drop", index: dropIssued, lines: structure.drop.lines });
+        }
+        if (structure.chorus.enabled && chorusIssued < structure.chorus.count) {
+          chorusIssued++;
+          plan.push({ type: "chorus", index: chorusIssued, lines: structure.chorus.lines });
+        }
+      }
+      if (structure.breakdown.enabled) {
+        for (let i = 0; i < structure.breakdown.count; i++) {
+          plan.push({ type: "breakdown", index: i + 1, lines: structure.breakdown.lines });
+        }
+      }
+      if (structure.bridge.enabled) {
+        for (let i = 0; i < structure.bridge.count; i++) {
+          plan.push({ type: "bridge", index: i + 1, lines: structure.bridge.lines });
+        }
+      }
+      if (structure.chorus.enabled && chorusIssued < structure.chorus.count) {
+        chorusIssued++;
+        plan.push({ type: "chorus", index: chorusIssued, lines: structure.chorus.lines });
+      }
+      if (structure.outro.enabled) {
+        for (let i = 0; i < structure.outro.count; i++) {
+          plan.push({ type: "outro", index: i + 1, lines: structure.outro.lines });
+        }
+      }
+    }
+    const totalOfEachType = {};
+    for (const p of plan) {
+      totalOfEachType[p.type] = (totalOfEachType[p.type] || 0) + 1;
+    }
+    for (const item of plan) {
+      const sType = item.type;
+      const tpl = SECTION_TEMPLATES[sType];
+      const targetLineCount = Math.max(1, item.lines || tpl.defaultLines);
+      let label = item.customLabel;
+      if (!label) {
+        if (totalOfEachType[sType] > 1) {
+          label = `${capitalize(sType === "buildup" ? "Build Up" : sType)} ${item.index}`;
+        } else {
+          label = capitalize(sType === "buildup" ? "Build Up" : sType);
+        }
+      }
+      const tag = `[${label}]`;
+      let performanceNote;
+      if (includeTags) {
+        performanceNote = pick(rng, tpl.performanceNotes);
+      }
+      let lines = [];
+      if (draftInfo.userStanzas.length > userStanzaIdx) {
+        const stanza = draftInfo.userStanzas[userStanzaIdx];
+        userStanzaIdx++;
+        if (stanza.length >= targetLineCount) {
+          lines = stanza.slice(0, targetLineCount);
+        } else {
+          lines = [...stanza];
+          const needed = targetLineCount - stanza.length;
+          const extra = generateLinesForSection(sType, needed, rhymePool, scheme, theme, rng);
+          lines.push(...extra);
+        }
+      } else {
+        lines = generateLinesForSection(
+          sType,
+          targetLineCount,
+          rhymePool,
+          scheme,
+          theme,
+          rng,
+          item.index
+        );
+      }
+      sections.push({
+        type: sType,
+        label,
+        tag,
+        performanceNote,
+        lines
+      });
+    }
+    const fullTextBlocks = [];
+    let totalLines = 0;
+    for (const sec of sections) {
+      let block = sec.tag;
+      if (sec.performanceNote) {
+        block += ` ${sec.performanceNote}`;
+      }
+      block += "\n" + sec.lines.join("\n");
+      fullTextBlocks.push(block);
+      totalLines += sec.lines.length;
+    }
+    const fullText = fullTextBlocks.join("\n\n");
+    const titleWords = theme.split(/\s+/).slice(0, 5).join(" ");
+    const title = capitalizeWords(titleWords || "Untitled Suno Track");
+    return {
+      title,
+      theme,
+      sections,
+      fullText,
+      totalLines,
+      seed
+    };
+  }
+  function generateLinesForSection(type, count, bank, scheme, theme, rng, index = 1) {
+    const tpl = SECTION_TEMPLATES[type];
+    const out = [];
+    if (type === "drop") {
+      const lead = pick(rng, tpl.openers);
+      out.push(lead);
+      if (count > 1) {
+        out.push(pick(rng, tpl.phrases));
+      }
+      while (out.length < count) {
+        out.push(pick(rng, bank.b));
+      }
+      return out.slice(0, count);
+    }
+    if (type === "intro") {
+      const lead = pick(rng, tpl.openers);
+      out.push(lead);
+      while (out.length < count) {
+        out.push(pick(rng, tpl.phrases));
+      }
+      return out.slice(0, count);
+    }
+    if (type === "buildup") {
+      const lead = pick(rng, tpl.openers);
+      out.push(lead);
+      while (out.length < count) {
+        out.push(pick(rng, tpl.phrases));
+      }
+      return out.slice(0, count);
+    }
+    if (type === "breakdown" || type === "outro") {
+      const lead = pick(rng, tpl.openers);
+      out.push(lead);
+      while (out.length < count) {
+        out.push(pick(rng, tpl.phrases));
+      }
+      return out.slice(0, count);
+    }
+    if (scheme === "AABB") {
+      const pairA = pickN(rng, bank.a, 2);
+      const pairB = pickN(rng, bank.b, 2);
+      const pairC = pickN(rng, bank.c, 2);
+      const pairD = pickN(rng, bank.d, 2);
+      const linesPool2 = [...pairA, ...pairB, ...pairC, ...pairD];
+      return linesPool2.slice(0, count);
+    } else if (scheme === "ABAB") {
+      const a1 = pick(rng, bank.a);
+      const b1 = pick(rng, bank.b);
+      const a2 = pick(rng, bank.a.filter((x) => x !== a1));
+      const b2 = pick(rng, bank.b.filter((x) => x !== b1));
+      const linesPool2 = [a1, b1, a2, b2];
+      while (linesPool2.length < count) {
+        linesPool2.push(pick(rng, bank.c), pick(rng, bank.d));
+      }
+      return linesPool2.slice(0, count);
+    }
+    const linesPool = [
+      ...pickN(rng, bank.a, 2),
+      ...pickN(rng, bank.b, 2),
+      ...pickN(rng, bank.c, 2),
+      ...pickN(rng, bank.d, 2)
+    ];
+    return linesPool.slice(0, count);
+  }
+  function capitalize(s2) {
+    if (!s2) return s2;
+    return s2.charAt(0).toUpperCase() + s2.slice(1);
+  }
+  function capitalizeWords(s2) {
+    return s2.split(/\s+/).map((w) => w.length > 2 ? capitalize(w) : w).join(" ");
+  }
+
+  // src/lib/lyrics/phonetics.ts
+  var RAP_FLOW_LEXICON = {
+    // Manual Section 12 Corpus & Banned String Fixes
+    again: "uhgehn",
+    through: "throo",
+    bounce: "bauns",
+    bitches: "bichiz",
+    bitch: "bich",
+    bichiz: "bichiz",
+    bich: "bich",
+    chain: "chayn",
+    watch: "wahch",
+    reaching: "reechin",
+    reach: "reech",
+    touch: "tuch",
+    catch: "kach",
+    latto: "lahto",
+    amex: "ameks",
+    maybach: "maybahk",
+    maybachs: "maybahks",
+    fuck: "fuhk",
+    all: "awl",
+    said: "sed",
+    how: "how",
+    clap: "klap",
+    shit: "shit",
+    braids: "braydz",
+    braid: "brayd",
+    swim: "swim",
+    lotto: "lahtoh",
+    says: "sez",
+    roles: "rohlz",
+    royce: "roys",
+    code: "kohd",
+    climax: "klaimaks",
+    smooth: "smooth",
+    payback: "paybak",
+    hoes: "hohz",
+    hoe: "hoh",
+    play: "play",
+    lay: "lay",
+    where: "wair",
+    daddy: "dadee",
+    end: "end",
+    be: "bee",
+    he: "hee",
+    she: "shee",
+    we: "wee",
+    see: "see",
+    off: "awf",
+    // Weak forms & Function words (Section 10.1)
+    the: "tha",
+    thee: "thee",
+    probably: "problee",
+    probable: "probubul",
+    going: "goin",
+    gonna: "gonna",
+    want: "wahnt",
+    wanna: "wanna",
+    trying: "trahyin",
+    tryin: "trahyin",
+    tryna: "tryna",
+    finna: "finna",
+    ima: "ahma",
+    imma: "ahma",
+    because: "kuz",
+    cause: "kuz",
+    cuz: "kuz",
+    about: "baut",
+    around: "raund",
+    with: "wit",
+    without: "witout",
+    you: "yuh",
+    your: "yo",
+    yours: "yorz",
+    to: "tuh",
+    and: "an",
+    for: "fer",
+    of: "uh",
+    what: "wut",
+    was: "wuz",
+    were: "wer",
+    them: "em",
+    give: "giv",
+    gimme: "gimme",
+    let: "let",
+    lemme: "lemme",
+    got: "gaht",
+    gotta: "gotta",
+    should: "shood",
+    could: "kood",
+    would: "wood",
+    shoulda: "shooda",
+    coulda: "kooda",
+    woulda: "wooda",
+    kinda: "kynda",
+    sorta: "sorta",
+    outta: "owda",
+    yeah: "yea",
+    yes: "yes",
+    nope: "nohp",
+    nah: "naw",
+    // Section 7.2: PRICE monophthongization before VOICED consonants & open syllables (/aɪ/ -> /aː/ "ah")
+    time: "tahm",
+    times: "tahmz",
+    mine: "mahn",
+    side: "sahd",
+    sides: "sahdz",
+    ride: "rahd",
+    rides: "rahdz",
+    riding: "rahdin",
+    ridin: "rahdin",
+    slide: "slahd",
+    slides: "slahdz",
+    sliding: "slahdin",
+    slidin: "slahdin",
+    glide: "glahd",
+    gliding: "glahdin",
+    hide: "hahd",
+    hiding: "hahdin",
+    wide: "wahd",
+    tide: "tahd",
+    tides: "tahdz",
+    i: "ah",
+    my: "mah",
+    eye: "ah",
+    eyes: "ahz",
+    line: "lahn",
+    lines: "lahnz",
+    fine: "fahn",
+    shine: "shahn",
+    shining: "shahnin",
+    vibe: "vahb",
+    vibes: "vahbz",
+    vibing: "vahbin",
+    five: "fahv",
+    alive: "uhlahv",
+    mind: "mahnd",
+    minds: "mahndz",
+    grind: "grahnd",
+    grinding: "grahndin",
+    sign: "sahn",
+    signs: "sahnz",
+    rhyme: "rahm",
+    rhymes: "rahmz",
+    rhyming: "rahmin",
+    lie: "lah",
+    lying: "lahyin",
+    die: "dah",
+    dying: "dahyin",
+    cry: "krah",
+    crying: "krahyin",
+    fly: "flah",
+    flying: "flahyin",
+    try: "trah",
+    // Section 7.2: PRICE glide PRESERVED before VOICELESS consonants (/aɪ/ -> "ai" / "ait" / "aik" / "ais")
+    right: "rait",
+    rights: "raits",
+    night: "nait",
+    nights: "naits",
+    tonight: "tuhnait",
+    light: "lait",
+    lights: "laits",
+    like: "laik",
+    likes: "laiks",
+    tight: "tait",
+    sight: "sait",
+    fight: "fait",
+    fighting: "faitin",
+    ice: "ais",
+    white: "wait",
+    bite: "bait",
+    pipe: "paip",
+    hype: "haip",
+    strike: "straik",
+    // Section 6.1: Cluster reduction (sharing voicing)
+    first: "firs",
+    test: "tes",
+    tests: "tesiz",
+    desk: "des",
+    desks: "desiz",
+    hand: "han",
+    hands: "hanz",
+    cold: "kohl",
+    left: "lef",
+    act: "ak",
+    just: "juhs",
+    past: "pas",
+    west: "wes",
+    best: "bes",
+    fast: "fas",
+    last: "las",
+    lost: "lahs",
+    // Section 6.8: Flapping & casual American speech
+    better: "bedder",
+    little: "liddle",
+    bottle: "boddle",
+    city: "siddee",
+    pretty: "priddee",
+    party: "pardee",
+    body: "bahdee",
+    everybody: "evrybahdee",
+    somebody: "sumbahdee",
+    nobody: "nobahdee",
+    // Urban, Hip-Hop & Suno Vocal Terms
+    brother: "brotha",
+    sister: "sista",
+    mother: "mutha",
+    father: "fatha",
+    forever: "foreva",
+    together: "tagetha",
+    whatever: "whateva",
+    never: "neva",
+    something: "sumthin",
+    nothing: "nuthin",
+    everything: "evrythin",
+    anything: "anythin",
+    someone: "sumwun",
+    everyone: "evrywun",
+    money: "munnee",
+    people: "peepul",
+    family: "famlee",
+    business: "biznis",
+    tomorrow: "tamorrah",
+    yesterday: "yesterday",
+    shawty: "shawdee",
+    shorty: "shordee",
+    drip: "drip",
+    dripping: "drippin",
+    drop: "drahp",
+    dropped: "drahpt",
+    dropping: "droppin",
+    pop: "pahp",
+    popping: "poppin",
+    bopping: "bahpin",
+    bop: "bahp",
+    rock: "rahk",
+    rocking: "rahkin",
+    roll: "rohl",
+    rolling: "rohlin",
+    stop: "stahp",
+    stopping: "stahppin",
+    talk: "tawk",
+    talking: "tawkin",
+    walk: "wawk",
+    walking: "wawkin",
+    looking: "lookin",
+    listen: "lisin",
+    listening: "lisnin",
+    call: "kawl",
+    calling: "kawlin",
+    fall: "fawl",
+    falling: "fawlin",
+    running: "runnin",
+    waiting: "waitin",
+    chasing: "chaysin",
+    living: "livin",
+    breathing: "breethin",
+    screaming: "skreemin",
+    shouting: "showtin",
+    whispering: "whisprin",
+    burning: "bernin",
+    bleeding: "bleedin",
+    // Audio / Bass Terms
+    bass: "bays",
+    sub: "sub",
+    subs: "subz",
+    rhythm: "rithum",
+    tempo: "tempoh",
+    beat: "beet",
+    beats: "beetz",
+    sound: "sownd",
+    sounds: "sowndz",
+    music: "myoozik",
+    synths: "sinths",
+    synth: "sinth",
+    drums: "drumz",
+    frequency: "freekwensee",
+    groove: "groov",
+    pocket: "pahkit",
+    track: "trak",
+    tracks: "traks",
+    club: "klub",
+    clubs: "klubz",
+    floor: "flor",
+    speaker: "speeker",
+    speakers: "speekerz",
+    pressure: "presher",
+    tension: "tenshun",
+    energy: "enerjee",
+    dark: "dahrk",
+    darkness: "dahrknis",
+    shadow: "shadoh",
+    shadows: "shadohz",
+    neon: "neeon",
+    street: "street",
+    streets: "streets",
+    heart: "hahrt",
+    heartbeat: "hahrtbeet",
+    soul: "sohl",
+    blood: "blud",
+    fire: "fyer",
+    flame: "flaym",
+    power: "power",
+    picture: "pikcher",
+    action: "akshun",
+    motion: "mohshun",
+    // Foreign / Baile / Latin loans
+    baile: "bylee",
+    favela: "fahvelah",
+    funk: "fuhnk",
+    brasileiro: "brahzeelayroh",
+    brazil: "brahzil",
+    portuguese: "porchugeez",
+    faz: "fahz",
+    pose: "pohzee",
+    vem: "vayng",
+    vai: "vy",
+    toca: "tohkah",
+    som: "sohng",
+    ritmo: "reetmoh",
+    dan\u00E7a: "dahnsah",
+    fogo: "fohgoh",
+    onda: "ohndah",
+    amor: "ahmohr",
+    vida: "veedah",
+    coraz\u00F3n: "kohrahzohn",
+    fuego: "fweygoh",
+    dembow: "demboh",
+    perreo: "pehrayoh",
+    chica: "cheekah",
+    loco: "lohkoh",
+    mami: "mahmee",
+    papi: "pahpee",
+    reggaeton: "rehgaytohn"
+  };
+  var RAP_MULTI_WORD_RULES = [
+    [/\bgoing to\b/gi, "gonna"],
+    [/\bi am going to\b/gi, "ahma"],
+    [/\bi'm going to\b/gi, "ahma"],
+    [/\bi'ma\b/gi, "ahma"],
+    [/\bwant to\b/gi, "wanna"],
+    [/\btrying to\b/gi, "tryna"],
+    [/\bfixing to\b/gi, "finna"],
+    [/\bout of\b/gi, "owda"],
+    [/\bkind of\b/gi, "kynda"],
+    [/\bsort of\b/gi, "sorta"],
+    [/\bgot to\b/gi, "gotta"],
+    [/\bgive me\b/gi, "gimme"],
+    [/\blet me\b/gi, "lemme"],
+    [/\bshould have\b/gi, "shooda"],
+    [/\bcould have\b/gi, "kooda"],
+    [/\bwould have\b/gi, "wooda"],
+    [/\ba lot of\b/gi, "a lahda"],
+    [/\bcome on\b/gi, "kamon"],
+    [/\bwhat is\b/gi, "wuts"],
+    [/\bwhat are\b/gi, "wuder"],
+    [/\bwhat you\b/gi, "wucha"],
+    [/\bdon't you\b/gi, "doncha"],
+    [/\bdid you\b/gi, "didja"],
+    [/\bget out\b/gi, "gedowt"]
+  ];
+  function algorithmicPhonetics(word, mode = "rap") {
+    const w = word.toLowerCase();
+    const clean = w.replace(/[^a-z']/g, "");
+    if (!clean) return word;
+    if (RAP_FLOW_LEXICON[clean]) {
+      return RAP_FLOW_LEXICON[clean];
+    }
+    if (clean === "don't" || clean === "dont") return "dohnt";
+    if (clean === "won't" || clean === "wont") return "wohnt";
+    if (clean === "can't" || clean === "cant") return "kant";
+    if (clean === "ain't" || clean === "aint") return "aynt";
+    if (clean === "i'm" || clean === "im") return mode === "rap" ? "ahm" : "aim";
+    if (clean === "i've" || clean === "ive") return mode === "rap" ? "ahv" : "aiv";
+    if (clean === "i'll" || clean === "ill") return mode === "rap" ? "ahl" : "ail";
+    if (clean === "i'd" || clean === "id") return mode === "rap" ? "ahd" : "aid";
+    if (clean === "you're" || clean === "youre") return mode === "rap" ? "yo" : "yoor";
+    if (clean === "you've" || clean === "youve") return "yoov";
+    if (clean === "you'll" || clean === "youll") return "yool";
+    if (clean === "we're" || clean === "were") return "weer";
+    if (clean === "they're" || clean === "theyre") return "thair";
+    if (clean === "it's" || clean === "its") return "its";
+    if (clean === "that's" || clean === "thats") return "thats";
+    if (clean === "there's" || clean === "theres") return "thairz";
+    if (clean === "what's" || clean === "whats") return "wuts";
+    if (clean.endsWith("ing") && clean.length > 4) {
+      const root = clean.slice(0, -3);
+      const rootPhon = RAP_FLOW_LEXICON[root] || algorithmicPhonetics(root, mode);
+      if (mode === "rap") {
+        return rootPhon + "in";
+      } else {
+        return rootPhon + "ing";
+      }
+    }
+    if (clean.endsWith("ed") && clean.length > 3) {
+      const root = clean.slice(0, -2);
+      if (RAP_FLOW_LEXICON[root]) {
+        return RAP_FLOW_LEXICON[root] + "d";
+      }
+    }
+    if (clean.endsWith("s") && clean.length > 3) {
+      const root = clean.slice(0, -1);
+      if (RAP_FLOW_LEXICON[root]) {
+        return RAP_FLOW_LEXICON[root] + "z";
+      }
+    }
+    if (/([bdfghjklmnprstvwz])i([dmbvzlnr])e\b/.test(clean)) {
+      if (mode === "rap") {
+        return clean.replace(/([bdfghjklmnprstvwz])i([dmbvzlnr])e\b/, "$1ah$2");
+      } else {
+        return clean.replace(/([bdfghjklmnprstvwz])i([dmbvzlnr])e\b/, "$1y$2");
+      }
+    }
+    if (/([bdfghjklmnprstvwz])i([tkpsfc])e\b/.test(clean)) {
+      return clean.replace(/([bdfghjklmnprstvwz])i([tkpsfc])e\b/, "$1ai$2");
+    }
+    let p = clean.replace(/tion\b/g, "shun").replace(/sion\b/g, "zhun").replace(/cious\b/g, "shus").replace(/tious\b/g, "shus").replace(/ture\b/g, "cher").replace(/ph/g, "f").replace(/ck/g, "k").replace(/qu/g, "kw").replace(/wr/g, "r").replace(/kn/g, "n").replace(/igh/g, "ai").replace(/eigh/g, "ay").replace(/ough/g, "aw").replace(/augh/g, "aw").replace(/ee/g, "ee").replace(/oo/g, "oo").replace(/ea/g, "ee").replace(/ai/g, "ay").replace(/ay/g, "ay").replace(/oa/g, "oh").replace(/ow\b/g, "oh").replace(/ou/g, "ow").replace(/oi/g, "oy").replace(/oy/g, "oy").replace(/aw/g, "aw").replace(/au/g, "aw").replace(/wh/g, "w").replace(/tch/g, "___CH___").replace(/ch/g, "___CH___").replace(/sh/g, "___SH___").replace(/th/g, "___TH___").replace(/c([eiy])/g, "s$1").replace(/ck/g, "k").replace(/c/g, "k").replace(/___CH___/g, "ch").replace(/___SH___/g, "sh").replace(/___TH___/g, "th").replace(/x/g, "ks").replace(/q/g, "k");
+    if (/([bdfghjklmnprstvwz])([aeou])([bdfghjklmnprstvwz])e\b/.test(p)) {
+      p = p.replace(/([bdfghjklmnprstvwz])a([bdfghjklmnprstvwz])e\b/, "$1ay$2");
+      p = p.replace(/([bdfghjklmnprstvwz])o([bdfghjklmnprstvwz])e\b/, "$1oh$2");
+      p = p.replace(/([bdfghjklmnprstvwz])u([bdfghjklmnprstvwz])e\b/, "$1oo$2");
+    }
+    if (mode === "rap") {
+      p = p.replace(/([aeiouy])tt([aeiouy])/g, "$1dd$2");
+    }
+    return p.replace(/-/g, "");
+  }
+  function wordToAmericanPhonetic(rawWord, mode = "rap") {
+    const match = rawWord.match(/^([^A-Za-z0-9']*)([A-Za-z0-9']+)([^A-Za-z0-9']*)$/);
+    if (!match) return rawWord.replace(/-/g, "");
+    const [, leading, core, trailing] = match;
+    const lower = core.toLowerCase();
+    let phonetic = RAP_FLOW_LEXICON[lower];
+    if (!phonetic) {
+      phonetic = algorithmicPhonetics(core, mode);
+    }
+    phonetic = phonetic.replace(/-/g, "");
+    if (core === core.toUpperCase() && core.length > 1) {
+      phonetic = phonetic.toUpperCase();
+    } else if (core[0] === core[0].toUpperCase()) {
+      phonetic = phonetic.charAt(0).toUpperCase() + phonetic.slice(1);
+    }
+    return `${leading}${phonetic}${trailing}`.replace(/-/g, "");
+  }
+  function lineToAmericanPhonetic(line, mode = "rap") {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return { original: line, phonetic: "", isTag: false };
+    }
+    if (/^\[.*\]$/.test(trimmed)) {
+      return { original: line, phonetic: line, isTag: true };
+    }
+    if (/^\(.*\)$/.test(trimmed)) {
+      const inner = trimmed.slice(1, -1);
+      const converted2 = inner.split(/\s+/).map((w) => wordToAmericanPhonetic(w, mode)).join(" ");
+      return { original: line, phonetic: `(${converted2})`.replace(/-/g, ""), isTag: false };
+    }
+    let processedLine = line;
+    if (mode === "rap") {
+      for (const [re, rep] of RAP_MULTI_WORD_RULES) {
+        processedLine = processedLine.replace(re, rep);
+      }
+    }
+    const converted = processedLine.split(/(\s+)/).map((token) => /^\s+$/.test(token) ? token : wordToAmericanPhonetic(token, mode)).join("");
+    const noHyphens = converted.replace(/-/g, "");
+    return { original: line, phonetic: noHyphens, isTag: false };
+  }
+  function convertToPhonetics(text, options = { mode: "rap" }) {
+    const mode = options.mode || "rap";
+    const lines = text.split("\n");
+    const processedLines = lines.map((l) => lineToAmericanPhonetic(l, mode));
+    const fullPhonetic = processedLines.map((l) => l.phonetic).join("\n");
+    return {
+      fullOriginal: text,
+      fullPhonetic,
+      lines: processedLines
+    };
+  }
+  var wordToPhonetic = wordToAmericanPhonetic;
+  var lineToPhonetic = lineToAmericanPhonetic;
   return __toCommonJS(entry_exports);
 })();
 
@@ -6198,6 +7538,21 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
     skillFields: {},
     skillReport: null,
     skillError: "",
+    // Lyrics Studio state
+    lyricsSubTab: "creator",
+    lyricsTheme: "",
+    lyricsGenre: "Hybrid Bass / Trapstep",
+    lyricsDelivery: "Sung Melodic to High Belt",
+    lyricsRhyme: "AABB",
+    lyricsDraft: "",
+    lyricsInstructions: "",
+    lyricsIncludeTags: true,
+    lyricsStructure: JSON.parse(JSON.stringify(S.DEFAULT_STRUCTURE)),
+    lyricsResult: null,
+    lyricsFullText: "",
+    phoneticInput: "",
+    phoneticResult: null,
+    phoneticDisplayMode: "pure",
   };
 
   function $(sel, root) {
@@ -6260,6 +7615,18 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
     $("#modal-body").textContent = body;
     $("#modal-ok").textContent = kind === "ok" ? "OK" : "Got It";
     m.classList.remove("hidden");
+  }
+
+  function downloadText(filename, text) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   function downloadJson(filename, data) {
@@ -6325,7 +7692,7 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
 
   function setView(v) {
     state.view = v;
-    location.hash = v === "skills" ? "skills" : "styles";
+    location.hash = v;
     render();
   }
 
@@ -6433,16 +7800,7 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
     if (!state.prompts.length) return;
     const text = S.formatAllPromptsTxt(state.prompts);
     const filename = "suno-styles-" + S.historyFileStamp() + ".txt";
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadText(filename, text);
     copyText(text).then((ok) => {
       showDialog(
         "ok",
@@ -6498,6 +7856,28 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
     render();
   }
 
+  function runLyricsGen() {
+    const th = state.lyricsTheme.trim() || state.lyricsDraft.trim().slice(0, 60) || "Midnight Heavy Bass Resonance";
+    try {
+      const res = S.generateLyrics({
+        theme: th,
+        genre: state.lyricsGenre,
+        mood: state.lyricsDelivery,
+        delivery: state.lyricsDelivery,
+        rhymeScheme: state.lyricsRhyme,
+        draftLyrics: state.lyricsDraft.trim(),
+        instructions: state.lyricsInstructions.trim(),
+        includePerformanceTags: state.lyricsIncludeTags,
+        structure: state.lyricsStructure,
+      });
+      state.lyricsResult = res;
+      state.lyricsFullText = res.fullText;
+      render();
+    } catch (err) {
+      showDialog("error", "Lyrics Generation Failed", "Could not generate lyrics. Try adjusting section counts.");
+    }
+  }
+
   function reportText(r) {
     const bits = ["# " + r.title, "", r.exclusion, "", ...r.sections.flatMap((s) => ["## " + s.heading, s.body, ""])];
     if (r.sliders?.length) {
@@ -6517,7 +7897,8 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
 
   function navHtml() {
     return `<nav class="nav" aria-label="Primary">
-      <a href="#styles" class="${state.view === "styles" ? "on" : ""}" data-view="styles">Styles Compiler</a>
+      <a href="#styles" class="${state.view === "styles" ? "on" : ""}" data-view="styles">Tab 1: Suno Workbench</a>
+      <a href="#lyrics" class="${state.view === "lyrics" ? "on" : ""}" data-view="lyrics">Tab 2: Lyrics Studio</a>
       <a href="#skills" class="${state.view === "skills" ? "on" : ""}" data-view="skills">Skills Studio</a>
     </nav>`;
   }
@@ -6618,9 +7999,9 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
     return `
       <header class="header"><div class="wrap header-inner">
         <div>
-          <div class="eyebrow">Styles Field Compiler</div>
+          <div class="eyebrow">Tab #1 · Styles Field Compiler</div>
           <h1>Suno Styles Generator</h1>
-          <p class="lede">Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Covers, lyrics, Editor, and Studio live in Skills Studio.</p>
+          <p class="lede">Starts blank. Generate Styles is the only action that compiles prompts. Reset clears the brief — session history stays in the list below. Lyrics and American phonetics live in Tab #2 Lyrics Studio.</p>
         </div>
         <div class="header-actions">
           ${navHtml()}
@@ -6713,12 +8094,173 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
           ${state.historyOpen ? hist : ""}
         </div>
       </section>
-      <footer class="wrap footer">Paste each Styles block into the Suno Styles field. Lyrics stay independent. BPM and character counts are verified before display.</footer>
+      <footer class="wrap footer">Tab #1 compiles 925–975 character Styles prompts. Tab #2 designs, finishes, and converts lyrics to American phonetics for Suno's Lyrics field. Lyrics stay independent.</footer>
     `;
   }
 
   function planRow(k, v) {
     return `<div class="plan-cell"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`;
+  }
+
+  function lyricsView() {
+    const sTypes = ["intro", "verse", "buildup", "drop", "chorus", "breakdown", "bridge", "outro"];
+    const structHtml = sTypes.map((st) => {
+      const cfg = state.lyricsStructure[st];
+      const title = st === "buildup" ? "Build Up" : st.charAt(0).toUpperCase() + st.slice(1);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0.5rem;border-radius:var(--r-sm);border:1px solid var(--border);background:${cfg.enabled ? "var(--bg-elevated)" : "transparent"};font-size:0.75rem">
+        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin:0;font-weight:500;color:var(--fg)">
+          <input type="checkbox" data-ly-sec-en="${st}" ${cfg.enabled ? "checked" : ""} />
+          <span>${title}</span>
+        </label>
+        ${cfg.enabled ? `<div style="display:flex;align-items:center;gap:0.5rem;font-family:var(--mono);font-size:11px">
+          <label style="margin:0;display:flex;align-items:center;gap:2px">
+            <span style="color:var(--fg-subtle);font-size:10px">#:</span>
+            <select data-ly-sec-cnt="${st}" style="height:1.5rem;padding:0 4px;font-size:11px">
+              ${[1, 2, 3, 4].map((n) => `<option value="${n}" ${cfg.count === n ? "selected" : ""}>${n}</option>`).join("")}
+            </select>
+          </label>
+          <label style="margin:0;display:flex;align-items:center;gap:2px">
+            <span style="color:var(--fg-subtle);font-size:10px">lines:</span>
+            <select data-ly-sec-ln="${st}" style="height:1.5rem;padding:0 4px;font-size:11px">
+              ${[2, 4, 6, 8, 12, 16].map((l) => `<option value="${l}" ${cfg.lines === l ? "selected" : ""}>${l}</option>`).join("")}
+            </select>
+          </label>
+        </div>` : `<span style="color:var(--fg-subtle);font-size:10px;font-style:italic">disabled</span>`}
+      </div>`;
+    }).join("");
+
+    return `
+      <header class="header"><div class="wrap header-inner">
+        <div>
+          <div class="eyebrow">Tab #2 · Lyrics Lab & Phonetics</div>
+          <h1>Lyrics Studio</h1>
+          <p class="lede">Complete and expand your lyrics with exact section counts & line lengths for intro, verse, buildup, drop, chorus, breakdown, bridge, and outro — plus convert to American English phonetics.</p>
+        </div>
+        <div class="header-actions">${navHtml()}</div>
+      </div></header>
+      <main class="wrap" style="padding-top:1.5rem">
+        <div class="row" style="margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0.75rem">
+          <button type="button" class="btn ${state.lyricsSubTab === "creator" ? "btn-primary" : "btn-ghost"}" id="ly-tab-creator">Lyrics Creator & Remixer</button>
+          <button type="button" class="btn ${state.lyricsSubTab === "phonetics" ? "btn-primary" : "btn-ghost"}" id="ly-tab-phonetics">American Phonetics Converter</button>
+        </div>
+        ${state.lyricsSubTab === "creator" ? `
+        <div class="grid">
+          <section class="panel panel-pad">
+            <div>
+              <label for="ly-theme">Song Theme & Core Narrative</label>
+              <input type="text" id="ly-theme" value="${esc(state.lyricsTheme)}" placeholder="e.g. Nocturnal cyberpunk chase through neon rain" />
+            </div>
+            <div>
+              <label for="ly-draft">Draft Lyrics (Optional — App will finish & expand them)</label>
+              <textarea id="ly-draft" rows="4" placeholder="Paste your rough verses, hook ideas, or fragments. The app will preserve your words, match meter/rhyme, and complete the full song structure.">${esc(state.lyricsDraft)}</textarea>
+            </div>
+            <div class="two">
+              <div>
+                <label for="ly-genre">Genre Vibe</label>
+                <select id="ly-genre">
+                  ${["Hybrid Bass / Trapstep", "Melodic Future Bass", "Dark R&B / Soul", "Trap / Street Drill", "Baile Funk / Latin Club", "Cinematic / Ritual Bass", "Pop / Radio Topline", "Lo-Fi / Bedroom Soul"].map((g) => `<option value="${g}" ${state.lyricsGenre === g ? "selected" : ""}>${g}</option>`).join("")}
+                </select>
+              </div>
+              <div>
+                <label for="ly-delivery">Vocal Delivery</label>
+                <select id="ly-delivery">
+                  ${["Sung Melodic to High Belt", "Melodic Rap / Sing-Rap Hybrid", "Rhythmic Fast Rap Cadence", "Talk-Rap / Conversational Spoken", "Intimate Breathy Whisper", "Anthemic Group Chant"].map((d) => `<option value="${d}" ${state.lyricsDelivery === d ? "selected" : ""}>${d}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+            <div class="two">
+              <div>
+                <label for="ly-rhyme">Rhyme Scheme</label>
+                <select id="ly-rhyme">
+                  <option value="AABB" ${state.lyricsRhyme === "AABB" ? "selected" : ""}>AABB (Couplets - punchy & catchy)</option>
+                  <option value="ABAB" ${state.lyricsRhyme === "ABAB" ? "selected" : ""}>ABAB (Alternating - classic flow)</option>
+                  <option value="Freeform" ${state.lyricsRhyme === "Freeform" ? "selected" : ""}>Freeform / Cadence-Driven</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end">
+                <label class="profile" style="width:100%">
+                  <span>Suno Performance Tags</span>
+                  <input type="checkbox" id="ly-tags" ${state.lyricsIncludeTags ? "checked" : ""} />
+                </label>
+              </div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--r-md);padding:0.75rem;background:var(--bg)">
+              <div class="row-between" style="border-bottom:1px solid var(--border);padding-bottom:0.5rem;margin-bottom:0.5rem">
+                <span class="eyebrow" style="font-size:10px">Structure Builder (# and length of each section)</span>
+                <div class="row" style="gap:4px">
+                  <button type="button" class="tiny" id="ly-pre-std">Standard</button>
+                  <button type="button" class="tiny" id="ly-pre-club">Club</button>
+                  <button type="button" class="tiny" id="ly-pre-pop">Pop</button>
+                  <button type="button" class="tiny" id="ly-pre-min">Minimal</button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                ${structHtml}
+              </div>
+            </div>
+            <div>
+              <label for="ly-inst">Special Instructions (Metaphors, Cues)</label>
+              <input type="text" id="ly-inst" value="${esc(state.lyricsInstructions)}" placeholder="e.g. Leave dramatic silence before drop, mention broken glass" />
+            </div>
+            <div class="row">
+              <button type="button" class="btn btn-primary grow" id="ly-gen-btn">${state.lyricsDraft.trim() ? "Finish & Complete My Lyrics" : "Generate Full Lyrics"}</button>
+              <button type="button" class="btn" id="ly-reset-btn">Reset</button>
+            </div>
+          </section>
+          <section style="display:flex;flex-direction:column;gap:1rem">
+            <div class="row-between">
+              <h2 style="font-size:0.875rem;font-weight:500;color:var(--fg)">${state.lyricsResult ? esc(state.lyricsResult.title) : "Lyrics Output"}</h2>
+              ${state.lyricsFullText ? `<div class="row">
+                <button type="button" class="btn btn-ghost" id="ly-copy-btn">Copy Lyrics</button>
+                <button type="button" class="btn btn-ghost" id="ly-dl-btn">Download .txt</button>
+                <button type="button" class="btn btn-ghost" id="ly-send-phon">Convert to Phonetics →</button>
+              </div>` : ""}
+            </div>
+            ${state.lyricsFullText ? `<div class="panel panel-pad">
+              <div class="row-between" style="font-size:11px;color:var(--fg-subtle)">
+                <span>Suno-Ready Lyrics Editor (Edit any line directly)</span>
+                <span>${state.lyricsResult ? state.lyricsResult.totalLines + " lines · " + state.lyricsResult.sections.length + " sections" : ""}</span>
+              </div>
+              <textarea id="ly-editor" rows="20" style="font-family:var(--mono);font-size:12px;line-height:1.6">${esc(state.lyricsFullText)}</textarea>
+            </div>` : `<div class="panel empty">
+              <strong>Lyrics Canvas Ready</strong>
+              <p>Set your narrative theme, adjust section counts & lengths, or paste a draft, then press <span style="color:var(--fg)">Generate Full Lyrics</span>.</p>
+            </div>`}
+          </section>
+        </div>
+        ` : `
+        <div class="grid">
+          <section class="panel panel-pad">
+            <div>
+              <label for="phon-in">Paste Lyrics (English, Foreign Syllables, Slang)</label>
+              <textarea id="phon-in" rows="16" placeholder="Paste lyrics here. Converts into American phonetic spelling using standard American English alphabet characters (A-Z) with stressed syllables capitalized.">${esc(state.phoneticInput)}</textarea>
+            </div>
+            <div class="row-between">
+              <button type="button" class="btn btn-primary" id="phon-conv-btn">Convert to American Phonetics</button>
+              <button type="button" class="tiny" id="phon-demo-btn">Load Sample Lyrics</button>
+            </div>
+            <p class="status">Why American Phonetics? Suno's vocal engines respond accurately to phonetic spelling. Converting non-English words (Baile → "BY-lee", Favela → "fah-VEL-ah") or tricky English words locks the desired pronunciation.</p>
+          </section>
+          <section class="panel panel-pad">
+            <div class="row-between" style="border-bottom:1px solid var(--border);padding-bottom:0.5rem">
+              <h2 style="font-size:0.875rem;font-weight:500;color:var(--fg)">American Phonetic Output</h2>
+              ${state.phoneticResult ? `<div class="row">
+                <button type="button" class="tiny" data-phon-mode="pure">Pure</button>
+                <button type="button" class="tiny" data-phon-mode="interlinear">Interlinear</button>
+                <button type="button" class="btn btn-ghost" id="phon-copy-btn">Copy Phonetic</button>
+              </div>` : ""}
+            </div>
+            ${state.phoneticResult ? `<div>
+              ${state.phoneticDisplayMode === "pure" ? `<textarea rows="16" readonly style="font-family:var(--mono);font-size:12px;color:var(--ok)">${esc(state.phoneticResult.fullPhonetic)}</textarea>` : `<div style="font-family:var(--mono);font-size:11px;max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+                ${state.phoneticResult.lines.map((l) => l.isTag ? `<span style="color:var(--accent);font-weight:600">${esc(l.original)}</span>` : `<div><span style="color:var(--fg-muted)">${esc(l.original)}</span><br/><span style="color:var(--ok);font-weight:500;padding-left:8px">↳ ${esc(l.phonetic)}</span></div>`).join("")}
+              </div>`}
+            </div>` : `<div class="empty"><strong>No Phonetic Conversion Yet</strong><p>Paste lyrics on the left and click Convert to American Phonetics.</p></div>`}
+          </section>
+        </div>
+        `}
+      </main>
+      <footer class="wrap footer">Tab #1 compiles 925–975 character Styles prompts. Tab #2 designs, finishes, and converts lyrics to American phonetics for Suno's Lyrics field. Lyrics stay independent.</footer>
+    `;
   }
 
   function skillsView() {
@@ -6909,6 +8451,155 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
           );
         });
       });
+    } else if (state.view === "lyrics") {
+      $("#ly-tab-creator")?.addEventListener("click", () => {
+        state.lyricsSubTab = "creator";
+        render();
+      });
+      $("#ly-tab-phonetics")?.addEventListener("click", () => {
+        state.lyricsSubTab = "phonetics";
+        render();
+      });
+      $("#ly-theme")?.addEventListener("input", (e) => {
+        state.lyricsTheme = e.target.value;
+      });
+      $("#ly-draft")?.addEventListener("input", (e) => {
+        state.lyricsDraft = e.target.value;
+      });
+      $("#ly-genre")?.addEventListener("change", (e) => {
+        state.lyricsGenre = e.target.value;
+      });
+      $("#ly-delivery")?.addEventListener("change", (e) => {
+        state.lyricsDelivery = e.target.value;
+      });
+      $("#ly-rhyme")?.addEventListener("change", (e) => {
+        state.lyricsRhyme = e.target.value;
+      });
+      $("#ly-tags")?.addEventListener("change", (e) => {
+        state.lyricsIncludeTags = e.target.checked;
+      });
+      $("#ly-inst")?.addEventListener("input", (e) => {
+        state.lyricsInstructions = e.target.value;
+      });
+      document.querySelectorAll("[data-ly-sec-en]").forEach((cb) => {
+        cb.addEventListener("change", (e) => {
+          const st = cb.getAttribute("data-ly-sec-en");
+          state.lyricsStructure[st].enabled = e.target.checked;
+          render();
+        });
+      });
+      document.querySelectorAll("[data-ly-sec-cnt]").forEach((sel) => {
+        sel.addEventListener("change", (e) => {
+          const st = sel.getAttribute("data-ly-sec-cnt");
+          state.lyricsStructure[st].count = parseInt(e.target.value, 10);
+        });
+      });
+      document.querySelectorAll("[data-ly-sec-ln]").forEach((sel) => {
+        sel.addEventListener("change", (e) => {
+          const st = sel.getAttribute("data-ly-sec-ln");
+          state.lyricsStructure[st].lines = parseInt(e.target.value, 10);
+        });
+      });
+      $("#ly-pre-std")?.addEventListener("click", () => {
+        state.lyricsStructure = JSON.parse(JSON.stringify(S.DEFAULT_STRUCTURE));
+        render();
+      });
+      $("#ly-pre-club")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 1, lines: 4 },
+          buildup: { enabled: true, count: 2, lines: 2 },
+          drop: { enabled: true, count: 3, lines: 2 },
+          chorus: { enabled: true, count: 1, lines: 4 },
+          breakdown: { enabled: true, count: 1, lines: 2 },
+          bridge: { enabled: false, count: 0, lines: 0 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-pre-pop")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 3, lines: 4 },
+          buildup: { enabled: true, count: 2, lines: 2 },
+          drop: { enabled: false, count: 0, lines: 0 },
+          chorus: { enabled: true, count: 3, lines: 4 },
+          breakdown: { enabled: false, count: 0, lines: 0 },
+          bridge: { enabled: true, count: 1, lines: 4 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-pre-min")?.addEventListener("click", () => {
+        state.lyricsStructure = {
+          intro: { enabled: true, count: 1, lines: 2 },
+          verse: { enabled: true, count: 1, lines: 4 },
+          buildup: { enabled: false, count: 0, lines: 0 },
+          drop: { enabled: true, count: 1, lines: 2 },
+          chorus: { enabled: true, count: 1, lines: 4 },
+          breakdown: { enabled: false, count: 0, lines: 0 },
+          bridge: { enabled: false, count: 0, lines: 0 },
+          outro: { enabled: true, count: 1, lines: 2 },
+        };
+        render();
+      });
+      $("#ly-gen-btn")?.addEventListener("click", runLyricsGen);
+      $("#ly-reset-btn")?.addEventListener("click", () => {
+        state.lyricsTheme = "";
+        state.lyricsDraft = "";
+        state.lyricsInstructions = "";
+        state.lyricsResult = null;
+        state.lyricsFullText = "";
+        render();
+      });
+      $("#ly-editor")?.addEventListener("input", (e) => {
+        state.lyricsFullText = e.target.value;
+      });
+      $("#ly-copy-btn")?.addEventListener("click", async () => {
+        if (!state.lyricsFullText) return;
+        const ok = await copyText(state.lyricsFullText);
+        showDialog(ok ? "ok" : "error", ok ? "Lyrics Copied" : "Clipboard Blocked", ok ? "Lyrics copied to clipboard!" : "Copy failed.");
+      });
+      $("#ly-dl-btn")?.addEventListener("click", () => {
+        if (!state.lyricsFullText) return;
+        downloadText("suno-lyrics-" + S.historyFileStamp() + ".txt", state.lyricsFullText);
+        showDialog("ok", "Downloaded", "Lyrics file downloaded.");
+      });
+      $("#ly-send-phon")?.addEventListener("click", () => {
+        if (!state.lyricsFullText) return;
+        state.phoneticInput = state.lyricsFullText;
+        state.phoneticResult = S.convertToPhonetics(state.lyricsFullText);
+        state.lyricsSubTab = "phonetics";
+        render();
+      });
+      $("#phon-in")?.addEventListener("input", (e) => {
+        state.phoneticInput = e.target.value;
+      });
+      $("#phon-conv-btn")?.addEventListener("click", () => {
+        if (!state.phoneticInput.trim()) {
+          showDialog("error", "Empty", "Please paste or type lyrics to convert.");
+          return;
+        }
+        state.phoneticResult = S.convertToPhonetics(state.phoneticInput);
+        render();
+      });
+      $("#phon-demo-btn")?.addEventListener("click", () => {
+        const demo = "[Verse 1]\nWalking in the shadows through the city haze\nFeel the sub bass dropping in a heavy maze\nBaile funk in the favela rhythm\n\n[Chorus]\nFold the floor before the morning comes";
+        state.phoneticInput = demo;
+        state.phoneticResult = S.convertToPhonetics(demo);
+        render();
+      });
+      document.querySelectorAll("[data-phon-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.phoneticDisplayMode = btn.getAttribute("data-phon-mode");
+          render();
+        });
+      });
+      $("#phon-copy-btn")?.addEventListener("click", async () => {
+        if (!state.phoneticResult) return;
+        const ok = await copyText(state.phoneticResult.fullPhonetic);
+        showDialog(ok ? "ok" : "error", ok ? "Copied" : "Clipboard Blocked", ok ? "American phonetics copied to clipboard!" : "Copy failed.");
+      });
     } else {
       document.querySelectorAll("[data-skill]").forEach((b) => {
         b.addEventListener("click", () => {
@@ -6968,12 +8659,19 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
 
   function render() {
     const root = $("#app");
-    root.innerHTML = state.view === "skills" ? skillsView() : stylesView();
+    if (state.view === "skills") {
+      root.innerHTML = skillsView();
+    } else if (state.view === "lyrics") {
+      root.innerHTML = lyricsView();
+    } else {
+      root.innerHTML = stylesView();
+    }
     bind();
   }
 
   window.addEventListener("hashchange", () => {
-    const v = location.hash.replace("#", "") === "skills" ? "skills" : "styles";
+    const raw = location.hash.replace("#", "");
+    const v = raw === "skills" ? "skills" : raw === "lyrics" ? "lyrics" : "styles";
     if (v !== state.view) {
       state.view = v;
       render();
@@ -6981,7 +8679,8 @@ npm run suno -- --no-profile "92 BPM neo-soul, male vocal"</pre>
   });
 
   hydrate();
-  if (location.hash.replace("#", "") === "skills") state.view = "skills";
+  const initHash = location.hash.replace("#", "");
+  if (initHash === "skills" || initHash === "lyrics") state.view = initHash;
   render();
 })();
 

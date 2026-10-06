@@ -12,3 +12,6 @@ export * from "../lib/suno/title-case.ts";
 export * from "../lib/suno/v6.ts";
 export * from "../lib/suno/skills/catalog.ts";
 export * from "../lib/suno/skills/run.ts";
+export * from "../lib/lyrics/types.ts";
+export * from "../lib/lyrics/generator.ts";
+export * from "../lib/lyrics/phonetics.ts";
