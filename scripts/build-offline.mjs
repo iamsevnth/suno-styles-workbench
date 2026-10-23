@@ -3,7 +3,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const dist = path.resolve(process.argv[2] ?? 'dist');
+const projectRoot = fs.realpathSync(process.cwd());
+const dist = fs.realpathSync(path.resolve(projectRoot, process.argv[2] ?? 'dist'));
+const relativeDist = path.relative(projectRoot, dist);
+if (relativeDist === '..' || relativeDist.startsWith(`..${path.sep}`) || path.isAbsolute(relativeDist)) {
+  throw new Error('Build directory must be inside the repository.');
+}
 const indexPath = path.join(dist, 'index.html');
 const outPath = path.join(dist, 'suno-workbench.html');
 
