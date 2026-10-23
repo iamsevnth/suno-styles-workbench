@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const dist = path.resolve(process.argv[2] ?? 'dist');
+const dist = path.resolve('dist');
 const indexPath = path.join(dist, 'index.html');
 const outPath = path.join(dist, 'suno-workbench.html');
 
