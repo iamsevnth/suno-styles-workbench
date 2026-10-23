@@ -106,7 +106,7 @@ export const ATMOSPHERE_WORDS = [
 
 export const INSTRUMENT_PATTERNS: [RegExp, string][] = [
   [/\b(?:r&b|rnb|clean electric|melodic)?\s*guitars?\b/i, "clean electric guitar"],
-  [/\bpiano\b/i, "sparse piano"],
+  [/\b(?<!electric )piano\b/i, "sparse piano"],
   [/\brhodes\b/i, "Rhodes electric piano"],
   [/\bpads?\b/i, "atmospheric pads"],
   [/\bplucks?\b/i, "synth plucks"],
@@ -337,8 +337,9 @@ function extractGenresInOrder(text: string): string[] {
     }
   }
 
+  // A bare "&" stays inside names such as "R&B" or "D&B"; only a spaced " & " separates genres.
   const chunks = text
-    .split(/\s*(?:\+|\/|,|&| x | × |\band\b)\s*/i)
+    .split(/\s*(?:\+|\/|,|\s&\s| x | × |\band\b)\s*/i)
     .map((c) => c.trim())
     .filter(Boolean);
   for (const chunk of chunks) {
@@ -376,7 +377,7 @@ function extractExplicitInstruments(text: string): string[] {
   const map: [RegExp, string][] = [
     [/\b(?:acoustic|electric|clean|nylon|12-string)?\s*guitars?\b/i, "guitar"],
     [/\brhodes(?:\s+piano|\s+electric piano)?\b/i, "Rhodes electric piano"],
-    [/\b(?:acoustic|upright|grand|felt)?\s*pianos?\b/i, "piano"],
+    [/\b(?:acoustic|upright|grand|felt)?\s*(?<!electric )pianos?\b/i, "piano"],
     [/\b808s?\b/i, "808 bass"],
     [/\bsynths?\b|\bsynthesizers?\b/i, "synth"],
     [/\bpads?\b/i, "pads"],
@@ -399,6 +400,19 @@ function extractExplicitInstruments(text: string): string[] {
     }
   }
   return explicit;
+}
+
+const VOCAL_CLAUSE_RE =
+  /vocal|voice|tone|cadence|flow|deliver|phras|rap|sung|sing|croon|falsetto|harmon|auto[- ]?tune|tuned|gloss|reverb|delay|double|ad-?lib|breath|rasp|smooth|airy|sultry|grit|silky|velvet|honey|soulful|tenor|baritone|soprano|alto|register|belt|whisper|chop/i;
+
+/**
+ * The vocal segment runs to the end of the sentence, so "female vocals, high energy"
+ * would carry the mood into the vocal line. Keep the first clause and every later
+ * comma clause that still describes the voice.
+ */
+function dropNonVocalClauses(segment: string): string {
+  const [first, ...rest] = segment.split(/\s*,\s*/);
+  return [first, ...rest.filter((clause) => VOCAL_CLAUSE_RE.test(clause))].join(", ");
 }
 
 function extractVocalDetails(text: string, lower: string, instrumental: boolean): VocalPreferences {
@@ -541,7 +555,7 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
     /(?:(?:black\s+|white\s+|african\s+)?(?:male|female|lead)\s+vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
   const match = text.match(vocalSegmentRegex);
   if (match && match[0].trim().length > 10) {
-    vocals.rawDescription = match[0].trim();
+    vocals.rawDescription = dropNonVocalClauses(match[0].trim());
   } else if (hasVocalMention) {
     const clauses = text.split(/(?<=[.!?;])\s+|\n+/);
     const vc = clauses.find((c) =>

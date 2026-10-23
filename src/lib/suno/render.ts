@@ -18,6 +18,50 @@ import { SonicPlan } from "./types.ts";
 export const MIN_CHARS = 925;
 export const MAX_CHARS = 975;
 
+/** Last-resort pad, worded so it fits any genre. */
+export const FINAL_PAD = "Translation stays clear on every playback system.";
+
+const RAP_STYLES = new Set([
+  "rap",
+  "talk-rap",
+  "melodic-rap",
+  "sung-rap",
+  "sing-rap",
+  "mumble-rap",
+  "soundcloud-rap",
+  "autotuned-rap",
+  "lyrical-rap",
+]);
+
+/** Lines in RAP_PADDING that only fit some rap styles; any other line fits every rap style. */
+const RAP_PADDING_STYLES: [RegExp, string[]][] = [
+  [/SoundCloud|skrrt/i, ["mumble-rap", "soundcloud-rap"]],
+  [/talk-rap/i, ["talk-rap"]],
+  [/Lyrical bars/i, ["lyrical-rap"]],
+  [/Sung-rap melodic topline/i, ["melodic-rap", "sung-rap", "sing-rap"]],
+  [/Autotuned pitch snaps|Fast retune auto-tune/i, ["autotuned-rap", "melodic-rap", "mumble-rap"]],
+  [
+    /zero sung harmonies|without ever breaking into melodic singing|rather than vocal harmonizing|without traditional choral stacks/i,
+    ["rap", "lyrical-rap", "talk-rap", "autotuned-rap"],
+  ],
+];
+
+function hasRapVocal(plan: SonicPlan): boolean {
+  return plan.vocals.present === true && RAP_STYLES.has(plan.vocals.style ?? "");
+}
+
+function rapPaddingFor(style: string | undefined): string[] {
+  return RAP_PADDING.filter((line) =>
+    RAP_PADDING_STYLES.every(([pattern, styles]) => !pattern.test(line) || styles.includes(style ?? ""))
+  );
+}
+
+/** A user's own vocal words are worth quoting once they say more than "female vocals". */
+function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
+  const words = vocals.rawDescription?.trim().split(/\s+/).length ?? 0;
+  return words >= 4;
+}
+
 export function renderStyles(plan: SonicPlan): string {
   let text = compose(plan);
   text = fitToWindow(text, plan);
@@ -143,9 +187,9 @@ function compose(plan: SonicPlan): string {
     const v = plan.vocals;
     const who = v.presentation === "female" ? "female" : v.presentation === "male" ? "male" : "lead";
 
-    if (v.rawDescription || (v.descriptors && v.descriptors.length > 0)) {
+    if (hasRichVocalDescription(v)) {
       // Direct, authentic enhancement of user's exact vocal description into Suno audio terms
-      const rawText = v.rawDescription ? v.rawDescription.replace(/\.$/, "") : v.descriptors!.join(", ");
+      const rawText = v.rawDescription!.replace(/\.$/, "");
       const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
 
       const intros = [
@@ -271,25 +315,13 @@ function fitToWindow(text: string, plan: SonicPlan): string {
   }
 
   if (t.length > MAX_CHARS) {
-    t = trimKeepingInstruments(t, MAX_CHARS);
+    t = shrinkToMax(t, plan);
   }
 
   if (t.length < MIN_CHARS) {
-    const isRap =
-      plan.vocals.style === "rap" ||
-      plan.vocals.style === "talk-rap" ||
-      plan.vocals.style === "melodic-rap" ||
-      plan.vocals.style === "sung-rap" ||
-      plan.vocals.style === "sing-rap" ||
-      plan.vocals.style === "mumble-rap" ||
-      plan.vocals.style === "soundcloud-rap" ||
-      plan.vocals.style === "autotuned-rap" ||
-      plan.vocals.style === "lyrical-rap" ||
-      (plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre));
-
-    const paddingPool = isRap
+    const paddingPool = hasRapVocal(plan)
       ? [
-          ...RAP_PADDING,
+          ...rapPaddingFor(plan.vocals.style),
           ...PADDING.filter(
             (p) =>
               !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(
@@ -331,20 +363,19 @@ function fitToWindow(text: string, plan: SonicPlan): string {
     }
   }
 
-  if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
+  if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
 
   let guard = 0;
   while (t.length < MIN_CHARS && guard < 10) {
     guard++;
-    const m = "Clear club translation remains essential.";
-    if (t.length + 1 + m.length <= MAX_CHARS) {
-      t = insertBeforeInstruments(t, m);
+    if (t.length + 1 + FINAL_PAD.length <= MAX_CHARS) {
+      t = insertBeforeInstruments(t, FINAL_PAD);
     } else break;
   }
 
   if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(t)) {
     t = `${plan.bpm} BPM ${t}`.replace(/\s+/g, " ").trim();
-    if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
+    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
   }
 
   t = ensureAnchors(t, plan);
@@ -370,19 +401,7 @@ function fitToWindow(text: string, plan: SonicPlan): string {
     }
   }
 
-  const isRapTrack =
-    plan.vocals.style === "rap" ||
-    plan.vocals.style === "talk-rap" ||
-    plan.vocals.style === "melodic-rap" ||
-    plan.vocals.style === "sung-rap" ||
-    plan.vocals.style === "sing-rap" ||
-    plan.vocals.style === "mumble-rap" ||
-    plan.vocals.style === "soundcloud-rap" ||
-    plan.vocals.style === "autotuned-rap" ||
-    plan.vocals.style === "lyrical-rap" ||
-    (plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre));
-
-  if (isRapTrack) {
+  if (hasRapVocal(plan)) {
     t = t
       .replace(/bright stacked female harmonies/gi, "bright female rap doubles")
       .replace(/stacked background harmonies on chorus lifts/gi, "stacked background hype shouts on hook drops")
@@ -398,18 +417,59 @@ function fitToWindow(text: string, plan: SonicPlan): string {
   return t.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Over the limit, drop whole filler sentences first (dropFillerSentence protects the vocal
+ * line, the BPM and the brief's anchors); cut mid-text only when nothing else can go.
+ */
+function shrinkToMax(text: string, plan: SonicPlan): string {
+  const anchors = anchorsToCheck(plan);
+  let t = text;
+  for (let guard = 0; t.length > MAX_CHARS && guard < 8; guard++) {
+    const next = dropFillerSentence(t, anchors);
+    if (next === t) break;
+    t = next;
+  }
+  return t.length > MAX_CHARS ? trimKeepingInstruments(t, MAX_CHARS) : t;
+}
+
 function hasAnchor(text: string, anchor: string): boolean {
   const esc = anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${esc}\\b`, "i").test(text);
 }
 
+/**
+ * Vocal anchors are derived from the user's own vocal words, so when those words are
+ * quoted in the vocal sentence the anchors are already honored.
+ */
+function anchorsToCheck(plan: SonicPlan): string[] {
+  const all = (plan.anchors ?? []).filter((a) => a && a.trim().length > 1);
+  if (!plan.vocals.present || !hasRichVocalDescription(plan.vocals)) return all;
+  const vocalAnchors = new Set(
+    [
+      plan.vocals.presentation && `${plan.vocals.presentation} rap flow`,
+      plan.vocals.presentation && `${plan.vocals.presentation} vocals`,
+      plan.vocals.style,
+    ].filter(Boolean)
+  );
+  return all.filter((a) => !vocalAnchors.has(a));
+}
+
+/** One natural sentence for every brief element the prose has not mentioned yet. */
+function anchorSentence(missing: string[]): string {
+  const list =
+    missing.length === 1
+      ? missing[0]
+      : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+  return `The production keeps ${list} front and center.`;
+}
+
 function ensureAnchors(text: string, plan: SonicPlan): string {
-  const need = (plan.anchors ?? []).filter((a) => a && a.trim().length > 1);
+  const need = anchorsToCheck(plan);
   let t = text;
 
-  for (const anchor of need) {
-    if (hasAnchor(t, anchor)) continue;
-    const clause = `Keep ${anchor} explicit in the arrangement.`;
+  const missing = need.filter((anchor) => !hasAnchor(t, anchor) && !/\bBPM\b/i.test(anchor));
+  if (missing.length) {
+    const clause = anchorSentence(missing);
     let guard = 0;
     while (t.length + 1 + clause.length > MAX_CHARS && guard < 6) {
       guard++;
@@ -417,27 +477,22 @@ function ensureAnchors(text: string, plan: SonicPlan): string {
       if (next === t) break;
       t = next;
     }
-    if (t.length + 1 + clause.length <= MAX_CHARS) {
-      t = insertBeforeInstruments(t, clause);
-    } else {
-      t = insertBeforeInstruments(t, anchor.endsWith(".") ? anchor : `${anchor}.`);
-      if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
-    }
+    t = insertBeforeInstruments(t, clause);
+    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
   }
 
   if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(t)) {
     t = `${plan.bpm} BPM ${t}`.replace(/\s+/g, " ").trim();
-    if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
+    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
   }
-  if (t.length < MIN_CHARS) {
-    const pad = "Clear club translation remains essential.";
-    if (t.length + 1 + pad.length <= MAX_CHARS) t = insertBeforeInstruments(t, pad);
+  if (t.length < MIN_CHARS && t.length + 1 + FINAL_PAD.length <= MAX_CHARS) {
+    t = insertBeforeInstruments(t, FINAL_PAD);
   }
   return t.replace(/\s+/g, " ").trim();
 }
 
 const INSTRUMENT_HEADER_RE =
-  /(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes|Primary instrumentation:)/i;
+  /(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes)/i;
 
 function findInstrumentationIndex(text: string): number {
   const m = text.match(INSTRUMENT_HEADER_RE);
@@ -463,7 +518,7 @@ function dropFillerSentence(text: string, anchors: string[]): string {
   return `${parts.join(" ")}${tail ? " " + tail : ""}`.replace(/\s+/g, " ").trim();
 }
 
-function insertBeforeInstruments(text: string, clause: string): string {
+export function insertBeforeInstruments(text: string, clause: string): string {
   const c = clause.trim();
   if (!c) return text;
   const instIdx = findInstrumentationIndex(text);
@@ -473,10 +528,10 @@ function insertBeforeInstruments(text: string, clause: string): string {
   return `${text} ${c}`.replace(/\s+/g, " ").trim();
 }
 
-function trimKeepingInstruments(text: string, max: number): string {
+export function trimKeepingInstruments(text: string, max: number): string {
   if (text.length <= max) return text;
   const inst = text.match(
-    /\s+(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes|Primary instrumentation:).*$/i
+    new RegExp(`\\s+${INSTRUMENT_HEADER_RE.source}.*$`, "i")
   );
   if (!inst) {
     let body = text.slice(0, max);

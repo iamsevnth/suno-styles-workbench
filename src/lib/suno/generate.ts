@@ -1,6 +1,14 @@
 import { parseUserInput } from "./parse.ts";
 import { buildPlans } from "./plan.ts";
-import { formatTitle, renderStyles } from "./render.ts";
+import {
+  FINAL_PAD,
+  formatTitle,
+  insertBeforeInstruments,
+  MAX_CHARS,
+  MIN_CHARS,
+  renderStyles,
+  trimKeepingInstruments,
+} from "./render.ts";
 import { hashString } from "./rng.ts";
 import { GenerateResult, PromptCandidate, SonicPlan } from "./types.ts";
 import { allHardGatesPass, criticalGatesPass, validatePrompt } from "./validate.ts";
@@ -129,8 +137,6 @@ export function generateStylesPrompts(
 }
 
 function forceCharacterWindow(text: string, bpm: number): string {
-  const MIN = 925;
-  const MAX = 975;
   let t = text.replace(/\s+/g, " ").trim();
 
   if (!new RegExp(`\\b${bpm}\\s*BPM\\b`, "i").test(t)) {
@@ -141,48 +147,21 @@ function forceCharacterWindow(text: string, bpm: number): string {
     "Strong motif identity and disciplined low-end hierarchy keep the production coherent.",
     "Swing-aware groove detail and intentional dynamic contrast leave room for expressive performance.",
     "Cinematic spatial motion supports section transitions without crowding the sub foundation.",
-    "Clear club translation remains essential across intimate and massive passages.",
     "Organic and synthetic layers trade focus while the groove stays physical and clear.",
+    FINAL_PAD,
   ];
 
-  let pi = 0;
-  while (t.length < MIN && pi < 20) {
-    const pad = pads[pi % pads.length];
-    pi++;
-    if (t.length + 1 + pad.length <= MAX) {
-      const instIdx = t.lastIndexOf("Primary instrumentation:");
-      if (instIdx > 0) t = `${t.slice(0, instIdx)}${pad} ${t.slice(instIdx)}`;
-      else t = `${t} ${pad}`;
-      t = t.replace(/\s+/g, " ").trim();
-    } else {
-      break;
-    }
+  for (const pad of pads) {
+    if (t.length >= MIN_CHARS) break;
+    if (t.length + 1 + pad.length <= MAX_CHARS) t = insertBeforeInstruments(t, pad);
   }
 
-  if (t.length > MAX) {
-    const instMatch = t.match(/ Primary instrumentation:.*$/);
-    if (instMatch && instMatch[0].length < MAX - 200) {
-      const bodyLen = MAX - instMatch[0].length;
-      let body = t.slice(0, t.length - instMatch[0].length).slice(0, bodyLen);
-      const cut = body.lastIndexOf(". ");
-      if (cut > bodyLen * 0.5) body = body.slice(0, cut + 1);
-      else body = body.replace(/\s+\S*$/, "") + ".";
-      t = `${body}${instMatch[0]}`.replace(/\s+/g, " ").trim();
-    } else {
-      t = t.slice(0, MAX - 1).replace(/\s+\S*$/, "") + ".";
-    }
-  }
+  if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
 
-  while (t.length < MIN) {
-    const add = " Clear club translation remains essential.";
-    if (t.length + add.length <= MAX) {
-      const instIdx = t.lastIndexOf("Primary instrumentation:");
-      if (instIdx > 0) t = `${t.slice(0, instIdx)}${add.trim()} ${t.slice(instIdx)}`;
-      else t = `${t}${add}`;
-      t = t.replace(/\s+/g, " ").trim();
-    } else {
-      break;
-    }
+  let guard = 0;
+  while (t.length < MIN_CHARS && t.length + 1 + FINAL_PAD.length <= MAX_CHARS && guard < 10) {
+    guard++;
+    t = insertBeforeInstruments(t, FINAL_PAD);
   }
 
   return t;

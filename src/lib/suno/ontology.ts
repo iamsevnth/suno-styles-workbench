@@ -803,6 +803,9 @@ export const MOOD_MAP: Record<string, string[]> = {
   cold: ["distant brightness", "clinical space"],
 };
 
+// Three characters lets whole-word abbreviations such as "r&b", "rnb", "dnb", "ukg" and "edm" match.
+const MIN_PHRASE_LENGTH = 3;
+
 export function matchGenre(raw: string): GenreDef | undefined {
   const original = raw
     .trim()
@@ -818,10 +821,10 @@ export function matchGenre(raw: string): GenreDef | undefined {
   }
   for (const genre of ranked) {
     const name = genre.name.toLowerCase();
-    if (name.length >= 4 && includesPhrase(original, name)) return genre;
+    if (name.length >= MIN_PHRASE_LENGTH && includesPhrase(original, name)) return genre;
     const aliases = [...genre.aliases].sort((a, b) => b.length - a.length);
     for (const a of aliases) {
-      if (a.length >= 4 && includesPhrase(original, a)) return genre;
+      if (a.length >= MIN_PHRASE_LENGTH && includesPhrase(original, a)) return genre;
     }
   }
   const stripped = original
@@ -838,9 +841,9 @@ export function matchGenre(raw: string): GenreDef | undefined {
     }
     for (const genre of ranked) {
       const name = genre.name.toLowerCase();
-      if (name.length >= 4 && includesPhrase(stripped, name)) return genre;
+      if (name.length >= MIN_PHRASE_LENGTH && includesPhrase(stripped, name)) return genre;
       for (const a of genre.aliases) {
-        if (a.length >= 4 && includesPhrase(stripped, a)) return genre;
+        if (a.length >= MIN_PHRASE_LENGTH && includesPhrase(stripped, a)) return genre;
       }
     }
   }

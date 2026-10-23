@@ -317,12 +317,11 @@ export function buildOnePlan(
   }
 
   const lockedBass = lockedBassFamily(parsed.bassHints);
-  const bassFamilies = ["wub", "808", "growl", "reese", "neuro"];
-  const bassFamily = lockedBass
-    ? lockedBass
-    : bassFamilies[
-        (bassFamilies.indexOf(preset.bassFamily) + Math.floor(rng() * 5) + rank) % 5
-      ];
+  const bassFamilies = isBassMusic(families) ? ALL_BASS_FAMILIES : ["808"];
+  const presetIndex = Math.max(0, bassFamilies.indexOf(preset.bassFamily));
+  const bassFamily =
+    lockedBass ??
+    bassFamilies[(presetIndex + Math.floor(rng() * bassFamilies.length) + rank) % bassFamilies.length];
 
   const groove = buildGroove(families, preset.rhythmFamily, parsed, rng);
   const drums = buildDrums(families, parsed, rng);
@@ -513,6 +512,14 @@ function diversifyGenres(
   return [primary.name, secondary.name, accent.name];
 }
 
+const ALL_BASS_FAMILIES = ["wub", "808", "growl", "reese", "neuro"];
+const BASS_MUSIC_FAMILIES = new Set(["bass", "riddim", "future", "garage", "breaks"]);
+
+/** Wub, growl, Reese and neuro tones belong to bass music; trap, rap, R&B and pop plans stay on 808s. */
+function isBassMusic(families: string[]): boolean {
+  return families.some((f) => BASS_MUSIC_FAMILIES.has(f));
+}
+
 function lockedBassFamily(hints: string[]): string | undefined {
   const h = hints.join(" ").toLowerCase();
   if (/reese/.test(h)) return "reese";
@@ -652,7 +659,7 @@ function buildBass(
   behavior.push(pick(rng, [...moveBank]));
 
   if (rng() > 0.4) behavior.push(...pickFamily(rng, DNA_BASS, families, 1));
-  if (rng() > 0.4 && !userBass) {
+  if (rng() > 0.4 && !userBass && isBassMusic(families)) {
     const others = Object.keys(BASS_TONES).filter((f) => f !== family);
     const extra = pick(rng, others);
     if (rng() > 0.3) bass.push(pick(rng, [...BASS_TONES[extra]]));
@@ -967,7 +974,10 @@ function buildVocals(
   ];
   let style = explicit?.style;
   if (!style) {
-    if (parsed.genres.some((g) => /Melodic Rap|Emotional Rap/i.test(g))) {
+    if (/Soul|R&B/i.test(parsed.genres[0] ?? "")) {
+      // The brief leads with R&B or soul and names no rap style: keep the lead sung.
+      style = "sung";
+    } else if (parsed.genres.some((g) => /Melodic Rap|Emotional Rap/i.test(g))) {
       style = pick(rng, ["melodic-rap", "autotuned-rap", "rap"]);
     } else if (parsed.genres.some((g) => /Drill/i.test(g))) {
       style = pick(rng, ["rap", "lyrical-rap", "talk-rap"]);

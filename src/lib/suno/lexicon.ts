@@ -391,7 +391,7 @@ export const BASS_TONES: Record<string, string[]> = {
     "rounded 808 bodies with click attacks",
     "octave-jumping 808 phrases",
     "muted 808s that bloom on the drop",
-    "boomy 808 slides and growls with tuned sub rumble",
+    "boomy 808 slides with tuned sub rumble",
     "trap 808 glide and bounce with precise pitch automation",
   ],
   wub: [
@@ -1348,7 +1348,7 @@ export const PADDING: string[] = [
   "Groove humanization is light: hats can swing, kicks stay grid-true for club punch.",
   "Vocal consonants stay dry enough to cut through 808 tails and supersaw wash.",
   "Each bass phrase has a clear start and stop so the drop never turns into drone.",
-  "Impact FX mark section borders; they do not sit looping under the whole hook.",
+  "Impact FX mark section borders instead of looping under the whole hook.",
   "If energy is high, density is still scored — more motion in hats and vocals, not more competing mids.",
   "The hook motif is short enough to chant and strong enough to survive a stripped breakdown.",
   "Filter automation tells the story: darker verses, open drops, a brief closed tunnel before the last hit.",

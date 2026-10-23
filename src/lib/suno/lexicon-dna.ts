@@ -73,7 +73,7 @@ export const DNA_PALETTE: Record<string, string[]> = {
 
 export const DNA_BASS: Record<string, string[]> = {
   trap: [
-    "boomy 808 slides and growls with sub rumble and precise tuning",
+    "boomy 808 slides with distorted sub rumble and precise tuning",
     "trap 808 glide and bounce with precise pitch automation",
   ],
   general: [
