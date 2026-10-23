@@ -36,10 +36,18 @@ const GENRE_OPTIONS = [
 ];
 
 const DELIVERY_OPTIONS = [
+  "Mumble SoundCloud Rapper (slurred cadence, distorted 808s, hype ad-libs)",
+  "Autotuned Trap Flow (hard pitch snap, robotic slides, metallic tone)",
+  "Sung-Rap / Melodic Trap Hybrid (Drake/Juice WRLD cadence, pitched bounce, no choir)",
+  "Lyrical Bars & Internal Rhymes (dense syllables, multi-rhymes, breath control)",
+  "Talk-Rap / Conversational Spoken (deadpan West Coast / Detroit off-beat, zero singing)",
+  "Fast Chopper / Double-Time Rap (rapid-fire consonants, breath-controlled sprint)",
+  "UK / NY Street Drill Cadence (menacing syncopation, sliding 808 pockets)",
+  "Southern Trap Bounce (triplet rolls, heavy low-end pocket, raw mic presence)",
+  "Boom Bap Golden Era Flow (crisp pocket delivery, punchline emphasis)",
+  "Melodic Sing-Rap Topline (melodic contours, zero pop belting, autotuned sheen)",
+  "Rhythmic Fast Rap Cadence (in-the-pocket syncopated delivery)",
   "Sung Melodic to High Belt",
-  "Melodic Rap / Sing-Rap Hybrid",
-  "Rhythmic Fast Rap Cadence",
-  "Talk-Rap / Conversational Spoken",
   "Intimate Breathy Whisper",
   "Anthemic Group Chant",
 ];

@@ -2256,16 +2256,44 @@ var Suno = (() => {
       );
       if (m) vocals.register = m[1].toLowerCase();
     }
-    if (/\btalk[- ]?rap\b|\bspoken[- ]word\b|\btalk[- ]sing\b|\bconversational rap\b/i.test(text)) {
+    if (/\bmumble[- ]?(rap|flow|vocal|rapper)?\b|\bsoundcloud[- ]?(rap|rapper|trap)?\b|\bcloud[- ]?rap\b/i.test(text)) {
+      vocals.style = "mumble-rap";
+      vocals.processing = [...vocals.processing ?? [], "slurred mumble delivery", "heavy autotune saturation", "distorted 808 ad-libs"];
+    } else if (/\bauto[- ]?tuned? rap\b|\bauto[- ]?tune rap\b|\bhard auto[- ]?tune\b|\brobotic rap\b|\brage[- ]?trap\b/i.test(text)) {
+      vocals.style = "autotuned-rap";
+      vocals.processing = [...vocals.processing ?? [], "hard auto-tune retune speed", "pitch-snapped precision", "zero choral singing"];
+    } else if (/\blyrical[- ]?(bars?|rap|flow)?\b|\b(complex|technical|dense) (bars?|rhymes?)\b|\bfast[- ]?(rap|flow)\b|\bchopper (rap|flow)\b|\bboom[- ]?bap (rap|flow|bars)\b|\bbars\b|\bmulti[- ]syllab/i.test(
+      text
+    )) {
+      vocals.style = "lyrical-rap";
+      vocals.processing = [...vocals.processing ?? [], "crisp consonant articulation", "breath control", "dense internal rhymes"];
+    } else if (/\btalk[- ]?rap\b|\bspoken[- ]word\b|\btalk[- ]sing\b|\bconversational rap\b|\bspoken rap\b|\bdeadpan rap\b|\bdetroit (flow|rap)\b/i.test(text)) {
       vocals.style = "talk-rap";
-    } else if (/\bsung[- ]?rap\b|\bmelodic rap\b|\bsing-rap\b/i.test(text)) {
+      vocals.processing = [...vocals.processing ?? [], "dry conversational cadence", "rhythmic spoken-flow", "zero singing"];
+    } else if (/\bsung[- ]?rap\b|\bmelodic[- ]?rap\b|\bsing[- ]?rap\b|\brap & singer\b|\bsinger & rap\b/i.test(text)) {
       vocals.style = "melodic-rap";
-    } else if (/\brapping\b|\brap\b/i.test(text)) {
+      vocals.processing = [...vocals.processing ?? [], "melodic trap sung-rap cadence", "autotuned pitch correction", "strictly no choral harmonies or pop belting"];
+    } else if (/\brapping\b|\brap\b|\brappers?\b|\bspitting bars\b|\bdrill\b/i.test(text)) {
       vocals.style = "rap";
-    } else if (/\bsung\b|\bsinging\b|\bsinger\b|\benglish (singing|vocal)/i.test(text)) {
+    } else if (/\b(pure |traditional |clean pop )?singing\b|\bsinger(?! & rap)\b|\bsung(?!\s*[- ]?rap)\b|\benglish (singing|vocal)/i.test(text)) {
       vocals.style = "sung";
     } else if (/\bvocal chops?\b/i.test(text)) {
       vocals.style = "chops";
+    }
+    if (genres.length === 0 && vocals.style && vocals.style !== "sung" && vocals.style !== "chops") {
+      if (vocals.style === "mumble-rap") {
+        genres.push("SoundCloud Trap", "Minimal Dark Trap");
+      } else if (vocals.style === "autotuned-rap") {
+        genres.push("Melodic Trap", "Rage Trap");
+      } else if (vocals.style === "melodic-rap") {
+        genres.push("Melodic Trap", "Southern Trap");
+      } else if (vocals.style === "lyrical-rap") {
+        genres.push("Boom Bap", "Conscious Hip Hop");
+      } else if (vocals.style === "talk-rap") {
+        genres.push("West Coast Hip Hop", "Minimal Dark Trap");
+      } else {
+        genres.push("Southern Trap", "Aggressive Trap");
+      }
     }
     if (/\benglish\b/i.test(text)) vocals.language = "English";
     if (/\bportuguese\b|\bbrazilian portuguese\b/i.test(text)) {
@@ -2274,7 +2302,7 @@ var Suno = (() => {
     if (/\bvocal chops?\b/i.test(text)) {
       vocals.processing = [...vocals.processing ?? [], "vocal chops"];
     }
-    if (Object.keys(vocals).length > 0 || /\bvocal/i.test(text)) {
+    if (Object.keys(vocals).length > 0 || /\bvocal|rap|rapper|bars|spit/i.test(text)) {
       vocals.present = !instrumental;
     }
     const grooveHints = [];
@@ -3142,34 +3170,139 @@ var Suno = (() => {
       "soulful sung lines with light melisma"
     ],
     rap: [
-      "English rhythmic rap delivery",
-      "percussive rap cadence",
-      "syncopated rap pocket",
-      "confident rap flow with pocket precision",
-      "bar-heavy rap verses into a chanted hook",
-      "tight rap cadence that leaves air for the 808"
+      "English rhythmic rap delivery with authoritative pocket precision",
+      "percussive rap cadence with hard-hitting consonant punch",
+      "syncopated trap rap pocket with aggressive bounce",
+      "confident rap flow leaving clean air for the 808",
+      "bar-heavy street rap verses into a crowd-shouted chant hook",
+      "tight staccato rap cadence with raw mic presence",
+      "menacing drill-paced rap delivery with syncopated triplet bursts",
+      "unforgiving street rap bars with heavy low-end pocket sync",
+      "effortless southern trap bounce with syncopated pockets",
+      "high-octane rap delivery with rhythmic breath control",
+      "gritty street-certified rap flow with explosive crowd ad-libs",
+      "bouncy 808-locked rap cadence with stuttered triplet rolls",
+      "commanding hardcore rap delivery with punchy syllable stress",
+      "swaggering street narrative rap with heavy bass synchronization",
+      "relentless pocket rider flow with sharp dynamic inflection"
     ],
     "talk-rap": [
-      "English talk-rap cadence, almost spoken",
-      "dry conversational talk-rap over the pocket",
-      "intimate talk-rap verses that lift into a sung hook",
-      "spoken-flow rap with rhythmic consonants",
-      "late-night talk-rap delivery, close and unhurried"
+      "English talk-rap cadence, dry and conversational, zero singing",
+      "deadpan spoken-flow rap with crisp rhythmic consonants",
+      "conversational talk-rap delivery over the 808 pocket, strictly spoken",
+      "West Coast-style talk-rap swagger with rhythmic speech cadence",
+      "Detroit-style offbeat talk-rap flow with razor-sharp punchline pauses",
+      "unhurried spoken bar delivery, intimate close-mic talk-rap",
+      "rhythmic spoken-word rap verses into a hard-hitting spoken hook",
+      "cynical street narrative talk-rap flow with crisp consonant punch",
+      "laid-back conversational rap flow with rhythmic micro-pauses",
+      "nonchalant deadpan talk-rap cadence with cold street delivery",
+      "monotone conversational rap delivery, zero choral melodies or singing",
+      "Michigan punchline talk-rap flow with sudden rests and off-kilter pocket",
+      "Earl Sweatshirt-style introspective conversational spoken delivery",
+      "low-register dry talk-rap monologue over heavy bass thud",
+      "street dialogue talk-rap pacing with crisp breath sounds"
     ],
     "melodic-rap": [
-      "English sung-rap phrasing with sung hook lift",
-      "melodic-rap verses that bloom into full sung peaks",
-      "half-sung cadence into belted choruses",
-      "sing-rap hybrid with autotune as shine",
-      "hook-sung, verse-rapped English topline"
+      "English melodic sung-rap phrasing with tight autotuned pitch glides",
+      "melodic trap sung-rap flow with rhythmic pocket cadences and zero pop belting",
+      "infectious sung-rap delivery locked to the triplet hi-hat grid, no choir",
+      "SoundCloud-era melodic sung-rap pocket with smooth pitch correction",
+      "harmonic trap sung-rap verses with autotuned ad-lib trails",
+      "Atlanta melodic trap sung-rap cadence with rhythmic pitch bends",
+      "modern sing-rap hybrid topline with crisp autotune shine, no traditional singing",
+      "melodic street-rap cadence riding sliding 808 sub-bass contours",
+      "rhythmic pitched sung-rap delivery with auto-tuned chant hook",
+      "Drake-style nocturnal sung-rap cadence with pitched pocket bounce",
+      "Juice WRLD-inspired emotive melodic sung-rap verses with raw autotuned pain",
+      "Tory Lanez-style rapid melodic sung-rap flow riding distorted 808s",
+      "Roddy Ricch-inspired bouncy melodic rap topline with rhythmic chirps",
+      "Don Toliver-style atmospheric melodic sung-rap cadence with pitch snaps",
+      "melodic emo-trap sung-rap delivery with autotuned vibrato tail, zero choral harmonies"
+    ],
+    "sung-rap": [
+      "English melodic sung-rap phrasing with tight autotuned pitch glides",
+      "melodic trap sung-rap flow with rhythmic pocket cadences and zero pop belting",
+      "infectious sung-rap delivery locked to the triplet hi-hat grid, no choir",
+      "SoundCloud-era melodic sung-rap pocket with smooth pitch correction",
+      "harmonic trap sung-rap verses with autotuned ad-lib trails",
+      "Atlanta melodic trap sung-rap cadence with rhythmic pitch bends",
+      "modern sing-rap hybrid topline with crisp autotune shine, no traditional singing",
+      "melodic street-rap cadence riding sliding 808 sub-bass contours",
+      "rhythmic pitched sung-rap delivery with auto-tuned chant hook",
+      "Drake-style nocturnal sung-rap cadence with pitched pocket bounce",
+      "Juice WRLD-inspired emotive melodic sung-rap verses with raw autotuned pain",
+      "Tory Lanez-style rapid melodic sung-rap flow riding distorted 808s",
+      "Roddy Ricch-inspired bouncy melodic rap topline with rhythmic chirps",
+      "Don Toliver-style atmospheric melodic sung-rap cadence with pitch snaps",
+      "melodic emo-trap sung-rap delivery with autotuned vibrato tail, zero choral harmonies"
+    ],
+    "mumble-rap": [
+      "hypnotic mumble rap flow with slurred cadence and distorted 808 punch",
+      "SoundCloud-era mumble rap delivery with spaced-out melodic repetition",
+      "laid-back slurred mumble cadence with effortless rhythmic swagger",
+      "triplet mumble rap flow with infectious earworm ad-libs and slurred hooks",
+      "relaxed lo-fi mumble vocal with high-energy hype punctuations",
+      "cloud-rap mumble delivery with spaced-out hypnotic cadence",
+      "mumble-trap cadence with heavily saturated bass-riding flow",
+      "slurred melodic mumble flow with autotuned ad-lib trails",
+      "Playboi Carti-style baby-voice mumble delivery with hyper ad-lib squeaks",
+      "Lil Uzi Vert-style animated mumble rap flow with breathless triplet rolls",
+      "druggy haze SoundCloud mumble cadence with distorted 808 clipping",
+      "repetitive hypnotic mumble hook with spaced-out vocal syllables",
+      "lo-fi bedroom SoundCloud mumble delivery drenched in tape delay",
+      "murmured trap flow with rhythmic syllable slurs and abrupt stops",
+      "underground plugg-style mumble cadence riding airy ambient keys"
+    ],
+    "soundcloud-rap": [
+      "hypnotic mumble rap flow with slurred cadence and distorted 808 punch",
+      "SoundCloud-era mumble rap delivery with spaced-out melodic repetition",
+      "laid-back slurred mumble cadence with effortless rhythmic swagger",
+      "triplet mumble rap flow with infectious earworm ad-libs and slurred hooks",
+      "Playboi Carti-style baby-voice mumble delivery with hyper ad-lib squeaks",
+      "druggy haze SoundCloud mumble cadence with distorted 808 clipping",
+      "lo-fi bedroom SoundCloud mumble delivery drenched in tape delay"
+    ],
+    "autotuned-rap": [
+      "hard auto-tune rap flow with fast retune speed and metallic shine",
+      "modern futuristic autotuned trap cadence with pitch-snapped precision",
+      "hyper-processed autotune rap topline with aggressive melodic slides",
+      "saturated autotuned rap delivery locked into the sub-bass groove",
+      "robotic metallic autotune cadence with emotive pitch glides, zero choral singing",
+      "heavily autotuned trap delivery with stereo ad-lib echoes",
+      "pitch-corrected rap verses with metallic chorus chant doubling",
+      "Travis Scott-style dark atmospheric autotuned rap with reverb throw ad-libs",
+      "Future-style saturated autotuned street flow with relentless triplet momentum",
+      "hard pitch-quantized rage-trap rap cadence with distorted top-end",
+      "robotic auto-tune topline with instantaneous retune time and wide doubles",
+      "metallic autotuned hook chant with panned octaves, zero traditional singing",
+      "hyperpop-adjacent autotuned rap delivery with glitchy pitch drops",
+      "heavily quantized melodic trap rap with hard autotune crunch"
+    ],
+    "lyrical-rap": [
+      "bar-heavy lyrical rap delivery with intricate multi-syllabic schemes",
+      "aggressive lyrical rap flow with breathless double-time precision",
+      "sharp technical lyrical cadence with crisp consonant articulation",
+      "relentless bar-for-bar lyrical flow, dense internal rhymes",
+      "boom-bap inspired modern lyrical delivery with devastating punchlines",
+      "fast-paced lyrical rap flow locked dead-center in the pocket",
+      "complex breath-controlled lyrical cadence with razor-sharp rhymes",
+      "authoritative street lyricist flow with dynamic vocal presence",
+      "Griselda-style gritty street lyricism with cold punchline delivery",
+      "J. Cole-style narrative lyrical bars with conversational transitions",
+      "Kendrick-style dynamic cadence shifts with multi-voice character bars",
+      "chopper-style double-time rapid rap delivery with machine-gun syllables",
+      "dense poetic lyrical rap delivery over raw boom-bap drums",
+      "intricate slant-rhyme lyrical flow with explosive emphasis on 4th beats",
+      "unforgiving underground battle rap delivery with devastating multi-rhymes"
     ],
     chops: [
       "vocal chops as hook material",
       "pitched English vocal fragments as percussion"
     ],
     hybrid: [
-      "sung-rap hybrid English topline",
-      "verses rapped, choruses sung"
+      "sung-rap hybrid English topline, strictly rap pocket",
+      "verses rapped, hooks chanted with autotuned doubles"
     ]
   };
   var VOCAL_ARC = {
@@ -3182,26 +3315,82 @@ var Suno = (() => {
       "stacking doubles only on the hook so verses stay close"
     ],
     rap: [
-      "keeping verses pocket-tight and hooks chant-wide",
-      "dry rap verses exploding into stacked hook shouts",
-      "leaving space after punchlines for the bass to answer",
-      "double-time bars into a half-time hook"
+      "keeping verses pocket-tight and hooks chant-wide with zero sung harmonies",
+      "dry rap verses exploding into stacked hook shouts and hype ad-libs",
+      "leaving space after punchlines for the 808 to answer",
+      "double-time bars into a half-time chanted hook",
+      "aggressive verse flow building to an explosive crowd-chanted refrain",
+      "staccato verse cadence breaking into a syncopated hook chant, strictly no singing",
+      "verses locked dead-center in the pocket, hooks doubled with crowd shouts",
+      "punchline-heavy verses punctuated by heavy sub-bass hits and silence rests"
     ],
     "talk-rap": [
-      "spoken verses that lift into a sung or chanted hook",
-      "staying conversational until the drop demands volume",
-      "close-mic talk that widens only on the chorus"
+      "spoken verses that lead into an emphatic rhythmic spoken hook, zero singing",
+      "keeping verses spoken and hook chanted with crowd ad-libs, strictly no singing",
+      "staying conversational and deadpan until the drop demands volume",
+      "close-mic rhythmic talk that widens into shouted chant doubles on the chorus",
+      "dry spoken bars that let the 808 breathe between punchlines",
+      "nonchalant monologue verses shifting into a rhythmic call-and-response spoken hook",
+      "laid-back West Coast spoken flow transitioning into a hard-hitting dry spoken hook",
+      "deadpan punchline delivery with intentional silence pauses before the drop"
     ],
     "melodic-rap": [
-      "rapped verses blooming into sung-rap choruses",
-      "half-sung cadence into full sung peaks",
-      "autotune shine reserved for the hook"
+      "melodic sung-rap trap verses leading into an autotuned earworm hook without traditional singing",
+      "triplet melodic rap cadence maintaining hip-hop pocket and pitch-snapped flow, zero choral harmonies",
+      "half-sung melodic verses into an autotuned chant-style hook, strictly rap cadence",
+      "smooth melodic rap flow shifting dynamically into aggressive punchlines",
+      "autotuned melodic verses into a hypnotic repetitive melodic hook with ad-lib echoes",
+      "Drake-style atmospheric sung-rap verses dropping into an autotuned chant hook",
+      "Juice WRLD-style raw melodic verses building into an autotuned earworm hook",
+      "pitched trap sung-rap verses with fast autotune glides and stereo doubles"
+    ],
+    "sung-rap": [
+      "melodic sung-rap trap verses leading into an autotuned earworm hook without traditional singing",
+      "triplet melodic rap cadence maintaining hip-hop pocket and pitch-snapped flow, zero choral harmonies",
+      "half-sung melodic verses into an autotuned chant-style hook, strictly rap cadence",
+      "smooth melodic rap flow shifting dynamically into aggressive punchlines",
+      "autotuned melodic verses into a hypnotic repetitive melodic hook with ad-lib echoes",
+      "Drake-style atmospheric sung-rap verses dropping into an autotuned chant hook",
+      "Juice WRLD-style raw melodic verses building into an autotuned earworm hook",
+      "pitched trap sung-rap verses with fast autotune glides and stereo doubles"
+    ],
+    "mumble-rap": [
+      "hypnotic slurred verses into a repetitive anthemic mumble hook",
+      "spaced-out mumble bars surrounded by explosive hype ad-libs",
+      "lazy flow verses exploding into high-energy trap hook chants",
+      "slurred low-energy verses contrasted with hyperactive stereo ad-lib screams",
+      "Playboi Carti-style spaced-out verses leading into a repetitive chant hook",
+      "murmured triplet verses anchored by distorted 808 hits and ad-lib bursts",
+      "cloudy mumble flow shifting from lazy drawl into frantic ad-lib responses"
+    ],
+    "soundcloud-rap": [
+      "hypnotic slurred verses into a repetitive anthemic mumble hook",
+      "spaced-out mumble bars surrounded by explosive hype ad-libs",
+      "slurred low-energy verses contrasted with hyperactive stereo ad-lib screams"
+    ],
+    "autotuned-rap": [
+      "pitch-snapped autotuned verses building into a stadium-sized autotuned chant",
+      "hard-tuned rap bars with wide stereo autotuned ad-lib throws",
+      "metallic autotuned flow riding seamlessly across 808 slides",
+      "hyper-processed autotune verses leading into a robotic hook anthem, zero choral singing",
+      "Travis Scott-style cavernous autotuned verses bursting into a hard-tuned chant hook",
+      "distorted autotuned rap bars with stereo pitch-quantized echoes",
+      "fast-retune autotuned flow accelerating into an explosive pitch-snapped refrain"
+    ],
+    "lyrical-rap": [
+      "relentless 16-bar lyrical assault with zero wasted syllables",
+      "dense multi-syllable verses exploding into an aggressive crowd-chanted hook",
+      "breathless technical flow building in intensity through every verse",
+      "rapid-fire lyrical bars leading into a hard-hitting staccato hook",
+      "machine-gun chopper delivery in verses giving way to a heavy half-time chanted refrain",
+      "intricate internal rhyme schemes delivered at breakneck speed with flawless articulation",
+      "devastating bar-for-bar verses ending on sudden punchline drops before the hook"
     ],
     chops: [
       "chops answering the lead like a second percussionist"
     ],
     hybrid: [
-      "verses rapped, choruses sung, last drop both"
+      "verses rapped, choruses chanted with autotune doubles, zero choral singing"
     ]
   };
   var VOCAL_PROC = [
@@ -3224,14 +3413,30 @@ var Suno = (() => {
     "powerful belt with controlled vibrato"
   ];
   var VOCAL_PROC_RAP = [
-    "dry verse vocal, short room only",
-    "light autotune as shine, not as the performance",
-    "doubles on the hook only",
-    "tight delay throws on punchlines",
-    "ad-lib answers panned wide",
+    "dry verse vocal, short room only, zero vocal harmonies",
+    "hard auto-tune retune speed with metallic shine",
+    "heavy SoundCloud-style vocal saturation and 1176 compression",
+    "doubles on the hook only with crowd shout ad-libs",
+    "tight delay throws on punchlines and rhyme endings",
+    "ad-lib answers panned wide ('yeah', 'skrrt', 'what', 'aye')",
     "consonant-forward compression so the pocket stays readable",
-    "hook stacks, verse left almost mono",
-    "subtle slap on the talk-rap cadence"
+    "hook chant stacks, verse left strictly bone-dry and center-focused",
+    "subtle slapback on the talk-rap cadence with upfront mic presence",
+    "telephone EQ bandpass effect on verse intros",
+    "pitched-down demon vocal doubles on the hook drop",
+    "high-passed ad-libs panned hard left and right",
+    "tape saturation with aggressive de-essing for cutting rap consonants",
+    "fast pitch-snapped retune on sung-rap hooks without traditional harmonizing",
+    "heavily distorted vocal distortion on aggressive hype ad-libs",
+    "crisp transient shaping for high-speed lyrical consonant articulation",
+    "sidechained stereo delay throws filling gaps between rap punchlines",
+    "dry center lead with hard-panned stereo whisper doubles",
+    "lo-fi bitcrushed telephone filter on mumble-rap intro bars",
+    "wide stereo pitch-shifted octaves under the lead rap hook",
+    "aggressive brickwall limiter for in-your-face rap vocal presence",
+    "pitch-corrected triplet ad-lib echoes bouncing across the stereo field",
+    "analog tube drive adding warmth and grit to conversational spoken bars",
+    "crisp pop filter close-mic presence with heavy dynamic control"
   ];
   var VOCAL_INST = {
     female: [
@@ -3242,7 +3447,25 @@ var Suno = (() => {
       "intimate female verse layers",
       "sultry female alto layers",
       "soaring female soprano stacks",
-      "female rap doubles"
+      "female rap doubles",
+      "gritty female trap rap flow",
+      "hard-hitting female drill bars",
+      "autotuned female melodic-rap layers",
+      "deadpan female talk-rap close-mic",
+      "SoundCloud female mumble rap delivery",
+      "sharp female lyrical rap flow",
+      "slurred female SoundCloud mumble flow",
+      "hard autotuned female trap flow",
+      "emotive female sung-rap topline",
+      "breathless female chopper rap bars",
+      "Detroit offbeat female talk-rap delivery",
+      "menacing female drill rap doubles",
+      "punchy female lyrical rap lead",
+      "pitched-up female rage trap vocal",
+      "gritty Southern female street flow",
+      "nonchalant female conversational spoken flow",
+      "high-octane female battle rap cadence",
+      "distorted lo-fi female mumble ad-libs"
     ],
     male: [
       "intimate male vocal layers",
@@ -3251,9 +3474,44 @@ var Suno = (() => {
       "male baritone doubles",
       "commanding male rap layers",
       "smooth male tenor stacks",
-      "raw male talk-rap close-mic"
+      "raw male talk-rap close-mic",
+      "heavy autotuned male trap rap layers",
+      "SoundCloud male mumble-rap vocal",
+      "bar-heavy male lyrical rap layers",
+      "menacing male drill rap doubles",
+      "gritty Southern male trap flow",
+      "fast-paced male chopper rap delivery",
+      "slurred male SoundCloud mumble rapper",
+      "hard pitch-snapped male autotuned trap flow",
+      "emotive male sung-rap topline",
+      "breathless male chopper rap bars",
+      "Detroit offbeat male talk-rap delivery",
+      "bar-for-bar male underground lyrical MC",
+      "Travis Scott-style cavernous autotuned male lead",
+      "Griselda-style gutter male lyricist",
+      "nonchalant West Coast male talk-rap delivery",
+      "Juice WRLD-style melodic emo-rap vocal",
+      "Drake-style nocturnal male sung-rap delivery",
+      "hardcore street-corner male rap delivery",
+      "distorted rage-trap male ad-lib shouts"
     ],
-    lead: ["lead vocal layers", "stacked lead doubles", "English topline layers"]
+    lead: [
+      "lead vocal layers",
+      "stacked lead doubles",
+      "English topline layers",
+      "upfront rap lead vocal",
+      "autotuned trap lead",
+      "conversational talk-rap lead",
+      "SoundCloud mumble rap lead",
+      "hard autotuned trap rap lead",
+      "emotive melodic sung-rap lead",
+      "dense lyrical rap lead",
+      "deadpan talk-rap lead",
+      "menacing drill rap lead",
+      "high-energy Southern trap rap lead",
+      "breathless chopper rap lead",
+      "Detroit offbeat talk-rap lead"
+    ]
   };
   var PRODUCTION_VERBS = {
     harm: [
@@ -3559,6 +3817,32 @@ var Suno = (() => {
     "Any guitar, pluck, or bell is a cameo, not a new genre.",
     "The record should still read as the named hybrid if you mute the vocal for a DJ tool edit."
   ];
+  var RAP_PADDING = [
+    "Vocal delivery stays strictly in the rap pocket with zero sung harmonies, letting 808 slides and kick transients punch through cleanly.",
+    "Ad-libs, chant doubles, and delay throws punctuate punchlines without ever breaking into melodic singing or choir chords.",
+    "Mono lead rap vocal stays upfront with fast-attack compression, flanked by hard-panned ad-libs and hype accents.",
+    "Cadence is locked to the drum grid, leaving intentional pocket gaps between bars for sub-bass responses.",
+    "Hook impact relies on chant doubling and crowd shouts rather than vocal harmonizing.",
+    "Consonant punch and rhythmic delivery drive the topline energy from intro to outro.",
+    "Fast retune auto-tune and saturation provide the melodic texture while preserving pure rap cadence.",
+    "Verses keep a bone-dry, in-your-face center image so the flow remains distinct on small speakers.",
+    "Ad-lib layers use telephone bandpass filtering and stereo delay throws to create space without cluttering the center lead.",
+    "Drum pockets leave space after every fourth bar for an aggressive punchline delivery.",
+    "Bass and kick work as a single low-end fist while the rapper drives the rhythmic counterpoint.",
+    "Pitched-down vocal doubles anchor the hook without traditional choral stacks.",
+    "High-hat rolls and triplet snare fills wrap around the rap cadence rather than clashing with syllables.",
+    "Punchlines land on dry rests before the 808 bass drops back in.",
+    "Lead rapper commands the front-to-back depth with tight slapback delay and zero choral reverb wash.",
+    "SoundCloud-style distorted ad-lib screams ('skrrt', 'aye') bounce across the stereo field around the dry center lead.",
+    "Sung-rap melodic topline maintains strict hip-hop pocket timing without slipping into traditional R&B singing.",
+    "Autotuned pitch snaps lock tightly to minor scale steps, avoiding choir pads or vocal harmony stacks.",
+    "Lyrical bars flow continuously with razor-sharp consonant articulation and breathless internal rhymes.",
+    "Conversational talk-rap delivery uses deadpan dynamic restraint to contrast with explosive 808 drops.",
+    "Triplet flows and rapid-fire syllable bursts give way to spacious chanted hook refrains.",
+    "Stereo width is shaped by hard-panned hype doubles, keeping the lead vocal locked dead-center in mono.",
+    "Low-end frequencies duck momentarily behind the kick and vocal transients to preserve maximum lyrical punch.",
+    "Breath sounds and aggressive mic close-proximity give the rap delivery raw, unpolished street authenticity."
+  ];
   var MICROS = [
     "Clear club translation remains essential.",
     "Motif identity stays simple and memorable.",
@@ -3785,52 +4069,121 @@ var Suno = (() => {
 
   // src/lib/suno/lexicon-vocals.ts
   var VOCAL_PAIRS = [
-    // POWER / BOLD
-    { archetype: "power", male: "bold male baritone", female: "sultry female alto", styles: ["sung"], families: ["general", "soul", "trap"] },
+    // RAPPER ARCHETYPES (MUMBLE, AUTOTUNED, LYRICAL, TALK-RAP, SUNG-RAP, DRILL, SOUTHERN TRAP, CHOPPER)
+    { archetype: "mumble", male: "SoundCloud mumble male rap flow", female: "hypnotic female mumble rap delivery", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "drill", "rap", "general"] },
+    { archetype: "mumble", male: "slurred male trap rapper flow", female: "slurred female trap rap cadence", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap"] },
+    { archetype: "mumble", male: "spaced-out SoundCloud male cloud rapper", female: "lo-fi ethereal female mumble rapper", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap", "general"] },
+    { archetype: "mumble", male: "lazy-drawl SoundCloud male trap flow", female: "repetitive hypnotic female mumble flow", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap"] },
+    { archetype: "mumble", male: "heavy-bass riding male mumble rapper", female: "triplet-cadence female mumble trap flow", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap", "drill"] },
+    { archetype: "mumble", male: "Playboi Carti-style baby-voice male mumble rapper", female: "animated high-energy female mumble rap lead", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap"] },
+    { archetype: "mumble", male: "druggy haze SoundCloud male trap delivery", female: "soft slurred female cloud rap flow", styles: ["rap", "mumble-rap", "soundcloud-rap"], families: ["trap", "rap", "phonk"] },
+    { archetype: "autotuned", male: "hard-tuned melodic male trap rap", female: "pitch-snapped female autotuned rap", styles: ["rap", "autotuned-rap", "melodic-rap", "sung-rap"], families: ["trap", "future", "rap", "general"] },
+    { archetype: "autotuned", male: "robotic autotuned male rapper", female: "futuristic autotuned female rap lead", styles: ["rap", "autotuned-rap"], families: ["trap", "rap", "future"] },
+    { archetype: "autotuned", male: "metallic fast-retune male trap flow", female: "hyper-processed female autotuned cadence", styles: ["rap", "autotuned-rap"], families: ["trap", "rap", "future"] },
+    { archetype: "autotuned", male: "Travis Scott-style atmospheric autotuned male lead", female: "saturated autotuned female trap vocalist", styles: ["rap", "autotuned-rap", "melodic-rap"], families: ["trap", "rap", "cinematic"] },
+    { archetype: "autotuned", male: "pitch-corrected rage-trap male rapper", female: "high-octane autotuned female rage flow", styles: ["rap", "autotuned-rap"], families: ["trap", "rap"] },
+    { archetype: "autotuned", male: "emotive autotuned male hook rapper", female: "piercing autotuned female rap cadence", styles: ["rap", "autotuned-rap", "sung-rap"], families: ["trap", "rap", "soul"] },
+    { archetype: "autotuned", male: "Future-style relentless autotuned street flow", female: "laser-precise autotuned female rap topline", styles: ["rap", "autotuned-rap"], families: ["trap", "rap"] },
+    { archetype: "melodic", male: "emotive autotuned male sung-rap", female: "catchy rhythmic female sung-rap", styles: ["rap", "melodic-rap", "sung-rap", "autotuned-rap"], families: ["trap", "future", "rap", "soul", "general"] },
+    { archetype: "melodic", male: "Drake-style nocturnal male sung-rap", female: "infectious female sung-rap trap flow", styles: ["rap", "melodic-rap", "sung-rap"], families: ["trap", "soul", "rap", "general"] },
+    { archetype: "melodic", male: "Juice WRLD-inspired emotional male sung-rap", female: "melodic emo-trap female sung-rap", styles: ["rap", "melodic-rap", "sung-rap", "autotuned-rap"], families: ["trap", "rap", "soul"] },
+    { archetype: "melodic", male: "melodic trap male sing-rap delivery", female: "rhythmic female sing-rap hybrid", styles: ["rap", "melodic-rap", "sung-rap"], families: ["trap", "rap", "future"] },
+    { archetype: "melodic", male: "bouncy Atlanta male sung-rap pocket", female: "silky Southern female sung-rap flow", styles: ["rap", "melodic-rap", "sung-rap"], families: ["trap", "rap"] },
+    { archetype: "melodic", male: "Roddy Ricch-style pitched male rap flow", female: "melodic street female sung-rap", styles: ["rap", "melodic-rap", "sung-rap"], families: ["trap", "rap"] },
+    { archetype: "melodic", male: "Don Toliver-style atmospheric male sung-rap", female: "hypnotic late-night female sung-rap cadence", styles: ["rap", "melodic-rap", "sung-rap", "autotuned-rap"], families: ["trap", "rap", "cinematic"] },
+    { archetype: "lyrical", male: "bar-heavy technical male rapper", female: "razor-sharp lyrical female rap flow", styles: ["rap", "lyrical-rap"], families: ["rap", "drill", "trap", "general"] },
+    { archetype: "lyrical", male: "fast-cadence male lyrical rapper", female: "breathless female chopper rap flow", styles: ["rap", "lyrical-rap"], families: ["rap", "drill", "general"] },
+    { archetype: "lyrical", male: "dense multi-syllable male lyricist", female: "intricate rhyme-scheme female lyricist", styles: ["rap", "lyrical-rap"], families: ["rap", "trap", "general"] },
+    { archetype: "lyrical", male: "boom-bap street poet male lyricist", female: "sharp-tongued underground female lyricist", styles: ["rap", "lyrical-rap"], families: ["rap", "general"] },
+    { archetype: "lyrical", male: "complex breath-control male chopper rapper", female: "rapid-fire staccato female bar spitter", styles: ["rap", "lyrical-rap"], families: ["rap", "trap"] },
+    { archetype: "lyrical", male: "gritty East Coast male bar-heavy rapper", female: "devastating punchline female lyrical MC", styles: ["rap", "lyrical-rap"], families: ["rap", "drill"] },
+    { archetype: "lyrical", male: "Griselda-style gutter male lyricist", female: "uncompromising technical female lyricist", styles: ["rap", "lyrical-rap"], families: ["rap", "general"] },
+    { archetype: "talk", male: "deadpan conversational male talk-rap", female: "cool conversational female talk-rap", styles: ["rap", "talk-rap"], families: ["rap", "trap", "general"] },
+    { archetype: "talk", male: "rhythmic spoken-word male rap flow", female: "unhurried spoken-cadence female rap", styles: ["rap", "talk-rap"], families: ["rap", "cinematic", "general"] },
+    { archetype: "talk", male: "West Coast swagger male talk-rap cadence", female: "laid-back West Coast female talk-rap", styles: ["rap", "talk-rap"], families: ["rap", "trap", "general"] },
+    { archetype: "talk", male: "Detroit-style offbeat male talk-rap", female: "punchline-heavy Michigan female talk-rap", styles: ["rap", "talk-rap"], families: ["rap", "trap"] },
+    { archetype: "talk", male: "cynical street narrative male talk-rap", female: "monotone sharp-tongued female talk-rap", styles: ["rap", "talk-rap"], families: ["rap", "cinematic"] },
+    { archetype: "talk", male: "whispered close-mic male talk-rap delivery", female: "intimate spoken-flow female talk-rap", styles: ["rap", "talk-rap"], families: ["rap", "general"] },
+    { archetype: "drill", male: "menacing UK/NY male drill flow", female: "aggressive road-rap female drill flow", styles: ["rap", "drill", "lyrical-rap"], families: ["drill", "trap", "rap"] },
+    { archetype: "drill", male: "sliding-808 male drill cadence", female: "frenetic syncopated female drill rapper", styles: ["rap", "drill"], families: ["drill", "trap"] },
+    { archetype: "street", male: "gritty Southern male trap flow", female: "fierce high-energy female trap flow", styles: ["rap", "trap", "lyrical-rap"], families: ["trap", "drill", "rap"] },
+    { archetype: "street", male: "Memphis phonk male rap delivery", female: "haunting Memphis female phonk flow", styles: ["rap", "phonk", "trap"], families: ["phonk", "trap", "rap"] },
+    { archetype: "street", male: "Houston chopped male rap cadence", female: "syrupy chopped female trap flow", styles: ["rap", "trap"], families: ["trap", "rap"] },
+    // SUNG ARCHETYPES (POWER, SMOOTH, RAW, MODERN, ANTHEMIC)
+    { archetype: "power", male: "bold male baritone", female: "sultry female alto", styles: ["sung"], families: ["general", "soul"] },
     { archetype: "power", male: "powerful male tenor with rasp", female: "soaring female soprano with breathy edge", styles: ["sung"], families: ["future", "soul", "general"] },
-    { archetype: "power", male: "gritty masculine delivery", female: "velvety feminine delivery", styles: ["sung", "rap"], families: ["trap", "bass", "general"] },
     { archetype: "power", male: "commanding male baritone", female: "empowering female belt", styles: ["sung"], families: ["future", "soul", "general"] },
     { archetype: "power", male: "aggressive male rock shout", female: "fierce female rock belt", styles: ["sung"], families: ["general"] },
-    { archetype: "power", male: "hyper-aggressive male trap delivery", female: "fierce pop diva female lead", styles: ["rap", "sung"], families: ["trap", "future"] },
     // SMOOTH / SOULFUL
     { archetype: "smooth", male: "warm male crooner", female: "intimate female crooner", styles: ["sung"], families: ["soul", "future", "general"] },
-    { archetype: "smooth", male: "smooth male R&B lead", female: "silky smooth female R&B lead", styles: ["sung"], families: ["soul", "trap"] },
-    { archetype: "smooth", male: "soulful male ad-libs", female: "soulful female ad-libs", styles: ["sung", "melodic-rap"], families: ["soul", "trap", "future"] },
+    { archetype: "smooth", male: "smooth male R&B lead", female: "silky smooth female R&B lead", styles: ["sung"], families: ["soul"] },
+    { archetype: "smooth", male: "soulful male ad-libs", female: "soulful female ad-libs", styles: ["sung"], families: ["soul", "future"] },
     { archetype: "smooth", male: "tender acoustic male folk voice", female: "intimate lo-fi female whisper", styles: ["sung"], families: ["soul", "general"] },
     { archetype: "smooth", male: "warm vintage male croon", female: "rich resonant female contralto", styles: ["sung"], families: ["soul", "cinematic"] },
     // EMOTIONAL / RAW
-    { archetype: "raw", male: "raw emotional male vocals", female: "passionate emotional female vocals", styles: ["sung", "melodic-rap"], families: ["soul", "future", "cinematic"] },
-    { archetype: "raw", male: "breathy intimate male whisper", female: "ethereal female whisper", styles: ["sung", "talk-rap"], families: ["soul", "cinematic", "future"] },
-    { archetype: "raw", male: "dark brooding male baritone", female: "dark brooding female alto", styles: ["sung", "talk-rap"], families: ["cinematic", "ritual", "drill", "trap"] },
-    { archetype: "raw", male: "raspy masculine edge", female: "husky feminine edge", styles: ["sung", "rap"], families: ["trap", "phonk", "bass"] },
+    { archetype: "raw", male: "raw emotional male vocals", female: "passionate emotional female vocals", styles: ["sung"], families: ["soul", "future", "cinematic"] },
+    { archetype: "raw", male: "breathy intimate male whisper", female: "ethereal female whisper", styles: ["sung"], families: ["soul", "cinematic", "future"] },
+    { archetype: "raw", male: "dark brooding male baritone", female: "dark brooding female alto", styles: ["sung"], families: ["cinematic", "ritual"] },
     { archetype: "raw", male: "gruff bluesy male growl", female: "smoky bluesy female growl", styles: ["sung"], families: ["soul", "phonk"] },
     // MODERN / CLEAN
     { archetype: "modern", male: "modern clean male pop vocal", female: "modern clean female pop vocal", styles: ["sung"], families: ["future", "house", "general"] },
-    { archetype: "modern", male: "confident male rap flow", female: "silky female rap flow", styles: ["rap", "talk-rap"], families: ["trap", "drill", "rap", "phonk"] },
     { archetype: "modern", male: "bright youthful male tenor", female: "bright youthful female soprano", styles: ["sung"], families: ["future", "house"] },
     { archetype: "modern", male: "playful male falsetto", female: "playful female soprano", styles: ["sung"], families: ["future", "soul"] },
     // ANTHEMIC / CHORUS
     { archetype: "anthemic", male: "anthemic male chorus lead", female: "anthemic female chorus lead", styles: ["sung"], families: ["future", "house", "general"] },
     { archetype: "anthemic", male: "stacked male harmonies", female: "stacked female harmonies", styles: ["sung"], families: ["future", "soul"] },
-    { archetype: "anthemic", male: "cinematic dramatic male narration", female: "haunting atmospheric female vocal", styles: ["talk-rap", "sung"], families: ["cinematic", "ritual"] }
+    { archetype: "anthemic", male: "cinematic dramatic male narration", female: "haunting atmospheric female vocal", styles: ["sung"], families: ["cinematic", "ritual"] }
   ];
   var VOCAL_MALE_ONLY = [
     "commanding urban male rap",
+    "hyper-confident male trap flow",
+    "slurred SoundCloud male mumble-rap",
+    "hard-tuned autotuned male rap flow",
+    "bar-heavy technical male lyricist",
+    "deadpan conversational male talk-rap flow",
+    "aggressive UK drill male road-rap",
+    "rapid-fire male chopper rap delivery",
+    "melodic trap male sung-rap topline",
+    "gritty Southern male trap flow",
+    "Griselda-style gutter male lyricist",
+    "Detroit offbeat male punchline rapper",
+    "Travis Scott-style atmospheric male autotune lead",
+    "Juice WRLD-inspired emotive male sung-rap",
+    "Drake-style nocturnal male sing-rap delivery",
+    "raw unprocessed male battle rapper",
+    "sub-bass locked male boom-bap MC",
+    "distorted rage-trap male hype delivery",
+    "Houston syrupy chopped male trap flow",
+    "Memphis phonk male rap delivery",
     "laid-back male reggae vocal",
     "gritty urban male delivery",
     "soaring operatic male tenor",
     "deep resonant male bass",
-    "hyper-confident male trap flow",
     "tender heartfelt male ballad voice",
     "raw unprocessed male indie vocal",
     "cinematic brooding male spoken-word",
     "powerful gospel-tinged male lead"
   ];
   var VOCAL_FEMALE_ONLY = [
+    "fierce contemporary female rap",
+    "hypnotic female SoundCloud mumble flow",
+    "pitch-snapped female autotuned trap delivery",
+    "razor-sharp technical female lyricist",
+    "cool deadpan female talk-rap delivery",
+    "aggressive female drill rap cadence",
+    "melodic female trap sung-rap topline",
+    "slurred lo-fi female mumble delivery",
+    "breathless female chopper rap flow",
+    "Detroit offbeat female punchline rapper",
+    "gritty Southern female trap flow",
+    "hyper-processed female rage-rap vocal",
+    "intimate close-mic female talk-rap",
+    "infectious female sing-rap hybrid topline",
+    "raw underground female battle MC",
+    "unfiltered female street drill road-rap",
     "empowering female diva belt",
     "dreamy ethereal female soprano",
     "sultry jazz female alto",
-    "fierce contemporary female rap",
     "haunting cinematic female vocal",
     "playful bubbly female pop",
     "powerful gospel female choir lead",
@@ -3855,10 +4208,36 @@ var Suno = (() => {
     "stacked background harmonies on chorus lifts",
     "subtle melisma on emotional peaks"
   ];
+  var VOCAL_MODIFIERS_RAP = [
+    "with hard-hitting ad-libs and crowd chant doubles",
+    "with punchline delay throws and rhythmic double-tracking",
+    "with hard auto-tune snap and metallic sheen",
+    "with aggressive mic presence and zero vocal harmonies",
+    "with slurred soundcloud cadence and distorted 808 ad-libs",
+    "with razor-sharp consonant articulation and breathless delivery",
+    "with rhythmic ad-lib echoes panned wide",
+    "with deadpan spoken swagger and syncopated cadence",
+    "with infectious melodic trap cadence and autotuned hooks",
+    "with pitched-down demon doubles on hook drops",
+    "with crisp staccato punchlines and dynamic pauses",
+    "with raw street energy and upfront compression",
+    "with zero singing, locked strictly to the drum grid",
+    "with stuttering triplet flow and heavy 808 pocket sync",
+    "with distorted hype ad-libs and crowd callouts",
+    "with instantaneous auto-tune retune speed and pitch snaps",
+    "with dense internal rhyming schemes and breath control",
+    "with telephone-filtered intro bars and bone-dry verses",
+    "with Detroit-style off-beat punchlines and sudden rests",
+    "with syncopated drill triplets and sliding sub-bass pockets",
+    "with sung-rap melodic bounce and autotuned vibrato tails",
+    "with aggressive 1176 vocal compression and tape saturation",
+    "with wide stereo whisper doubles framing the mono lead",
+    "with hyperactive ad-lib screams ('aye', 'yeah', 'skrrt')"
+  ];
   var VOCAL_GENRE_PAIRS = {
     trap: { male: "confident male rap flow", female: "silky female rap flow" },
-    drill: { male: "confident male rap flow", female: "silky female rap flow" },
-    rap: { male: "confident male rap flow", female: "silky female rap flow" },
+    drill: { male: "menacing UK drill male rap flow", female: "aggressive female drill road-rap" },
+    rap: { male: "bar-heavy male rap flow", female: "razor-sharp female rap flow" },
     phonk: { male: "gritty urban male delivery", female: "fierce contemporary female rap" },
     cinematic: { male: "cinematic dramatic male narration", female: "haunting atmospheric female vocal" },
     ritual: { male: "cinematic dramatic male narration", female: "haunting atmospheric female vocal" },
@@ -3869,28 +4248,44 @@ var Suno = (() => {
   };
   function pickVocalPhrase(rng, presentation, style, families) {
     const gender = presentation === "male" ? "male" : "female";
+    const isRap = style === "rap" || style === "talk-rap" || style === "melodic-rap" || style === "sung-rap" || style === "sing-rap" || style === "mumble-rap" || style === "soundcloud-rap" || style === "autotuned-rap" || style === "lyrical-rap" || families.includes("rap") || families.includes("drill");
     const matching = VOCAL_PAIRS.filter((p) => {
-      const styleOk = !style || p.styles.includes(style);
+      let styleOk = false;
+      if (isRap) {
+        styleOk = p.styles.some(
+          (s2) => s2 === style || s2 === "rap" || s2 === "talk-rap" || s2 === "melodic-rap" || s2 === "sung-rap" || s2 === "mumble-rap" || s2 === "soundcloud-rap" || s2 === "autotuned-rap" || s2 === "lyrical-rap"
+        );
+      } else {
+        styleOk = !style || p.styles.includes(style);
+      }
       const famOk = p.families.some((f) => families.includes(f) || f === "general");
       return styleOk && famOk;
     });
-    const pool = matching.length ? matching : [...VOCAL_PAIRS];
+    const rapPairs = VOCAL_PAIRS.filter((p) => p.styles.some((s2) => s2 !== "sung"));
+    const pool = matching.length ? matching : isRap ? rapPairs : [...VOCAL_PAIRS];
     const pair = pool[Math.floor(rng() * pool.length) % pool.length];
     let phrase = gender === "male" ? pair.male : pair.female;
-    if (rng() > 0.45) {
+    if (rng() > 0.35) {
       const extras = gender === "male" ? VOCAL_MALE_ONLY : VOCAL_FEMALE_ONLY;
       const styleExtras = extras.filter((e) => {
-        if (style === "rap" || style === "talk-rap") return /rap|spoken|urban|trap flow/i.test(e);
-        if (style === "sung") return !/rap|spoken/i.test(e);
+        if (isRap) return /rap|mumble|autotuned|lyricist|talk-rap|drill|chopper|spoken|bars|phonk|mc/i.test(e);
+        if (style === "sung") return !/rap|mumble|autotuned|drill|chopper|spoken|bars|phonk|mc/i.test(e);
         return true;
       });
-      const src = styleExtras.length ? styleExtras : extras;
-      if (rng() > 0.65) phrase = src[Math.floor(rng() * src.length) % src.length];
+      const src = styleExtras.length ? styleExtras : isRap ? rapPairs.map((p) => gender === "male" ? p.male : p.female) : extras;
+      if (rng() > 0.45) phrase = src[Math.floor(rng() * src.length) % src.length];
     }
-    const rec = families.map((f) => VOCAL_GENRE_PAIRS[f]).find(Boolean);
-    if (rec && rng() > 0.7) phrase = gender === "male" ? rec.male : rec.female;
-    const mod = VOCAL_MODIFIERS[Math.floor(rng() * VOCAL_MODIFIERS.length) % VOCAL_MODIFIERS.length];
-    if (rng() > 0.35) phrase = `${phrase} ${mod}`;
+    if (!isRap || families.includes("trap") || families.includes("drill") || families.includes("rap") || families.includes("phonk")) {
+      const rapRecs = ["trap", "drill", "rap", "phonk"];
+      const matchedFamily = families.find((f) => (isRap ? rapRecs.includes(f) : true) && VOCAL_GENRE_PAIRS[f]);
+      if (matchedFamily && rng() > 0.7) {
+        const rec = VOCAL_GENRE_PAIRS[matchedFamily];
+        phrase = gender === "male" ? rec.male : rec.female;
+      }
+    }
+    const modPool = isRap ? VOCAL_MODIFIERS_RAP : VOCAL_MODIFIERS;
+    const mod = modPool[Math.floor(rng() * modPool.length) % modPool.length];
+    if (rng() > 0.25) phrase = `${phrase} ${mod}`;
     return phrase;
   }
 
@@ -4279,10 +4674,19 @@ var Suno = (() => {
     for (const m of parsed.moods.slice(0, 3)) anchors.push(m);
     if (parsed.key) anchors.push(parsed.key);
     if (parsed.instrumental) anchors.push("instrumental");
-    if (parsed.vocals?.presentation) anchors.push(`${parsed.vocals.presentation} vocals`);
+    if (parsed.vocals?.presentation) {
+      if (parsed.vocals?.style === "rap" || parsed.vocals?.style === "talk-rap" || parsed.vocals?.style === "melodic-rap" || parsed.vocals?.style === "mumble-rap" || parsed.vocals?.style === "autotuned-rap" || parsed.vocals?.style === "lyrical-rap") {
+        anchors.push(`${parsed.vocals.presentation} rap flow`);
+      } else {
+        anchors.push(`${parsed.vocals.presentation} vocals`);
+      }
+    }
     if (parsed.vocals?.register) anchors.push(parsed.vocals.register);
     if (parsed.vocals?.style === "talk-rap") anchors.push("talk-rap");
-    else if (parsed.vocals?.style === "melodic-rap") anchors.push("sung-rap");
+    else if (parsed.vocals?.style === "melodic-rap") anchors.push("melodic-rap");
+    else if (parsed.vocals?.style === "mumble-rap") anchors.push("mumble-rap");
+    else if (parsed.vocals?.style === "autotuned-rap") anchors.push("autotuned-rap");
+    else if (parsed.vocals?.style === "lyrical-rap") anchors.push("lyrical-rap");
     else if (parsed.vocals?.style === "rap") anchors.push("rap");
     else if (parsed.vocals?.style === "sung") anchors.push("sung");
     if (parsed.vocals?.language) anchors.push(parsed.vocals.language);
@@ -4369,18 +4773,28 @@ var Suno = (() => {
     return { bass: unique(bass).slice(0, 4), bassBehavior: unique(behavior).slice(0, 3) };
   }
   function buildHarmony(families, mood, parsed, rng) {
+    const isRap = parsed.vocals?.style === "rap" || parsed.vocals?.style === "talk-rap" || parsed.vocals?.style === "melodic-rap" || parsed.vocals?.style === "sung-rap" || parsed.vocals?.style === "sing-rap" || parsed.vocals?.style === "mumble-rap" || parsed.vocals?.style === "soundcloud-rap" || parsed.vocals?.style === "autotuned-rap" || parsed.vocals?.style === "lyrical-rap" || families.includes("rap") || families.includes("drill");
     const h = [];
     if (parsed.key) h.push(`${parsed.key} tonal center`);
-    h.push(...pickFamily(rng, HARMONY, families, 2));
-    if (rng() > 0.4) h.push(...pickFamily(rng, DNA_HARMONY, families, 1));
+    const harmFamilies = isRap ? ["trap", "general"] : families;
+    h.push(...pickFamily(rng, HARMONY, harmFamilies, 2));
+    if (rng() > 0.4) {
+      const raw = pickFamily(rng, DNA_HARMONY, isRap ? ["trap", "general"] : families, 1);
+      const filtered = isRap ? raw.filter((x) => !/harmonies|soaring|stacked harmonies|soulful lifts/i.test(x)) : raw;
+      h.push(...filtered.length ? filtered : ["minimal trap-key stabs"]);
+    }
     if (["dark", "ominous", "melancholic", "menacing", "nocturnal", "aggressive"].includes(mood)) {
       h.push(oneFamily(rng, HARMONY, ["trap", "general"]));
     }
     return unique(h).slice(0, 3);
   }
   function buildMelody(families, _mood, parsed, rng) {
+    const isRap = parsed.vocals?.style === "rap" || parsed.vocals?.style === "talk-rap" || parsed.vocals?.style === "melodic-rap" || parsed.vocals?.style === "sung-rap" || parsed.vocals?.style === "sing-rap" || parsed.vocals?.style === "mumble-rap" || parsed.vocals?.style === "soundcloud-rap" || parsed.vocals?.style === "autotuned-rap" || parsed.vocals?.style === "lyrical-rap" || families.includes("rap") || families.includes("drill");
     if (parsed.instruments.some((i) => /guitar/i.test(i))) {
       return [pick(rng, ["sparse clean electric guitar motifs", "melodic guitar answers"])];
+    }
+    if (isRap) {
+      return [pick(rng, MELODY.trap ?? ["cold pluck hooks", "short dark bell cells"])];
     }
     return pickFamily(rng, MELODY, families, 1);
   }
@@ -4403,8 +4817,32 @@ var Suno = (() => {
   function buildArrangement(energy, parsed, rng) {
     const a = [...parsed.arrangementHints];
     a.push(...pickArc(rng, energy));
-    if (rng() > 0.4) a.push(pick(rng, [...DNA_ARRANGE]));
-    if (rng() > 0.7) a.push(pick(rng, [...DNA_HOOK]));
+    const isRap = parsed.vocals?.style === "rap" || parsed.vocals?.style === "talk-rap" || parsed.vocals?.style === "melodic-rap" || parsed.vocals?.style === "sung-rap" || parsed.vocals?.style === "sing-rap" || parsed.vocals?.style === "mumble-rap" || parsed.vocals?.style === "soundcloud-rap" || parsed.vocals?.style === "autotuned-rap" || parsed.vocals?.style === "lyrical-rap" || parsed.genres.some((g2) => /rap|trap|drill|boom bap|hip hop/i.test(g2));
+    if (rng() > 0.4) {
+      const raw = pick(rng, [...DNA_ARRANGE]);
+      if (isRap && /harmonies|soaring|belt/i.test(raw)) {
+        a.push("tight verse-to-chorus transition with rhythmic handoff and minimal trap motif");
+      } else {
+        a.push(raw);
+      }
+    }
+    if (rng() > 0.7) {
+      if (isRap) {
+        const rapHooks = [
+          "rhythmic chant hook with crowd shouts and 808 sub drops",
+          "hypnotic hook repetition with pitch-bent autotuned ad-libs",
+          "staccato punchline hook with wide stereo hype doubles",
+          "catchy single-note synth hook locked dead-center in the 808 pocket",
+          "earworm chanted refrain with layered ad-lib calls and zero sung harmonies",
+          "menacing drill slide hook with syncopated triplet pauses",
+          "repetitive melodic trap sung-rap hook riding distorted 808 slides",
+          "deadpan spoken hook with crisp punchline pauses and heavy bass answers"
+        ];
+        a.push(pick(rng, rapHooks));
+      } else {
+        a.push(pick(rng, [...DNA_HOOK]));
+      }
+    }
     return unique(a).slice(0, 4);
   }
   function buildMix(parsed, rng) {
@@ -4439,15 +4877,21 @@ var Suno = (() => {
       "rap",
       "melodic-rap",
       "talk-rap",
-      "sung",
+      "autotuned-rap",
+      "lyrical-rap",
+      "mumble-rap",
       "melodic-rap"
     ];
     let style = explicit?.style;
     if (!style) {
       if (parsed.genres.some((g2) => /Melodic Rap|Emotional Rap/i.test(g2))) {
-        style = pick(rng, ["melodic-rap", "sung", "talk-rap"]);
+        style = pick(rng, ["melodic-rap", "autotuned-rap", "rap"]);
       } else if (parsed.genres.some((g2) => /Drill/i.test(g2))) {
-        style = pick(rng, ["rap", "talk-rap", "melodic-rap"]);
+        style = pick(rng, ["rap", "lyrical-rap", "talk-rap"]);
+      } else if (parsed.genres.some((g2) => /Trap/i.test(g2))) {
+        style = pick(rng, ["rap", "autotuned-rap", "mumble-rap", "melodic-rap", "talk-rap"]);
+      } else if (parsed.genres.some((g2) => /Boom Bap|Conscious Hip Hop|Underground Rap/i.test(g2))) {
+        style = pick(rng, ["lyrical-rap", "rap", "talk-rap"]);
       } else if (parsed.genres.some((g2) => /Soul|R&B/i.test(g2))) {
         style = pick(rng, ["sung", "sung", "melodic-rap"]);
       } else {
@@ -4467,7 +4911,8 @@ var Suno = (() => {
     };
   }
   function pickNProc(rng, style) {
-    const source = style === "rap" || style === "talk-rap" ? VOCAL_PROC_RAP : VOCAL_PROC;
+    const isRap = style === "rap" || style === "talk-rap" || style === "melodic-rap" || style === "sung-rap" || style === "sing-rap" || style === "mumble-rap" || style === "soundcloud-rap" || style === "autotuned-rap" || style === "lyrical-rap";
+    const source = isRap ? VOCAL_PROC_RAP : VOCAL_PROC;
     const copy = [...source];
     const n = 2;
     const out = [];
@@ -4478,8 +4923,9 @@ var Suno = (() => {
     return out;
   }
   function selectInstruments(bass, _drums, _harmony, melody, soundDesign, vocals, parsed, families, rng) {
+    const isRap = vocals.style === "rap" || vocals.style === "talk-rap" || vocals.style === "melodic-rap" || vocals.style === "sung-rap" || vocals.style === "sing-rap" || vocals.style === "mumble-rap" || vocals.style === "soundcloud-rap" || vocals.style === "autotuned-rap" || vocals.style === "lyrical-rap" || families.includes("rap") || families.includes("drill");
     const inst = [];
-    if (families.includes("soul") && !families.includes("trap")) {
+    if (families.includes("soul") && !families.includes("trap") && !isRap) {
       inst.push(
         "Rhodes electric piano",
         "clean jazz guitar",
@@ -4499,7 +4945,7 @@ var Suno = (() => {
           rng,
           {
             trap: ["trap hat engine"],
-            future: ["supersaw chord stacks", "sidechained pads"],
+            future: isRap ? ["trap hat engine", "cold synth plucks"] : ["supersaw chord stacks", "sidechained pads"],
             general: ["atmospheric pads"]
           },
           families,
@@ -4513,7 +4959,7 @@ var Suno = (() => {
           oneFamily(
             rng,
             {
-              future: ["pluck motifs", "bell-like leads"],
+              future: isRap ? ["cold pluck hooks"] : ["pluck motifs", "bell-like leads"],
               trap: ["cold pluck hooks"],
               general: ["short synth hooks"]
             },
@@ -4530,9 +4976,20 @@ var Suno = (() => {
       if (families.includes("ritual")) inst.push("ceremonial hand drums");
     }
     if (vocals.present) {
-      const who = vocals.presentation === "female" ? pick(rng, [...VOCAL_INST.female]) : vocals.presentation === "male" ? pick(rng, [...VOCAL_INST.male]) : pick(rng, [...VOCAL_INST.lead]);
+      let pool;
+      if (vocals.presentation === "female") {
+        pool = isRap ? VOCAL_INST.female.filter((v) => /rap|bars|mumble|autotuned|talk-rap|lyrical|drill/i.test(v)) : VOCAL_INST.female;
+      } else if (vocals.presentation === "male") {
+        pool = isRap ? VOCAL_INST.male.filter((v) => /rap|bars|mumble|autotuned|talk-rap|lyrical|drill|chopper/i.test(v)) : VOCAL_INST.male;
+      } else {
+        pool = isRap ? VOCAL_INST.lead.filter((v) => /rap|talk-rap|autotuned|mumble|sung-rap|bars/i.test(v)) : VOCAL_INST.lead;
+      }
+      const who = pick(
+        rng,
+        pool.length ? pool : [vocals.presentation === "female" ? "female rap doubles" : "commanding male rap layers"]
+      );
       inst.push(who);
-      if (vocals.processing?.some((p) => /chop/i.test(p))) inst.push("vocal chops");
+      if (!isRap && vocals.processing?.some((p) => /chop/i.test(p))) inst.push("vocal chops");
     }
     for (const p of parsed.instruments) {
       if (!inst.some((i) => i.toLowerCase().includes(p.toLowerCase().slice(0, 6)))) {
@@ -4653,11 +5110,17 @@ var Suno = (() => {
     const master = plan.master[0];
     const instruments = plan.instruments.slice(0, 8).join(", ");
     const prod = oneFamily(rng, PRODUCTION, families);
-    const vocalCue = plan.vocals.present ? [
+    const isRapStyle = plan.vocals.style === "rap" || plan.vocals.style === "talk-rap" || plan.vocals.style === "melodic-rap" || plan.vocals.style === "sung-rap" || plan.vocals.style === "sing-rap" || plan.vocals.style === "mumble-rap" || plan.vocals.style === "soundcloud-rap" || plan.vocals.style === "autotuned-rap" || plan.vocals.style === "lyrical-rap" || families.includes("rap") || families.includes("drill");
+    const rapRole = plan.vocals.style === "talk-rap" ? "talk-rap delivery" : plan.vocals.style === "melodic-rap" || plan.vocals.style === "sung-rap" || plan.vocals.style === "sing-rap" ? "melodic sung-rap flow" : plan.vocals.style === "mumble-rap" || plan.vocals.style === "soundcloud-rap" ? "SoundCloud mumble-rap flow" : plan.vocals.style === "autotuned-rap" ? "hard autotuned rap flow" : plan.vocals.style === "lyrical-rap" ? "technical lyrical-rap delivery" : "rap flow";
+    const vocalCue = plan.vocals.present ? isRapStyle ? [
+      plan.vocals.presentation ?? "lead",
+      plan.vocals.timbre ?? "gritty",
+      rapRole
+    ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() : [
       plan.vocals.presentation ?? "lead",
       plan.vocals.timbre,
       plan.vocals.register ?? "mid",
-      plan.vocals.style === "talk-rap" ? "talk-rap" : plan.vocals.style === "melodic-rap" ? "sung-rap" : plan.vocals.style === "rap" ? "rap" : plan.vocals.style === "chops" ? "chopped" : "sung",
+      plan.vocals.style === "chops" ? "chopped" : "sung",
       "vocals"
     ].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() : "";
     let s1;
@@ -4725,16 +5188,19 @@ var Suno = (() => {
     if (plan.vocals.present) {
       const v = plan.vocals;
       const who = v.presentation === "female" ? "female" : v.presentation === "male" ? "male" : "lead";
-      const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : "sung";
-      const style = pick2(rng, [...VOCAL_STYLE[styleKey]]);
+      const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
+      const style = pick2(rng, [...VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap]);
       const proc = (v.processing ?? []).slice(0, 2).join(" and ");
-      const arcBank = VOCAL_ARC[styleKey] ?? VOCAL_ARC.sung;
-      const arc = pick2(rng, [...arcBank ?? VOCAL_ARC.sung]);
-      const identity = v.delivery && v.delivery.length > 18 ? v.delivery : `${who} ${v.timbre ?? "expressive"} ${v.register ?? "mid"} ${style}`;
-      s4 += ` Vocals: ${identity}`;
+      const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
+      const arc = pick2(rng, [...arcBank ?? VOCAL_ARC.rap]);
+      const identity = v.delivery && v.delivery.length > 18 ? v.delivery : `${who} ${v.timbre ?? (isRapStyle ? "gritty" : "expressive")} ${v.register ?? "mid"} ${style}`;
+      s4 += isRapStyle ? ` Vocal delivery: ${identity}` : ` Vocals: ${identity}`;
       if (v.language) s4 += ` in ${v.language}`;
       s4 += `, ${arc}`;
       if (proc) s4 += ` with ${proc}`;
+      if (isRapStyle && !s4.toLowerCase().includes("zero singing") && !s4.toLowerCase().includes("no singing")) {
+        s4 += ", strictly no singing or vocal harmonies, lead rapper flow only";
+      }
       s4 += ".";
     } else {
       s4 += pick2(rng, [
@@ -4806,9 +5272,18 @@ var Suno = (() => {
       t = trimKeepingInstruments(t, MAX_CHARS);
     }
     if (t.length < MIN_CHARS) {
+      const isRap = plan.vocals.style === "rap" || plan.vocals.style === "talk-rap" || plan.vocals.style === "melodic-rap" || plan.vocals.style === "sung-rap" || plan.vocals.style === "sing-rap" || plan.vocals.style === "mumble-rap" || plan.vocals.style === "soundcloud-rap" || plan.vocals.style === "autotuned-rap" || plan.vocals.style === "lyrical-rap" || plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre);
+      const paddingPool = isRap ? [
+        ...RAP_PADDING,
+        ...PADDING.filter(
+          (p) => !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(
+            p
+          )
+        )
+      ] : PADDING;
       const extras = [
-        ...PADDING,
-        `Groove emphasis stays on ${plan.groove[0] ?? "pocket and weight"} with disciplined spacing and selective silence.`,
+        ...paddingPool,
+        isRap ? `Vocal cadence rides ${plan.groove[0] ?? "the 808 pocket"} with rapid punchline delivery and zero sung melodies.` : `Groove emphasis stays on ${plan.groove[0] ?? "pocket and weight"} with disciplined spacing and selective silence.`,
         `Low-end identity prioritizes ${plan.bass[0] ?? "mono sub"} under expressive mid-bass motion and clean mono compatibility.`
       ];
       const order = extras.map((e, i) => ({ e, i: (rng() * 1e3 + i) % extras.length })).sort((a, b) => a.i - b.i).map((x) => x.e);
@@ -4854,6 +5329,10 @@ var Suno = (() => {
         const c2 = insertBeforeInstruments(t, mixClause);
         if (c2.length <= MAX_CHARS) t = c2;
       }
+    }
+    const isRapTrack = plan.vocals.style === "rap" || plan.vocals.style === "talk-rap" || plan.vocals.style === "melodic-rap" || plan.vocals.style === "sung-rap" || plan.vocals.style === "sing-rap" || plan.vocals.style === "mumble-rap" || plan.vocals.style === "soundcloud-rap" || plan.vocals.style === "autotuned-rap" || plan.vocals.style === "lyrical-rap" || plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre);
+    if (isRapTrack) {
+      t = t.replace(/bright stacked female harmonies/gi, "bright female rap doubles").replace(/stacked background harmonies on chorus lifts/gi, "stacked background hype shouts on hook drops").replace(/stacked background harmonies/gi, "stacked background ad-lib doubles").replace(/layered vocal harmonies on hook/gi, "layered ad-lib chants on hook").replace(/layered harmonies/gi, "stereo doubles").replace(/wide harmonic ad-libs/gi, "wide stereo ad-lib echoes").replace(/melodic lift with a soaring top-line fragment/gi, "cold pluck hook motif").replace(/pads, harmonies, and ambience/gi, "pads, ad-libs, and ambience").replace(/a harmony, a wobble syllable/gi, "a vocal chop, an 808 slide");
     }
     return t.replace(/\s+/g, " ").trim();
   }
@@ -4901,6 +5380,7 @@ var Suno = (() => {
     for (let i = parts.length - 1; i >= 1; i--) {
       if (anchors.some((a) => hasAnchor(parts[i], a))) continue;
       if (/\bbpm\b/i.test(parts[i])) continue;
+      if (/vocal delivery:|vocals:/i.test(parts[i])) continue;
       drop = i;
       break;
     }
@@ -5292,6 +5772,21 @@ var Suno = (() => {
       const bpm = PROFILE.preferredBpmCenters[a] ?? 140;
       push(`${a} + ${b}, ${mood}, ${bpm} BPM`);
     }
+    push("140 BPM Trap, mumble soundcloud rapper flow, distorted 808, slurred cadence");
+    push("130 BPM UK Drill, cold talk-rap delivery, sliding 808, zero singing");
+    push("88 BPM Boom Bap, lyrical bars, complex rhyme schemes, sharp punchlines");
+    push("136 BPM Melodic Trap, autotuned rap, emotional sung-rap hook, ambient keys");
+    push("144 BPM Atlanta Trap, rapid staccato rap flow, rapid hi-hats, heavy sub");
+    push("96 BPM West Coast Hip Hop, deadpan talk-rap cadence, laid-back G-funk bass");
+    push("142 BPM Rage Trap, hard autotuned rap flow, distorted synths, hyper-energy ad-libs");
+    push("132 BPM Cloud Rap, hypnotic SoundCloud mumble rapper, spaced-out pads, lo-fi 808");
+    push("92 BPM Underground Hip Hop, dense lyrical bars, boom bap drums, razor-sharp internal rhymes");
+    push("138 BPM Melodic Trap, Tory Lanez style sung-rap topline, autotuned hooks, zero pop singing");
+    push("100 BPM Detroit Hip Hop, offbeat talk-rap cadence, punchline pauses, clean sub-bass");
+    push("140 BPM NY Drill, menacing female drill rap flow, sliding 808s, triplet bursts");
+    push("146 BPM Southern Trap, rapid chopper rap cadence, triplet hats, heavy brass stabs");
+    push("134 BPM Emo Trap, Juice WRLD inspired autotuned sung-rap, acoustic guitar loop, sliding sub");
+    push("140 BPM Memphis Phonk, gritty distorted rap delivery, phonk cowbells, sub-bass bounce");
     return out;
   }
   function pickSuggestions(seed, count = SUGGESTION_COUNT) {
@@ -6894,9 +7389,134 @@ Up to 8 minutes per track. Max Mode and Variety sliders control consistency and 
         }
       }
       const tag = `[${label}]`;
+      const isRapDelivery = /rap|mumble|autotune|sung-rap|sing-rap|lyrical|bars|talk-rap|spoken|chopper|drill|trap|boom bap/i.test(
+        delivery
+      ) || /trap|drill|rap|hip hop/i.test(genre);
       let performanceNote;
       if (includeTags) {
-        performanceNote = pick(rng, tpl.performanceNotes);
+        if (isRapDelivery) {
+          if (sType === "intro") {
+            performanceNote = pick(rng, [
+              "(low-pass filtered intro, atmospheric sub rumble, producer tag)",
+              "(close-mic vocal intro, cold ad-libs: yeah, listen)",
+              "(dry spoken count-in, 808 pre-drop tease)",
+              "(telephone EQ vocals, vinyl static, spaced-out cadence)"
+            ]);
+          } else if (sType === "verse") {
+            if (/mumble/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(slurred SoundCloud mumble flow, triplet rolls, 808 glide answers)",
+                "(spaced-out mumble cadence, distorted ad-libs: aye! skrrt!)",
+                "(hypnotic lazy flow, heavy bass sync, short breath pauses)"
+              ]);
+            } else if (/autotune/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(hard autotuned trap cadence, pitch-snapped precision, stereo ad-lib throws)",
+                "(robotic metallic vocal delivery, fast retune speed, 808 locked)",
+                "(emotive autotuned flow, pitch glides on rhyme ends, zero choral singing)"
+              ]);
+            } else if (/sung-rap|sing-rap/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(melodic sung-rap trap flow, pitched cadence in the pocket, no choir)",
+                "(Drake/Juice WRLD inspired sung-rap delivery, rhythmic bounce, autotuned sheen)",
+                "(vibey nocturnal sing-rap pocket, tight delay throws, strictly rap timing)"
+              ]);
+            } else if (/lyrical|bars|chopper/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(bar-heavy technical flow, breathless multi-syllable rhyme scheme)",
+                "(rapid-fire staccato delivery, razor-sharp consonant articulation)",
+                "(relentless bar-for-bar lyrical assault, punchline rests for 808)"
+              ]);
+            } else if (/talk-rap|spoken/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(deadpan talk-rap cadence, dry conversational spoken flow, zero singing)",
+                "(Detroit offbeat talk-rap, punchline pauses, clean center presence)",
+                "(West Coast conversational swagger, laid-back speech timing over heavy sub)"
+              ]);
+            } else {
+              performanceNote = pick(rng, [
+                "(in the pocket, rhythmic rap flow, zero sung melodies)",
+                "(aggressive consonant punch, staccato cadence, leaves air for the 808)",
+                "(street trap bounce, syncopated triplets, crowd ad-lib doubles)"
+              ]);
+            }
+          } else if (sType === "buildup") {
+            performanceNote = pick(rng, [
+              "(snare rolls accelerate, hi-hat triplet rush, rising rap urgency)",
+              "(stuttering vocal chop riser, 808 cutoff, breath-held pre-drop pause)",
+              "(rapid punchline build, rising filter, double-time hats, zero choir)",
+              "(tension escalates, chanted vocal doubles, sub drop incoming)"
+            ]);
+          } else if (sType === "drop") {
+            performanceNote = pick(rng, [
+              "(explosive 808 drop, distorted sub glide, hype crowd chant)",
+              "(monumental sub impact, silence gap then full bass slam, ad-lib shouts)",
+              "(heavy trap drop, punchline accent, distorted 808 slide screams)",
+              "(half-time heavy drums, vocal chop hits, sub-bass seismic impact)"
+            ]);
+          } else if (sType === "chorus") {
+            if (/mumble/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(hypnotic mumble hook, repetitive earworm refrain, distorted 808s)",
+                "(slurred anthemic hook, hyperactive ad-lib screams: yeah! aye! what!)",
+                "(spaced-out mumble hook locked dead-center in the 808 pocket)"
+              ]);
+            } else if (/autotune/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(hard-tuned hook anthem, metallic pitch snaps, wide stereo ad-lib echoes)",
+                "(saturated autotune chant hook, robotic octave doubles, zero choir singing)",
+                "(Travis Scott-style cavernous autotuned hook, reverb throw ad-libs)"
+              ]);
+            } else if (/sung-rap|sing-rap/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(melodic sung-rap hook, pitched trap bounce, strictly no choral harmonies)",
+                "(infectious sing-rap earworm refrain, autotuned doubles, rap pocket)",
+                "(emotive melodic sung-rap hook, tight pocket timing, modern trap sheen)"
+              ]);
+            } else if (/lyrical|bars/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(hard-hitting chanted hook, crowd shout doubling, punchline impact)",
+                "(unforgiving lyrical hook, staccato syllables, explosive 808 responses)",
+                "(stadium-sized rap chant hook, doubled lead MC, zero vocal harmonies)"
+              ]);
+            } else if (/talk-rap|spoken/i.test(delivery)) {
+              performanceNote = pick(rng, [
+                "(deadpan spoken hook, razor-sharp punchline pauses, heavy sub answers)",
+                "(conversational call-and-response hook, dry spoken delivery, zero singing)",
+                "(nonchalant spoken hook refrain, tight center image over rolling 808s)"
+              ]);
+            } else {
+              performanceNote = pick(rng, [
+                "(crowd-chanted rap hook, shouted doubles, zero vocal harmonies)",
+                "(anthemic trap hook chant, hard-panned ad-libs, heavy sub synchronization)",
+                "(syncopated street hook, staccato punchlines, crowd hype responses)"
+              ]);
+            }
+          } else if (sType === "breakdown") {
+            performanceNote = pick(rng, [
+              "(drums cut out, solo 808 sub rumble, dry conversational spoken bars)",
+              "(low-pass filtered sample, quiet mumble ad-libs, intimate street confession)",
+              "(sparse bass break, lead MC spoken reflection, zero sung harmonies)",
+              "(filtered synth keys, whispered punchline, tension gathering for drop)"
+            ]);
+          } else if (sType === "bridge") {
+            performanceNote = pick(rng, [
+              "(half-time pocket switch, spoken storytelling cadence, raw bass focus)",
+              "(introspective lyrical bars, rhythm breakdown, dry center vocal)",
+              "(autotuned melodic rap bridge, pitch-bent ad-lib answers, zero choir)",
+              "(cadence switch-up, double-time sprint into sudden silence pause)"
+            ]);
+          } else if (sType === "outro") {
+            performanceNote = pick(rng, [
+              "(drums fade, lingering sub rumble, conversational talk-rap sign-off)",
+              "(fading 808 slides, quiet ad-lib echoes: yeah... let it ride...)",
+              "(slurred mumble vocal trailing into delay, solo 808 hits into silence)",
+              "(spoken street sign-off, vinyl crackle fade, zero vocal harmonies)"
+            ]);
+          }
+        } else {
+          performanceNote = pick(rng, tpl.performanceNotes);
+        }
       }
       let lines = [];
       if (draftInfo.userStanzas.length > userStanzaIdx) {

@@ -7,6 +7,7 @@ export interface ParsedInput {
   moods: string[];
   atmospheres: string[];
   instruments: string[];
+  explicitInstruments?: string[];
   vocals?: VocalPreferences;
   grooveHints: string[];
   bassHints: string[];
@@ -29,9 +30,24 @@ export interface VocalPreferences {
   register?: string;
   timbre?: string;
   delivery?: string;
-  style?: "sung" | "rap" | "talk-rap" | "melodic-rap" | "chops" | "hybrid";
+  style?:
+    | "sung"
+    | "rap"
+    | "talk-rap"
+    | "melodic-rap"
+    | "sung-rap"
+    | "sing-rap"
+    | "mumble-rap"
+    | "soundcloud-rap"
+    | "autotuned-rap"
+    | "lyrical-rap"
+    | "chops"
+    | "hybrid";
   language?: string;
   processing?: string[];
+  rawDescription?: string;
+  descriptors?: string[];
+  textureVariations?: string[];
 }
 
 export interface SonicPlan {

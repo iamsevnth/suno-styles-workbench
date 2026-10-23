@@ -559,10 +559,137 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
     }
     const tag = `[${label}]`;
 
+    const isRapDelivery =
+      /rap|mumble|autotune|sung-rap|sing-rap|lyrical|bars|talk-rap|spoken|chopper|drill|trap|boom bap/i.test(
+        delivery
+      ) || /trap|drill|rap|hip hop/i.test(genre);
+
     // Performance note
     let performanceNote: string | undefined;
     if (includeTags) {
-      performanceNote = pick(rng, tpl.performanceNotes);
+      if (isRapDelivery) {
+        if (sType === "intro") {
+          performanceNote = pick(rng, [
+            "(low-pass filtered intro, atmospheric sub rumble, producer tag)",
+            "(close-mic vocal intro, cold ad-libs: yeah, listen)",
+            "(dry spoken count-in, 808 pre-drop tease)",
+            "(telephone EQ vocals, vinyl static, spaced-out cadence)",
+          ]);
+        } else if (sType === "verse") {
+          if (/mumble/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(slurred SoundCloud mumble flow, triplet rolls, 808 glide answers)",
+              "(spaced-out mumble cadence, distorted ad-libs: aye! skrrt!)",
+              "(hypnotic lazy flow, heavy bass sync, short breath pauses)",
+            ]);
+          } else if (/autotune/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(hard autotuned trap cadence, pitch-snapped precision, stereo ad-lib throws)",
+              "(robotic metallic vocal delivery, fast retune speed, 808 locked)",
+              "(emotive autotuned flow, pitch glides on rhyme ends, zero choral singing)",
+            ]);
+          } else if (/sung-rap|sing-rap/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(melodic sung-rap trap flow, pitched cadence in the pocket, no choir)",
+              "(Drake/Juice WRLD inspired sung-rap delivery, rhythmic bounce, autotuned sheen)",
+              "(vibey nocturnal sing-rap pocket, tight delay throws, strictly rap timing)",
+            ]);
+          } else if (/lyrical|bars|chopper/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(bar-heavy technical flow, breathless multi-syllable rhyme scheme)",
+              "(rapid-fire staccato delivery, razor-sharp consonant articulation)",
+              "(relentless bar-for-bar lyrical assault, punchline rests for 808)",
+            ]);
+          } else if (/talk-rap|spoken/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(deadpan talk-rap cadence, dry conversational spoken flow, zero singing)",
+              "(Detroit offbeat talk-rap, punchline pauses, clean center presence)",
+              "(West Coast conversational swagger, laid-back speech timing over heavy sub)",
+            ]);
+          } else {
+            performanceNote = pick(rng, [
+              "(in the pocket, rhythmic rap flow, zero sung melodies)",
+              "(aggressive consonant punch, staccato cadence, leaves air for the 808)",
+              "(street trap bounce, syncopated triplets, crowd ad-lib doubles)",
+            ]);
+          }
+        } else if (sType === "buildup") {
+          performanceNote = pick(rng, [
+            "(snare rolls accelerate, hi-hat triplet rush, rising rap urgency)",
+            "(stuttering vocal chop riser, 808 cutoff, breath-held pre-drop pause)",
+            "(rapid punchline build, rising filter, double-time hats, zero choir)",
+            "(tension escalates, chanted vocal doubles, sub drop incoming)",
+          ]);
+        } else if (sType === "drop") {
+          performanceNote = pick(rng, [
+            "(explosive 808 drop, distorted sub glide, hype crowd chant)",
+            "(monumental sub impact, silence gap then full bass slam, ad-lib shouts)",
+            "(heavy trap drop, punchline accent, distorted 808 slide screams)",
+            "(half-time heavy drums, vocal chop hits, sub-bass seismic impact)",
+          ]);
+        } else if (sType === "chorus") {
+          if (/mumble/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(hypnotic mumble hook, repetitive earworm refrain, distorted 808s)",
+              "(slurred anthemic hook, hyperactive ad-lib screams: yeah! aye! what!)",
+              "(spaced-out mumble hook locked dead-center in the 808 pocket)",
+            ]);
+          } else if (/autotune/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(hard-tuned hook anthem, metallic pitch snaps, wide stereo ad-lib echoes)",
+              "(saturated autotune chant hook, robotic octave doubles, zero choir singing)",
+              "(Travis Scott-style cavernous autotuned hook, reverb throw ad-libs)",
+            ]);
+          } else if (/sung-rap|sing-rap/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(melodic sung-rap hook, pitched trap bounce, strictly no choral harmonies)",
+              "(infectious sing-rap earworm refrain, autotuned doubles, rap pocket)",
+              "(emotive melodic sung-rap hook, tight pocket timing, modern trap sheen)",
+            ]);
+          } else if (/lyrical|bars/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(hard-hitting chanted hook, crowd shout doubling, punchline impact)",
+              "(unforgiving lyrical hook, staccato syllables, explosive 808 responses)",
+              "(stadium-sized rap chant hook, doubled lead MC, zero vocal harmonies)",
+            ]);
+          } else if (/talk-rap|spoken/i.test(delivery)) {
+            performanceNote = pick(rng, [
+              "(deadpan spoken hook, razor-sharp punchline pauses, heavy sub answers)",
+              "(conversational call-and-response hook, dry spoken delivery, zero singing)",
+              "(nonchalant spoken hook refrain, tight center image over rolling 808s)",
+            ]);
+          } else {
+            performanceNote = pick(rng, [
+              "(crowd-chanted rap hook, shouted doubles, zero vocal harmonies)",
+              "(anthemic trap hook chant, hard-panned ad-libs, heavy sub synchronization)",
+              "(syncopated street hook, staccato punchlines, crowd hype responses)",
+            ]);
+          }
+        } else if (sType === "breakdown") {
+          performanceNote = pick(rng, [
+            "(drums cut out, solo 808 sub rumble, dry conversational spoken bars)",
+            "(low-pass filtered sample, quiet mumble ad-libs, intimate street confession)",
+            "(sparse bass break, lead MC spoken reflection, zero sung harmonies)",
+            "(filtered synth keys, whispered punchline, tension gathering for drop)",
+          ]);
+        } else if (sType === "bridge") {
+          performanceNote = pick(rng, [
+            "(half-time pocket switch, spoken storytelling cadence, raw bass focus)",
+            "(introspective lyrical bars, rhythm breakdown, dry center vocal)",
+            "(autotuned melodic rap bridge, pitch-bent ad-lib answers, zero choir)",
+            "(cadence switch-up, double-time sprint into sudden silence pause)",
+          ]);
+        } else if (sType === "outro") {
+          performanceNote = pick(rng, [
+            "(drums fade, lingering sub rumble, conversational talk-rap sign-off)",
+            "(fading 808 slides, quiet ad-lib echoes: yeah... let it ride...)",
+            "(slurred mumble vocal trailing into delay, solo 808 hits into silence)",
+            "(spoken street sign-off, vinyl crackle fade, zero vocal harmonies)",
+          ]);
+        }
+      } else {
+        performanceNote = pick(rng, tpl.performanceNotes);
+      }
     }
 
     // Check if user draft lyrics can be incorporated

@@ -63,6 +63,23 @@ export function suggestionPool(): string[] {
     push(`${a} + ${b}, ${mood}, ${bpm} BPM`);
   }
 
+  // Rapper style presets (mumble soundcloud, autotuned, lyrical bars, talk-rap, sung-rap)
+  push("140 BPM Trap, mumble soundcloud rapper flow, distorted 808, slurred cadence");
+  push("130 BPM UK Drill, cold talk-rap delivery, sliding 808, zero singing");
+  push("88 BPM Boom Bap, lyrical bars, complex rhyme schemes, sharp punchlines");
+  push("136 BPM Melodic Trap, autotuned rap, emotional sung-rap hook, ambient keys");
+  push("144 BPM Atlanta Trap, rapid staccato rap flow, rapid hi-hats, heavy sub");
+  push("96 BPM West Coast Hip Hop, deadpan talk-rap cadence, laid-back G-funk bass");
+  push("142 BPM Rage Trap, hard autotuned rap flow, distorted synths, hyper-energy ad-libs");
+  push("132 BPM Cloud Rap, hypnotic SoundCloud mumble rapper, spaced-out pads, lo-fi 808");
+  push("92 BPM Underground Hip Hop, dense lyrical bars, boom bap drums, razor-sharp internal rhymes");
+  push("138 BPM Melodic Trap, Tory Lanez style sung-rap topline, autotuned hooks, zero pop singing");
+  push("100 BPM Detroit Hip Hop, offbeat talk-rap cadence, punchline pauses, clean sub-bass");
+  push("140 BPM NY Drill, menacing female drill rap flow, sliding 808s, triplet bursts");
+  push("146 BPM Southern Trap, rapid chopper rap cadence, triplet hats, heavy brass stabs");
+  push("134 BPM Emo Trap, Juice WRLD inspired autotuned sung-rap, acoustic guitar loop, sliding sub");
+  push("140 BPM Memphis Phonk, gritty distorted rap delivery, phonk cowbells, sub-bass bounce");
+
   return out;
 }
 

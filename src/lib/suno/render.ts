@@ -5,6 +5,7 @@ import {
   MICROS,
   oneFamily,
   PADDING,
+  RAP_PADDING,
   PRODUCTION,
   PRODUCTION_VERBS,
   VOCAL_ARC,
@@ -48,27 +49,18 @@ function compose(plan: SonicPlan): string {
   const instruments = plan.instruments.slice(0, 8).join(", ");
   const prod = oneFamily(rng, PRODUCTION, families);
 
-  const vocalCue = plan.vocals.present
-    ? [
-        plan.vocals.presentation ?? "lead",
-        plan.vocals.timbre,
-        plan.vocals.register ?? "mid",
-        plan.vocals.style === "talk-rap"
-          ? "talk-rap"
-          : plan.vocals.style === "melodic-rap"
-          ? "sung-rap"
-          : plan.vocals.style === "rap"
-          ? "rap"
-          : plan.vocals.style === "chops"
-          ? "chopped"
-          : "sung",
-        "vocals",
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim()
-    : "";
+  const isRapStyle =
+    plan.vocals.style === "rap" ||
+    plan.vocals.style === "talk-rap" ||
+    plan.vocals.style === "melodic-rap" ||
+    plan.vocals.style === "sung-rap" ||
+    plan.vocals.style === "sing-rap" ||
+    plan.vocals.style === "mumble-rap" ||
+    plan.vocals.style === "soundcloud-rap" ||
+    plan.vocals.style === "autotuned-rap" ||
+    plan.vocals.style === "lyrical-rap" ||
+    families.includes("rap") ||
+    families.includes("drill");
 
   let s1: string;
   let s2: string;
@@ -130,10 +122,7 @@ function compose(plan: SonicPlan): string {
     s3 = `Keep ${bass} musical: ${behavior}.`;
   }
 
-  if (vocalCue && !s1.toLowerCase().includes("vocal")) {
-    s1 = s1.replace(/\.$/, "") + ` with ${vocalCue}.`;
-  }
-
+  // Harmonic bed & Melodic motifs
   let s4 = "";
   if (harm) {
     const harmVerb = pick2(rng, [...PRODUCTION_VERBS.harm]);
@@ -145,31 +134,55 @@ function compose(plan: SonicPlan): string {
     s4 += ".";
   }
   if (sd) {
-    s4 += pick2(rng, [...PRODUCTION_VERBS.texture]).replace("{sd}", sd);
+    s4 += (s4 ? " " : "") + pick2(rng, [...PRODUCTION_VERBS.texture]).replace("{sd}", sd);
   }
 
+  // Unified Vocal Section
+  let sVocal = "";
   if (plan.vocals.present) {
     const v = plan.vocals;
     const who = v.presentation === "female" ? "female" : v.presentation === "male" ? "male" : "lead";
-    const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : "sung";
-    const style = pick2(rng, [...VOCAL_STYLE[styleKey]]);
-    const proc = (v.processing ?? []).slice(0, 2).join(" and ");
-    const arcBank = VOCAL_ARC[styleKey] ?? VOCAL_ARC.sung;
-    const arc = pick2(rng, [...(arcBank ?? VOCAL_ARC.sung)]);
-    const identity =
-      v.delivery && v.delivery.length > 18
-        ? v.delivery
-        : `${who} ${v.timbre ?? "expressive"} ${v.register ?? "mid"} ${style}`;
-    s4 += ` Vocals: ${identity}`;
-    if (v.language) s4 += ` in ${v.language}`;
-    s4 += `, ${arc}`;
-    if (proc) s4 += ` with ${proc}`;
-    s4 += ".";
+
+    if (v.rawDescription || (v.descriptors && v.descriptors.length > 0)) {
+      // Direct, authentic enhancement of user's exact vocal description into Suno audio terms
+      const rawText = v.rawDescription ? v.rawDescription.replace(/\.$/, "") : v.descriptors!.join(", ");
+      const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
+
+      const intros = [
+        `Vocal performance features ${rawText}, engineered with ${texture}.`,
+        `Lead vocals deliver ${rawText}, captured with ${texture}.`,
+        `Vocal delivery showcases ${rawText}, finished with ${texture}.`,
+        `Topline features ${rawText}, balanced with ${texture}.`,
+      ];
+      sVocal = intros[template % intros.length];
+    } else {
+      const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
+      const stylePhrase = pick2(rng, [...(VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap)]);
+      const proc = (v.processing ?? []).slice(0, 2).join(" and ");
+      const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
+      const arc = pick2(rng, [...(arcBank ?? VOCAL_ARC.rap)]);
+      const identity =
+        v.delivery && v.delivery.length > 15
+          ? v.delivery
+          : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
+
+      let vBody = `${identity} with ${stylePhrase}`;
+      if (v.language) vBody += ` in ${v.language}`;
+      vBody += `, ${arc}`;
+      if (proc) vBody += `, treated with ${proc}`;
+
+      const intros = [
+        `Vocal performance features ${vBody}.`,
+        `Lead vocals deliver ${vBody}.`,
+        `Vocals center on ${vBody}.`,
+      ];
+      sVocal = intros[template % intros.length];
+    }
   } else {
-    s4 += pick2(rng, [
-      " Keep the arrangement instrumental-focused, letting bass, motif, and atmosphere carry the topline role.",
-      " Stay instrumental: bass motifs and atmosphere replace a lead vocal.",
-      " No lead vocal — motif, bass, and percussion carry the hook role.",
+    sVocal = pick2(rng, [
+      "Arrangement stays strictly instrumental, letting bass motifs and atmospheric textures lead the melodic hook role.",
+      "Composed as a pure instrumental cut, driven by bass movement and rhythmic space rather than a lead vocal.",
+      "Instrumental arrangement where melodic motifs and percussion carry the primary topline focus.",
     ]);
   }
 
@@ -178,9 +191,21 @@ function compose(plan: SonicPlan): string {
   if (master) s5 += `, finished with ${master}`;
   s5 += `. ${pick2(rng, [...PRODUCTION_VERBS.form])} ${arr}.`;
 
-  const s6 = `Primary instrumentation: ${instruments}.`;
+  // Flowing instrumentation phrasing without rigid label headers
+  const instIntros = [
+    `The arrangement centers on ${instruments}.`,
+    `Instrumentation features ${instruments}.`,
+    `Arranged with ${instruments}.`,
+    `Instrumentation is built around ${instruments}.`,
+    `Acoustic palette includes ${instruments}.`,
+  ];
+  const s6 = instIntros[template % instIntros.length];
 
-  return [s1, s2, s3, s4.trim(), s5, s6].join(" ").replace(/\s+/g, " ").trim();
+  return [s1, s2, s3, s4.trim(), sVocal.trim(), s5.trim(), s6.trim()]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function feelPhrase(feel: string, rng: () => number): string {
@@ -250,14 +275,41 @@ function fitToWindow(text: string, plan: SonicPlan): string {
   }
 
   if (t.length < MIN_CHARS) {
+    const isRap =
+      plan.vocals.style === "rap" ||
+      plan.vocals.style === "talk-rap" ||
+      plan.vocals.style === "melodic-rap" ||
+      plan.vocals.style === "sung-rap" ||
+      plan.vocals.style === "sing-rap" ||
+      plan.vocals.style === "mumble-rap" ||
+      plan.vocals.style === "soundcloud-rap" ||
+      plan.vocals.style === "autotuned-rap" ||
+      plan.vocals.style === "lyrical-rap" ||
+      (plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre));
+
+    const paddingPool = isRap
+      ? [
+          ...RAP_PADDING,
+          ...PADDING.filter(
+            (p) =>
+              !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(
+                p
+              )
+          ),
+        ]
+      : PADDING;
+
     const extras = [
-      ...PADDING,
+      ...paddingPool.filter((p) => !/vocal|singing|harmonies|sung/i.test(p)),
       `Groove emphasis stays on ${
         plan.groove[0] ?? "pocket and weight"
-      } with disciplined spacing and selective silence.`,
+      } with disciplined spacing and punchy transient response.`,
       `Low-end identity prioritizes ${
         plan.bass[0] ?? "mono sub"
       } under expressive mid-bass motion and clean mono compatibility.`,
+      `Rhythmic pocket remains locked to ${
+        plan.groove[0] ?? "the foundation"
+      } with clean transient dynamics.`,
     ];
     const order = extras
       .map((e, i) => ({ e, i: (rng() * 1000 + i) % extras.length }))
@@ -318,6 +370,31 @@ function fitToWindow(text: string, plan: SonicPlan): string {
     }
   }
 
+  const isRapTrack =
+    plan.vocals.style === "rap" ||
+    plan.vocals.style === "talk-rap" ||
+    plan.vocals.style === "melodic-rap" ||
+    plan.vocals.style === "sung-rap" ||
+    plan.vocals.style === "sing-rap" ||
+    plan.vocals.style === "mumble-rap" ||
+    plan.vocals.style === "soundcloud-rap" ||
+    plan.vocals.style === "autotuned-rap" ||
+    plan.vocals.style === "lyrical-rap" ||
+    (plan.primaryGenre && /rap|drill|trap|hip hop/i.test(plan.primaryGenre));
+
+  if (isRapTrack) {
+    t = t
+      .replace(/bright stacked female harmonies/gi, "bright female rap doubles")
+      .replace(/stacked background harmonies on chorus lifts/gi, "stacked background hype shouts on hook drops")
+      .replace(/stacked background harmonies/gi, "stacked background ad-lib doubles")
+      .replace(/layered vocal harmonies on hook/gi, "layered ad-lib chants on hook")
+      .replace(/layered harmonies/gi, "stereo doubles")
+      .replace(/wide harmonic ad-libs/gi, "wide stereo ad-lib echoes")
+      .replace(/melodic lift with a soaring top-line fragment/gi, "cold pluck hook motif")
+      .replace(/pads, harmonies, and ambience/gi, "pads, ad-libs, and ambience")
+      .replace(/a harmony, a wobble syllable/gi, "a vocal chop, an 808 slide");
+  }
+
   return t.replace(/\s+/g, " ").trim();
 }
 
@@ -359,8 +436,16 @@ function ensureAnchors(text: string, plan: SonicPlan): string {
   return t.replace(/\s+/g, " ").trim();
 }
 
+const INSTRUMENT_HEADER_RE =
+  /(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes|Primary instrumentation:)/i;
+
+function findInstrumentationIndex(text: string): number {
+  const m = text.match(INSTRUMENT_HEADER_RE);
+  return m && m.index != null ? m.index : -1;
+}
+
 function dropFillerSentence(text: string, anchors: string[]): string {
-  const instIdx = text.lastIndexOf("Primary instrumentation:");
+  const instIdx = findInstrumentationIndex(text);
   const head = instIdx > 0 ? text.slice(0, instIdx).trim() : text;
   const tail = instIdx > 0 ? text.slice(instIdx) : "";
   const parts = head.split(/(?<=\.)\s+/).filter(Boolean);
@@ -369,6 +454,7 @@ function dropFillerSentence(text: string, anchors: string[]): string {
   for (let i = parts.length - 1; i >= 1; i--) {
     if (anchors.some((a) => hasAnchor(parts[i], a))) continue;
     if (/\bbpm\b/i.test(parts[i])) continue;
+    if (/vocal performance|lead vocal|vocal delivery|topline features|vocals center|vocals:/i.test(parts[i])) continue; // Never drop vocal section!
     drop = i;
     break;
   }
@@ -380,7 +466,7 @@ function dropFillerSentence(text: string, anchors: string[]): string {
 function insertBeforeInstruments(text: string, clause: string): string {
   const c = clause.trim();
   if (!c) return text;
-  const instIdx = text.lastIndexOf("Primary instrumentation:");
+  const instIdx = findInstrumentationIndex(text);
   if (instIdx > 0) {
     return `${text.slice(0, instIdx)}${c} ${text.slice(instIdx)}`.replace(/\s+/g, " ").trim();
   }
@@ -389,7 +475,9 @@ function insertBeforeInstruments(text: string, clause: string): string {
 
 function trimKeepingInstruments(text: string, max: number): string {
   if (text.length <= max) return text;
-  const inst = text.match(/ Primary instrumentation:.*$/);
+  const inst = text.match(
+    /\s+(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes|Primary instrumentation:).*$/i
+  );
   if (!inst) {
     let body = text.slice(0, max);
     const lastStop = body.lastIndexOf(". ");

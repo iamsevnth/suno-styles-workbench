@@ -535,10 +535,26 @@ function buildAnchors(parsed: ParsedInput, bpm: number): string[] {
   for (const m of parsed.moods.slice(0, 3)) anchors.push(m);
   if (parsed.key) anchors.push(parsed.key);
   if (parsed.instrumental) anchors.push("instrumental");
-  if (parsed.vocals?.presentation) anchors.push(`${parsed.vocals.presentation} vocals`);
+  if (parsed.vocals?.presentation) {
+    if (
+      parsed.vocals?.style === "rap" ||
+      parsed.vocals?.style === "talk-rap" ||
+      parsed.vocals?.style === "melodic-rap" ||
+      parsed.vocals?.style === "mumble-rap" ||
+      parsed.vocals?.style === "autotuned-rap" ||
+      parsed.vocals?.style === "lyrical-rap"
+    ) {
+      anchors.push(`${parsed.vocals.presentation} rap flow`);
+    } else {
+      anchors.push(`${parsed.vocals.presentation} vocals`);
+    }
+  }
   if (parsed.vocals?.register) anchors.push(parsed.vocals.register);
   if (parsed.vocals?.style === "talk-rap") anchors.push("talk-rap");
-  else if (parsed.vocals?.style === "melodic-rap") anchors.push("sung-rap");
+  else if (parsed.vocals?.style === "melodic-rap") anchors.push("melodic-rap");
+  else if (parsed.vocals?.style === "mumble-rap") anchors.push("mumble-rap");
+  else if (parsed.vocals?.style === "autotuned-rap") anchors.push("autotuned-rap");
+  else if (parsed.vocals?.style === "lyrical-rap") anchors.push("lyrical-rap");
   else if (parsed.vocals?.style === "rap") anchors.push("rap");
   else if (parsed.vocals?.style === "sung") anchors.push("sung");
   if (parsed.vocals?.language) anchors.push(parsed.vocals.language);
@@ -661,10 +677,30 @@ function buildHarmony(
   parsed: ParsedInput,
   rng: () => number
 ): string[] {
+  const isRap =
+    parsed.vocals?.style === "rap" ||
+    parsed.vocals?.style === "talk-rap" ||
+    parsed.vocals?.style === "melodic-rap" ||
+    parsed.vocals?.style === "sung-rap" ||
+    parsed.vocals?.style === "sing-rap" ||
+    parsed.vocals?.style === "mumble-rap" ||
+    parsed.vocals?.style === "soundcloud-rap" ||
+    parsed.vocals?.style === "autotuned-rap" ||
+    parsed.vocals?.style === "lyrical-rap" ||
+    families.includes("rap") ||
+    families.includes("drill");
+
   const h: string[] = [];
   if (parsed.key) h.push(`${parsed.key} tonal center`);
-  h.push(...pickFamily(rng, HARMONY, families, 2));
-  if (rng() > 0.4) h.push(...pickFamily(rng, DNA_HARMONY, families, 1));
+  const harmFamilies = isRap ? ["trap", "general"] : families;
+  h.push(...pickFamily(rng, HARMONY, harmFamilies, 2));
+  if (rng() > 0.4) {
+    const raw = pickFamily(rng, DNA_HARMONY, isRap ? ["trap", "general"] : families, 1);
+    const filtered = isRap
+      ? raw.filter((x) => !/harmonies|soaring|stacked harmonies|soulful lifts/i.test(x))
+      : raw;
+    h.push(...(filtered.length ? filtered : ["minimal trap-key stabs"]));
+  }
   if (["dark", "ominous", "melancholic", "menacing", "nocturnal", "aggressive"].includes(mood)) {
     h.push(oneFamily(rng, HARMONY, ["trap", "general"]));
   }
@@ -677,10 +713,128 @@ function buildMelody(
   parsed: ParsedInput,
   rng: () => number
 ): string[] {
-  if (parsed.instruments.some((i) => /guitar/i.test(i))) {
-    return [pick(rng, ["sparse clean electric guitar motifs", "melodic guitar answers"])];
+  const isRap =
+    parsed.vocals?.style === "rap" ||
+    parsed.vocals?.style === "talk-rap" ||
+    parsed.vocals?.style === "melodic-rap" ||
+    parsed.vocals?.style === "sung-rap" ||
+    parsed.vocals?.style === "sing-rap" ||
+    parsed.vocals?.style === "mumble-rap" ||
+    parsed.vocals?.style === "soundcloud-rap" ||
+    parsed.vocals?.style === "autotuned-rap" ||
+    parsed.vocals?.style === "lyrical-rap" ||
+    families.includes("rap") ||
+    families.includes("drill");
+
+  // 1. If user explicitly specified instruments, honor them and vary their tone/texture
+  if (parsed.explicitInstruments?.length) {
+    if (parsed.explicitInstruments.includes("guitar")) {
+      return [
+        pick(rng, [
+          "warm tape-saturated electric guitar motifs",
+          "sparse clean electric guitar answers",
+          "ambient reverb-drenched guitar swells",
+          "delicate fingerpicked guitar phrases",
+          "rhythmic muted electric guitar riffs",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("Rhodes electric piano")) {
+      return [
+        pick(rng, [
+          "warm Rhodes electric piano motifs",
+          "tape-saturated Rhodes chord melodies",
+          "ambient chorus-modulated Rhodes lines",
+          "sparse neo-soul Rhodes phrases",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("piano")) {
+      return [
+        pick(rng, [
+          "intimate felt-piano melodic answers",
+          "sparse acoustic piano motifs",
+          "reverb-drenched piano hook fragments",
+          "warm dynamic piano phrasing",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("synth") || parsed.explicitInstruments.includes("synth plucks")) {
+      return [
+        pick(rng, [
+          "delicate synth pluck hooks",
+          "shimmering analog synth lead lines",
+          "warm filtered synth bell motifs",
+          "sine-wave melodic answers",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("strings")) {
+      return [
+        pick(rng, [
+          "cinematic legato string melodies",
+          "warm bowed cello counterpoint",
+          "expressive string section answers",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("brass")) {
+      return [
+        pick(rng, [
+          "muted trumpet melodic accents",
+          "warm vintage brass melodies",
+          "expressive horn counter-melodies",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("flute")) {
+      return [
+        pick(rng, [
+          "breathy wooden flute melodies",
+          "reverb-washed bamboo flute motifs",
+          "analog synth flute leads",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("bells") || parsed.explicitInstruments.includes("mallets")) {
+      return [
+        pick(rng, [
+          "crystalline synth bell cells",
+          "resonant kalimba melodic motifs",
+          "warm vibraphone melodic answers",
+        ]),
+      ];
+    }
   }
-  return pickFamily(rng, MELODY, families, 1);
+
+  // 2. If user mentions "melodic" or no explicit instrument specified:
+  // Never exclusively default to a single instrument! Draw dynamically from a genre-tailored diverse palette:
+  const melodicPalette = isRap
+    ? [
+        "warm Rhodes electric piano motifs",
+        "crystalline synth bell cells",
+        "lush filtered keyboard melodies",
+        "sparse neo-soul electric piano chords",
+        "cold pluck hooks",
+        "ambient filtered guitar swells",
+        "delicate sine-wave lead melodies",
+        "resonant kalimba melodic cells",
+        "detuned tape synth phrases",
+        "warm analog bell-lead motifs",
+      ]
+    : [
+        "warm Rhodes electric piano motifs",
+        "simple emotional lead motifs",
+        "lush analog synth pad melodies",
+        "crystalline bell-like leads",
+        "sparse clean electric guitar motifs",
+        "few-note hooks with strong contour",
+        "lyrical intimate melodic phrases",
+        "soft soulful keys",
+        "ambient resonant mallets",
+      ];
+
+  return [pick(rng, melodicPalette)];
 }
 
 function buildSoundDesign(
@@ -708,8 +862,43 @@ function buildSoundDesign(
 function buildArrangement(energy: string, parsed: ParsedInput, rng: () => number): string[] {
   const a = [...parsed.arrangementHints];
   a.push(...pickArc(rng, energy));
-  if (rng() > 0.4) a.push(pick(rng, [...DNA_ARRANGE]));
-  if (rng() > 0.7) a.push(pick(rng, [...DNA_HOOK]));
+  const isRap =
+    parsed.vocals?.style === "rap" ||
+    parsed.vocals?.style === "talk-rap" ||
+    parsed.vocals?.style === "melodic-rap" ||
+    parsed.vocals?.style === "sung-rap" ||
+    parsed.vocals?.style === "sing-rap" ||
+    parsed.vocals?.style === "mumble-rap" ||
+    parsed.vocals?.style === "soundcloud-rap" ||
+    parsed.vocals?.style === "autotuned-rap" ||
+    parsed.vocals?.style === "lyrical-rap" ||
+    parsed.genres.some((g) => /rap|trap|drill|boom bap|hip hop/i.test(g));
+
+  if (rng() > 0.4) {
+    const raw = pick(rng, [...DNA_ARRANGE]);
+    if (isRap && /harmonies|soaring|belt/i.test(raw)) {
+      a.push("tight verse-to-chorus transition with rhythmic handoff and minimal trap motif");
+    } else {
+      a.push(raw);
+    }
+  }
+  if (rng() > 0.7) {
+    if (isRap) {
+      const rapHooks = [
+        "rhythmic chant hook with crowd shouts and 808 sub drops",
+        "hypnotic hook repetition with pitch-bent autotuned ad-libs",
+        "staccato punchline hook with wide stereo hype doubles",
+        "catchy single-note synth hook locked dead-center in the 808 pocket",
+        "earworm chanted refrain with layered ad-lib calls and zero sung harmonies",
+        "menacing drill slide hook with syncopated triplet pauses",
+        "repetitive melodic trap sung-rap hook riding distorted 808 slides",
+        "deadpan spoken hook with crisp punchline pauses and heavy bass answers",
+      ];
+      a.push(pick(rng, rapHooks));
+    } else {
+      a.push(pick(rng, [...DNA_HOOK]));
+    }
+  }
   return unique(a).slice(0, 4);
 }
 
@@ -758,20 +947,34 @@ function buildVocals(
     presentation = "female";
   }
 
-  const styleCycle: ("sung" | "rap" | "melodic-rap" | "talk-rap")[] = [
+  const styleCycle: (
+    | "sung"
+    | "rap"
+    | "melodic-rap"
+    | "talk-rap"
+    | "mumble-rap"
+    | "autotuned-rap"
+    | "lyrical-rap"
+  )[] = [
     "sung",
     "rap",
     "melodic-rap",
     "talk-rap",
-    "sung",
+    "autotuned-rap",
+    "lyrical-rap",
+    "mumble-rap",
     "melodic-rap",
   ];
   let style = explicit?.style;
   if (!style) {
     if (parsed.genres.some((g) => /Melodic Rap|Emotional Rap/i.test(g))) {
-      style = pick(rng, ["melodic-rap", "sung", "talk-rap"]);
+      style = pick(rng, ["melodic-rap", "autotuned-rap", "rap"]);
     } else if (parsed.genres.some((g) => /Drill/i.test(g))) {
-      style = pick(rng, ["rap", "talk-rap", "melodic-rap"]);
+      style = pick(rng, ["rap", "lyrical-rap", "talk-rap"]);
+    } else if (parsed.genres.some((g) => /Trap/i.test(g))) {
+      style = pick(rng, ["rap", "autotuned-rap", "mumble-rap", "melodic-rap", "talk-rap"]);
+    } else if (parsed.genres.some((g) => /Boom Bap|Conscious Hip Hop|Underground Rap/i.test(g))) {
+      style = pick(rng, ["lyrical-rap", "rap", "talk-rap"]);
     } else if (parsed.genres.some((g) => /Soul|R&B/i.test(g))) {
       style = pick(rng, ["sung", "sung", "melodic-rap"]);
     } else {
@@ -780,6 +983,16 @@ function buildVocals(
   }
 
   const pairPhrase = pickVocalPhrase(rng, presentation, style, families);
+
+  const roomNuances = [
+    "centered punchy presence with close-mic intimacy",
+    "spacious stereo imaging with airy high-end shimmer and subtle plate reflections",
+    "intimate dry-lead placement with warm tape saturation and focused punch",
+    "reverb-drenched atmospheric space with delicate delay throws",
+    "tight acoustic staging with crisp articulation and stereo doubles",
+    "front-and-center vocal authority with polished harmonic presence",
+  ];
+  const texture = roomNuances[(rank + attempt + Math.floor(rng() * 2)) % roomNuances.length];
 
   return {
     present: true,
@@ -798,11 +1011,24 @@ function buildVocals(
     style,
     language: explicit?.language,
     processing: explicit?.processing ?? pickNProc(rng, style),
+    rawDescription: explicit?.rawDescription,
+    descriptors: explicit?.descriptors,
+    textureVariations: [texture],
   };
 }
 
 function pickNProc(rng: () => number, style?: string): string[] {
-  const source = style === "rap" || style === "talk-rap" ? VOCAL_PROC_RAP : VOCAL_PROC;
+  const isRap =
+    style === "rap" ||
+    style === "talk-rap" ||
+    style === "melodic-rap" ||
+    style === "sung-rap" ||
+    style === "sing-rap" ||
+    style === "mumble-rap" ||
+    style === "soundcloud-rap" ||
+    style === "autotuned-rap" ||
+    style === "lyrical-rap";
+  const source = isRap ? VOCAL_PROC_RAP : VOCAL_PROC;
   const copy = [...source];
   const n = 2;
   const out: string[] = [];
@@ -812,6 +1038,106 @@ function pickNProc(rng: () => number, style?: string): string[] {
   }
   return out;
 }
+
+const INSTRUMENT_TEXTURES: Record<string, string[]> = {
+  guitar: [
+    "clean electric guitar",
+    "warm tape-saturated electric guitar",
+    "ambient reverb-drenched guitar",
+    "sparse fingerpicked acoustic guitar",
+    "chorused neo-soul guitar chords",
+    "muted electric guitar riffs",
+  ],
+  "Rhodes electric piano": [
+    "warm Rhodes electric piano",
+    "tape-saturated Rhodes electric piano",
+    "ambient chorus-modulated Rhodes",
+    "crystalline bell-like Rhodes keys",
+    "filtered neo-soul Rhodes chords",
+    "felt-treated vintage Rhodes",
+  ],
+  piano: [
+    "intimate felt acoustic piano",
+    "reverb-drenched grand piano",
+    "sparse dynamic acoustic piano",
+    "tape-warmed upright piano",
+    "bright close-mic piano chords",
+  ],
+  "808 bass": [
+    "sliding 808 sub bass",
+    "saturated harmonic 808",
+    "deep clean tuned 808",
+    "punchy low-end 808 glide",
+    "warm analog 808 foundation",
+  ],
+  synth: [
+    "warm analog poly-synths",
+    "shimmering detuned synthesizer",
+    "filtered analog synth chords",
+    "wide stereo synth leads",
+  ],
+  pads: [
+    "lush atmospheric pads",
+    "drifting ambient pads",
+    "warm filtered analog pads",
+    "reverb-washed harmonic pad bed",
+  ],
+  strings: [
+    "expressive legato strings",
+    "cinematic orchestral strings",
+    "warm bowed cello and violin swells",
+    "lush analog synth string bed",
+  ],
+  brass: [
+    "warm vintage horn swells",
+    "muted trumpet accents",
+    "crisp brass stabs with tape delay",
+    "expressive brass section",
+  ],
+  flute: [
+    "breathy wooden flute melodies",
+    "reverb-washed bamboo flute",
+    "intimate acoustic flute lines",
+  ],
+  saxophone: [
+    "smoky tenor saxophone phrases",
+    "intimate close-mic saxophone",
+    "warm soulful saxophone counterpoint",
+  ],
+  bells: [
+    "crystalline synth bells",
+    "short resonant bell cells",
+    "ambient metallic bells",
+  ],
+  "synth plucks": [
+    "cold synth plucks",
+    "delicate sine-wave plucks",
+    "analog filtered pluck hooks",
+  ],
+  mallets: [
+    "resonant kalimba melodies",
+    "warm vibraphone chords",
+    "wooden marimba accents",
+  ],
+  harp: [
+    "delicate acoustic harp glissandos",
+    "ambient reverb-washed harp arpeggios",
+  ],
+  organ: [
+    "warm Hammond B3 organ chords",
+    "vintage rotary organ swells",
+  ],
+  "hand percussion": [
+    "ceremonial hand percussion",
+    "organic woodblock and shaker textures",
+    "warm djembe and conga polyrhythms",
+  ],
+  "vocal chops": [
+    "ambient pitched vocal chops",
+    "stereo-panned vocal chops",
+    "warm pitched vocal fragments",
+  ],
+};
 
 function selectInstruments(
   bass: string[],
@@ -824,79 +1150,118 @@ function selectInstruments(
   families: string[],
   rng: () => number
 ): string[] {
+  const isRap =
+    vocals.style === "rap" ||
+    vocals.style === "talk-rap" ||
+    vocals.style === "melodic-rap" ||
+    vocals.style === "sung-rap" ||
+    vocals.style === "sing-rap" ||
+    vocals.style === "mumble-rap" ||
+    vocals.style === "soundcloud-rap" ||
+    vocals.style === "autotuned-rap" ||
+    vocals.style === "lyrical-rap" ||
+    families.includes("rap") ||
+    families.includes("drill");
+
   const inst: string[] = [];
-  if (families.includes("soul") && !families.includes("trap")) {
-    inst.push(
-      "Rhodes electric piano",
-      "clean jazz guitar",
-      "electric bass",
-      "soft drum kit",
-      "shaker",
-      "muted synth pad"
-    );
-  } else {
-    inst.push("deep sub bass");
-    if (bass.some((b) => /wub|wobble/i.test(b))) inst.push("modulated wobble bass");
-    if (bass.some((b) => /reese/i.test(b))) inst.push("Reese mid-bass");
-    if (bass.some((b) => /808/i.test(b))) inst.push("sliding 808");
-    inst.push("punchy electronic drums");
-    inst.push(
-      ...pickFamily(
-        rng,
-        {
-          trap: ["trap hat engine"],
-          future: ["supersaw chord stacks", "sidechained pads"],
-          general: ["atmospheric pads"],
-        },
-        families,
-        2
-      )
-    );
-    if (
-      melody.some((m) => /guitar/i.test(m)) ||
-      parsed.instruments.some((i) => /guitar/i.test(i))
-    ) {
-      inst.push("clean electric guitar");
-    } else if (rng() > 0.55) {
+
+  // 1. If user specified explicit instruments, preserve ALL of them with varied textures
+  if (parsed.explicitInstruments && parsed.explicitInstruments.length > 0) {
+    for (const exp of parsed.explicitInstruments) {
+      const textures = INSTRUMENT_TEXTURES[exp];
+      if (textures && textures.length) {
+        inst.push(pick(rng, textures));
+      } else {
+        inst.push(exp);
+      }
+    }
+  }
+
+  // 2. Add bass foundation if not already covered
+  if (!inst.some((i) => /808|sub|bass/i.test(i))) {
+    if (bass.some((b) => /808/i.test(b)) || families.includes("trap") || families.includes("drill")) {
+      inst.push(pick(rng, ["sliding 808 sub bass", "deep tuned 808", "saturated 808 low end"]));
+    } else if (bass.some((b) => /wub|wobble/i.test(b))) {
+      inst.push("modulated wobble bass");
+    } else if (bass.some((b) => /reese/i.test(b))) {
+      inst.push("Reese mid-bass");
+    } else {
+      inst.push("deep sub bass");
+    }
+  }
+
+  // 3. Add drums / percussion
+  if (!inst.some((i) => /drums?|percussion|kit|hats/i.test(i))) {
+    if (families.includes("soul") && !families.includes("trap") && !isRap) {
+      inst.push("soft drum kit", "organic shaker");
+    } else if (families.includes("garage")) {
+      inst.push("skippy garage percussion kit");
+    } else if (families.includes("baile")) {
+      inst.push("baile percussion kit");
+    } else if (families.includes("ritual")) {
+      inst.push("ceremonial hand percussion");
+    } else {
+      inst.push(pick(rng, ["punchy electronic drums", "crisp trap drum kit", "tight rhythm kit"]));
+      if (families.includes("trap") || isRap) {
+        inst.push("rapid trap hi-hats");
+      }
+    }
+  }
+
+  // 4. If no explicit instruments were provided, complement with melodic & harmonic textures
+  if (!parsed.explicitInstruments || parsed.explicitInstruments.length === 0) {
+    // Add instrument matching melodic selection
+    const mel = melody[0] ?? "";
+    if (/rhodes/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["Rhodes electric piano"]));
+    } else if (/piano/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["piano"]));
+    } else if (/guitar/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["guitar"]));
+    } else if (/bell/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["bells"]));
+    } else if (/pluck/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["synth plucks"]));
+    } else if (/kalimba|mallet/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["mallets"]));
+    } else if (/pad/i.test(mel)) {
+      inst.push(pick(rng, INSTRUMENT_TEXTURES["pads"]));
+    } else {
       inst.push(
-        oneFamily(
+        pick(
           rng,
-          {
-            future: ["pluck motifs", "bell-like leads"],
-            trap: ["cold pluck hooks"],
-            general: ["short synth hooks"],
-          },
-          families
+          isRap
+            ? ["warm Rhodes electric piano", "crystalline synth bells", "lush filtered keyboard chords"]
+            : ["atmospheric pads", "warm analog synths", "ambient keys"]
         )
       );
     }
-    if (soundDesign.some((s) => /drone/i.test(s))) inst.push("dark drones");
-    if (soundDesign.some((s) => /impact|riser/i.test(s))) inst.push("cinematic impacts");
-    if (families.includes("baile")) inst.push("baile percussion kit");
-    if (families.includes("drill")) inst.push(pick(rng, ["dark melodic guitar", "sliding 808"]));
-    if (families.includes("phonk")) inst.push("phonk cowbell");
-    if (families.includes("garage")) inst.push("skippy garage percussion");
-    if (families.includes("ritual")) inst.push("ceremonial hand drums");
+
+    if (rng() > 0.4 && !inst.some((i) => /pad/i.test(i))) {
+      inst.push("atmospheric pads");
+    }
   }
 
-  if (vocals.present) {
-    const who =
-      vocals.presentation === "female"
-        ? pick(rng, [...VOCAL_INST.female])
-        : vocals.presentation === "male"
-        ? pick(rng, [...VOCAL_INST.male])
-        : pick(rng, [...VOCAL_INST.lead]);
-    inst.push(who);
-    if (vocals.processing?.some((p) => /chop/i.test(p))) inst.push("vocal chops");
+  // 5. Sound design textures
+  if (soundDesign.some((s) => /drone/i.test(s)) && !inst.some((i) => /drone/i.test(i))) {
+    inst.push("dark drones");
+  }
+  if (soundDesign.some((s) => /impact|riser/i.test(s)) && !inst.some((i) => /impact/i.test(i))) {
+    inst.push("cinematic impacts");
+  }
+  if (families.includes("phonk") && !inst.some((i) => /cowbell/i.test(i))) {
+    inst.push("phonk cowbell");
   }
 
+  // 6. Any other remaining user instruments from parsed.instruments
   for (const p of parsed.instruments) {
-    if (!inst.some((i) => i.toLowerCase().includes(p.toLowerCase().slice(0, 6)))) {
+    if (!inst.some((i) => i.toLowerCase().includes(p.toLowerCase().slice(0, 5)))) {
       inst.push(p);
     }
   }
 
-  return unique(inst).slice(0, 9);
+  // NOTICE: NO inst.push(who) — vocals are never added to the instrument list!
+  return unique(inst).slice(0, 8);
 }
 
 function shufflePick<T>(rng: () => number, arr: T[]): T[] {

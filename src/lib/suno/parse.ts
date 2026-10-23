@@ -171,48 +171,26 @@ export function parseUserInput(
   for (const [re, label] of INSTRUMENT_PATTERNS) {
     if (re.test(text) && !instruments.includes(label)) instruments.push(label);
   }
+  const explicitInstruments = extractExplicitInstruments(text);
 
-  const vocals: VocalPreferences = {};
   const instrumental = /\binstrumental\b/i.test(text);
-  if (/\bfemale\b/i.test(text)) vocals.presentation = "female";
-  if (/\bmale\b/i.test(text) && !/\bfemale\b/i.test(text)) vocals.presentation = "male";
-  if (/\bbreathy\b/i.test(text)) vocals.timbre = "breathy";
-  if (/\bairy\b/i.test(text)) vocals.timbre = "airy";
-  if (/\bsultry\b/i.test(text)) vocals.timbre = "sultry";
-  if (/\bgritty\b/i.test(text)) vocals.timbre = "gritty";
-  if (/\bsmoky\b/i.test(text)) vocals.timbre = "smoky";
-  if (/\bsilky\b/i.test(text)) vocals.timbre = "silky";
-  if (/\bwarm\b/i.test(text) && vocals.presentation === "male") vocals.timbre = "warm";
-  if (/\bintimate\b/i.test(text)) vocals.delivery = "intimate";
+  const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
-  if (/\b(soprano|mezzo-soprano|mezzo|contralto|alto|tenor|baritone|bass-baritone|countertenor)\b/i.test(text)) {
-    const m = text.match(
-      /\b(soprano|mezzo-soprano|mezzo|contralto|alto|tenor|baritone|bass-baritone|countertenor)\b/i
-    );
-    if (m) vocals.register = m[1].toLowerCase();
-  }
-
-  if (/\btalk[- ]?rap\b|\bspoken[- ]word\b|\btalk[- ]sing\b|\bconversational rap\b/i.test(text)) {
-    vocals.style = "talk-rap";
-  } else if (/\bsung[- ]?rap\b|\bmelodic rap\b|\bsing-rap\b/i.test(text)) {
-    vocals.style = "melodic-rap";
-  } else if (/\brapping\b|\brap\b/i.test(text)) {
-    vocals.style = "rap";
-  } else if (/\bsung\b|\bsinging\b|\bsinger\b|\benglish (singing|vocal)/i.test(text)) {
-    vocals.style = "sung";
-  } else if (/\bvocal chops?\b/i.test(text)) {
-    vocals.style = "chops";
-  }
-
-  if (/\benglish\b/i.test(text)) vocals.language = "English";
-  if (/\bportuguese\b|\bbrazilian portuguese\b/i.test(text)) {
-    vocals.language = "Brazilian Portuguese";
-  }
-  if (/\bvocal chops?\b/i.test(text)) {
-    vocals.processing = [...(vocals.processing ?? []), "vocal chops"];
-  }
-  if (Object.keys(vocals).length > 0 || /\bvocal/i.test(text)) {
-    vocals.present = !instrumental;
+  // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres
+  if (genres.length === 0 && vocals.style && vocals.style !== "sung" && vocals.style !== "chops") {
+    if (vocals.style === "mumble-rap") {
+      genres.push("SoundCloud Trap", "Minimal Dark Trap");
+    } else if (vocals.style === "autotuned-rap") {
+      genres.push("Melodic Trap", "Rage Trap");
+    } else if (vocals.style === "melodic-rap") {
+      genres.push("Melodic Trap", "Southern Trap");
+    } else if (vocals.style === "lyrical-rap") {
+      genres.push("Boom Bap", "Conscious Hip Hop");
+    } else if (vocals.style === "talk-rap") {
+      genres.push("West Coast Hip Hop", "Minimal Dark Trap");
+    } else {
+      genres.push("Southern Trap", "Aggressive Trap");
+    }
   }
 
   const grooveHints: string[] = [];
@@ -305,6 +283,7 @@ export function parseUserInput(
     moods,
     atmospheres,
     instruments,
+    explicitInstruments: explicitInstruments.length ? explicitInstruments : undefined,
     vocals: Object.keys(vocals).length ? vocals : undefined,
     grooveHints,
     bassHints,
@@ -390,4 +369,197 @@ function includesPhrase(hay: string, needle: string): boolean {
 
 function clampBpm(n: number): number {
   return Math.min(200, Math.max(60, n));
+}
+
+function extractExplicitInstruments(text: string): string[] {
+  const explicit: string[] = [];
+  const map: [RegExp, string][] = [
+    [/\b(?:acoustic|electric|clean|nylon|12-string)?\s*guitars?\b/i, "guitar"],
+    [/\brhodes(?:\s+piano|\s+electric piano)?\b/i, "Rhodes electric piano"],
+    [/\b(?:acoustic|upright|grand|felt)?\s*pianos?\b/i, "piano"],
+    [/\b808s?\b/i, "808 bass"],
+    [/\bsynths?\b|\bsynthesizers?\b/i, "synth"],
+    [/\bpads?\b/i, "pads"],
+    [/\bstrings?|violins?|cellos?\b/i, "strings"],
+    [/\bbrass|horns?|trumpets?|trombones?\b/i, "brass"],
+    [/\bflutes?\b/i, "flute"],
+    [/\bsax(?:ophone)?s?\b/i, "saxophone"],
+    [/\bbells?\b/i, "bells"],
+    [/\bplucks?\b/i, "synth plucks"],
+    [/\bkalimba|marimba|mallets?\b/i, "mallets"],
+    [/\bharp\b/i, "harp"],
+    [/\borgans?\b/i, "organ"],
+    [/\bhand drums?|percussion|congas?|bongos?|djembe|cajon\b/i, "hand percussion"],
+    [/\bvocal chops?\b/i, "vocal chops"],
+  ];
+
+  for (const [re, name] of map) {
+    if (re.test(text) && !explicit.includes(name)) {
+      explicit.push(name);
+    }
+  }
+  return explicit;
+}
+
+function extractVocalDetails(text: string, lower: string, instrumental: boolean): VocalPreferences {
+  const vocals: VocalPreferences = {};
+  if (instrumental) {
+    vocals.present = false;
+    return vocals;
+  }
+
+  const hasVocalMention =
+    /\b(vocal|vocals|voice|singing|singer|rapper|rapping|rap|bars|sung-rap|melodic-rap|sing-rap|talk-rap|mumble|cadence|croon|falsetto|soprano|mezzo|contralto|alto|tenor|baritone)\b/i.test(
+      text
+    );
+
+  if (!hasVocalMention && !/\bfemale\b|\bmale\b/i.test(text)) {
+    return vocals;
+  }
+
+  if (/\bfemale\b/i.test(text)) vocals.presentation = "female";
+  if (/\bmale\b/i.test(text) && !/\bfemale\b/i.test(text)) vocals.presentation = "male";
+
+  // Registers
+  const regMatch = text.match(
+    /\b(soprano|mezzo-soprano|mezzo|contralto|alto|tenor|baritone|bass-baritone|countertenor)\b/i
+  );
+  if (regMatch) vocals.register = regMatch[1].toLowerCase();
+
+  // Timbres & Cultural Tone
+  const descriptors: string[] = [];
+  if (/\bblack male vocal tone\b/i.test(text)) {
+    descriptors.push("Black male vocal tone");
+    vocals.presentation = "male";
+  } else if (/\bmale vocal tone\b/i.test(text)) {
+    descriptors.push("male vocal tone");
+  } else if (/\bfemale vocal tone\b/i.test(text)) {
+    descriptors.push("female vocal tone");
+  }
+
+  const timbreMatches: [RegExp, string][] = [
+    [/\bsmooth(?:\s+tone)?\b/i, "smooth tone"],
+    [/\bsmoky\b/i, "smoky tone"],
+    [/\bbreathy\b/i, "breathy"],
+    [/\bairy\b/i, "airy"],
+    [/\bsultry\b/i, "sultry"],
+    [/\bgritty\b/i, "gritty"],
+    [/\braspy\b/i, "raspy"],
+    [/\bsilky\b/i, "silky"],
+    [/\bwarm\b/i, "warm"],
+    [/\bdeep\b/i, "deep resonant tone"],
+    [/\bresonant\b/i, "resonant tone"],
+    [/\bintimate\b/i, "intimate"],
+    [/\braw\b/i, "raw"],
+    [/\bcrisp\b/i, "crisp"],
+    [/\bvelvety\b/i, "velvety"],
+    [/\bhoneyed\b/i, "honeyed"],
+    [/\bsoulful\b/i, "soulful"],
+  ];
+
+  for (const [re, label] of timbreMatches) {
+    if (re.test(text) && !descriptors.includes(label)) {
+      descriptors.push(label);
+      if (!vocals.timbre && !label.includes("Black male")) vocals.timbre = label;
+    }
+  }
+
+  // Delivery & Cadence
+  const deliveryMatches: [RegExp, string][] = [
+    [/\blaid[- ]?back cadence\b/i, "laid-back cadence"],
+    [/\brelaxed cadence\b/i, "relaxed cadence"],
+    [/\bmelodic sung[- ]?rap phrases\b/i, "melodic sung-rap phrases"],
+    [/\bconversational cadence\b/i, "conversational cadence"],
+    [/\brhythmic spoken[- ]?flow\b/i, "rhythmic spoken-flow"],
+    [/\btriplet flow\b/i, "triplet flow"],
+    [/\brapid cadence\b/i, "rapid cadence"],
+    [/\bdouble[- ]?time\b/i, "double-time cadence"],
+    [/\bpunchy delivery\b/i, "punchy delivery"],
+    [/\beffortless pocket\b/i, "effortless pocket"],
+    [/\bconfident swagger\b/i, "confident swagger"],
+  ];
+
+  for (const [re, label] of deliveryMatches) {
+    if (re.test(text) && !descriptors.includes(label)) {
+      descriptors.push(label);
+      if (!vocals.delivery) vocals.delivery = label;
+    }
+  }
+
+  // Effects & Processing
+  const procList: string[] = [];
+  if (/\bprominent auto[- ]?tune gloss\b/i.test(text)) {
+    procList.push("prominent autotune gloss");
+    descriptors.push("prominent autotune gloss");
+  } else if (/\bauto[- ]?tune gloss\b/i.test(text)) {
+    procList.push("autotune gloss");
+    descriptors.push("autotune gloss");
+  } else if (/\bhard auto[- ]?tune\b/i.test(text)) {
+    procList.push("hard autotune");
+    descriptors.push("hard autotune");
+  } else if (/\bauto[- ]?tuned?\b/i.test(text)) {
+    procList.push("autotuned pitch correction");
+    descriptors.push("autotuned pitch correction");
+  }
+
+  if (/\bplate reverb\b/i.test(text)) procList.push("vintage plate reverb");
+  if (/\bslapback(?: delay)?\b/i.test(text)) procList.push("slapback delay");
+  if (/\btape saturation\b|\btape warmth\b/i.test(text)) procList.push("tape saturation");
+  if (/\bstereo doubles\b|\bdoubled vocals\b/i.test(text)) procList.push("stereo doubles");
+  if (/\bvocal chops?\b/i.test(text)) procList.push("vocal chops");
+
+  // Style detection
+  if (/\bmumble[- ]?(rap|flow|vocal|rapper)?\b|\bsoundcloud[- ]?(rap|rapper|trap)?\b|\bcloud[- ]?rap\b/i.test(text)) {
+    vocals.style = "mumble-rap";
+    procList.push("slurred mumble delivery", "heavy autotune saturation");
+  } else if (/\bauto[- ]?tuned? rap\b|\bauto[- ]?tune rap\b|\bhard auto[- ]?tune\b|\brobotic rap\b|\brage[- ]?trap\b/i.test(text)) {
+    vocals.style = "autotuned-rap";
+    procList.push("hard auto-tune retune speed", "pitch-snapped precision");
+  } else if (
+    /\blyrical[- ]?(bars?|rap|flow)?\b|\b(complex|technical|dense) (bars?|rhymes?)\b|\bfast[- ]?(rap|flow)\b|\bchopper (rap|flow)\b|\bboom[- ]?bap (rap|flow|bars)\b|\bbars\b|\bmulti[- ]syllab/i.test(
+      text
+    )
+  ) {
+    vocals.style = "lyrical-rap";
+    procList.push("crisp consonant articulation", "breath control");
+  } else if (/\btalk[- ]?rap\b|\bspoken[- ]word\b|\btalk[- ]sing\b|\bconversational rap\b|\bspoken rap\b|\bdeadpan rap\b|\bdetroit (flow|rap)\b/i.test(text)) {
+    vocals.style = "talk-rap";
+    procList.push("dry conversational cadence", "rhythmic spoken-flow");
+  } else if (/\bsung[- ]?rap\b|\bmelodic[- ]?rap\b|\bsing[- ]?rap\b|\brap & singer\b|\bsinger & rap\b/i.test(text)) {
+    vocals.style = "melodic-rap";
+    procList.push("melodic sung-rap cadence", "autotuned pitch correction");
+  } else if (/\brapping\b|\brap\b|\brappers?\b|\bspitting bars\b|\bdrill\b/i.test(text)) {
+    vocals.style = "rap";
+  } else if (/\b(pure |traditional |clean pop )?singing\b|\bsinger(?! & rap)\b|\bsung(?!\s*[- ]?rap)\b|\benglish (singing|vocal)/i.test(text)) {
+    vocals.style = "sung";
+  } else if (/\bvocal chops?\b/i.test(text)) {
+    vocals.style = "chops";
+  }
+
+  // Extract rawDescription segment
+  const vocalSegmentRegex =
+    /(?:(?:black\s+|white\s+|african\s+)?(?:male|female|lead)\s+vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
+  const match = text.match(vocalSegmentRegex);
+  if (match && match[0].trim().length > 10) {
+    vocals.rawDescription = match[0].trim();
+  } else if (hasVocalMention) {
+    const clauses = text.split(/(?<=[.!?;])\s+|\n+/);
+    const vc = clauses.find((c) =>
+      /\b(vocal|vocals|voice|singer|singing|rapper|rap|sung-rap|melodic-rap)\b/i.test(c)
+    );
+    if (vc) vocals.rawDescription = vc.trim();
+  }
+
+  if (procList.length) {
+    vocals.processing = [...new Set([...(vocals.processing ?? []), ...procList])];
+  }
+  if (descriptors.length) {
+    vocals.descriptors = [...new Set(descriptors)];
+  }
+
+  if (/\benglish\b/i.test(text)) vocals.language = "English";
+  if (/\bportuguese\b|\bbrazilian portuguese\b/i.test(text)) vocals.language = "Brazilian Portuguese";
+
+  vocals.present = true;
+  return vocals;
 }
