@@ -44,7 +44,7 @@ export const V6_MODELS: V6ModelOption[] = [
     label: "v6-mini (All Plans)",
     plan: "All plans (free)",
     picker: "A free, more efficient version of premium v6 models.",
-    use: "Fast drafts and high-volume idea capture. Lighter than flagship v6. All three models support up to 8 minutes per generation.",
+    use: "Fast drafts and high-volume idea capture. Lighter than flagship v6.",
   },
 ];
 
