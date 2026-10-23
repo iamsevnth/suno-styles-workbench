@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const dist = path.resolve(process.argv[2] ?? 'dist');
+const distRealPath = fs.realpathSync(dist);
 const indexPath = path.join(dist, 'index.html');
 const outPath = path.join(dist, 'suno-workbench.html');
 
@@ -13,9 +14,18 @@ const ASSET_TAG =
   /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical)"[^>]*>/g;
 
 function readAsset(url) {
-  const file = path.join(dist, url.replace(/^\.?\//, ''));
+  const file = path.resolve(distRealPath, url.replace(/^\.?\//, ''));
+  const relativePath = path.relative(distRealPath, file);
+  if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
+    throw new Error(`Asset path is outside the build directory: ${url}`);
+  }
   if (!fs.existsSync(file)) throw new Error(`Asset not found: ${url} (looked for ${file})`);
-  return fs.readFileSync(file, 'utf8');
+  const realPath = fs.realpathSync(file);
+  const realRelativePath = path.relative(distRealPath, realPath);
+  if (realRelativePath === '..' || realRelativePath.startsWith(`..${path.sep}`) || path.isAbsolute(realRelativePath)) {
+    throw new Error(`Asset path is outside the build directory: ${url}`);
+  }
+  return fs.readFileSync(realPath, 'utf8');
 }
 
 let scripts = 0;
