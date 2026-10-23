@@ -4,8 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const dist = path.resolve(process.argv[2] ?? 'dist');
+const realDist = fs.realpathSync(dist);
 const indexPath = path.join(dist, 'index.html');
 const outPath = path.join(dist, 'suno-workbench.html');
+
+function isWithinDirectory(directory, file) {
+  const prefix = directory.endsWith(path.sep) ? directory : `${directory}${path.sep}`;
+  return file === directory || file.startsWith(prefix);
+}
 
 // One pass over the original HTML: the inlined bundle itself contains tag-like strings
 // (React's warnings mention <link rel="stylesheet" href="%s">), so it must never be rescanned.
@@ -13,9 +19,12 @@ const ASSET_TAG =
   /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical)"[^>]*>/g;
 
 function readAsset(url) {
-  const file = path.join(dist, url.replace(/^\.?\//, ''));
+  const file = path.resolve(dist, url.replace(/^\.?\//, ''));
+  if (!isWithinDirectory(dist, file)) throw new Error(`Asset path is outside the build directory: ${url}`);
   if (!fs.existsSync(file)) throw new Error(`Asset not found: ${url} (looked for ${file})`);
-  return fs.readFileSync(file, 'utf8');
+  const realFile = fs.realpathSync(file);
+  if (!isWithinDirectory(realDist, realFile)) throw new Error(`Asset path is outside the build directory: ${url}`);
+  return fs.readFileSync(realFile, 'utf8');
 }
 
 let scripts = 0;
