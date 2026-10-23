@@ -1,21 +1,15 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Only the current `main` branch, which is what https://iamsevnth.github.io/suno-styles-workbench/ serves, receives fixes. Download a fresh copy of the offline file after a fix to pick it up.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## How the site handles data
 
-## Reporting a Vulnerability
+Suno Workbench runs entirely in the browser. It has no backend, accounts, analytics, cookies or API keys, and it makes no network requests with what you type. Briefs and results are kept in `sessionStorage`. Styles history is kept in `localStorage` until you clear it.
 
-Use this section to tell people how to report a vulnerability.
+## Reporting a vulnerability
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Please report vulnerabilities privately through GitHub's **Report a vulnerability** button on the repository's Security tab, not in a public issue. Include the steps to reproduce and the browser you used.
+
+If the report is confirmed, a fix is published to `main` and the reporter is credited unless they ask not to be. If it is declined, you'll get an explanation.
