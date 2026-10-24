@@ -64,6 +64,48 @@ function rapPaddingFor(style: string | undefined): string[] {
   );
 }
 
+/**
+ * Characters the generated vocal sentence may use. The production carries a Styles prompt, so a
+ * brief that only names the basics gets a short vocal line and the rest goes to the sonic plan.
+ */
+export const VOCAL_BUDGET = { compact: 150, detailed: 300 } as const;
+
+/**
+ * The vocal sentence, built from the voice outward: who sings comes first, then the brief's own
+ * processing, then planned details in order of usefulness, each only while it fits the budget.
+ */
+function vocalSentence(
+  intro: string,
+  identity: string,
+  v: SonicPlan["vocals"],
+  stylePhrase: string,
+  arc: string
+): string {
+  const budget = VOCAL_BUDGET[v.detail ?? "compact"];
+  const procs = v.processing ?? [];
+  let body = identity + (v.language ? ` in ${v.language}` : "");
+  const sentence = (b: string) => `${intro} ${b}.`;
+  const tryAdd = (addition: string | undefined) => {
+    if (addition && sentence(body + addition).length <= budget) body += addition;
+  };
+  let treated = false;
+  const addProcessing = (list: string[]) => {
+    const text = list.join(" and ");
+    if (!text) return;
+    const before = body;
+    tryAdd(`${treated ? " and " : ", treated with "}${text}`);
+    if (body !== before) treated = true;
+  };
+  if (v.processingFromBrief) addProcessing(procs.slice(0, 2));
+  // Most traits read as "with ..."; bare ones ("subtle melisma on emotional peaks") need a comma.
+  tryAdd(v.deliveryDetail ? (/^with\s/.test(v.deliveryDetail) ? " " : ", ") + v.deliveryDetail : undefined);
+  const styleJoin = body.includes(",") ? " and" : /\swith\s/.test(body) ? "," : " with";
+  tryAdd(`${styleJoin} ${stylePhrase}`);
+  tryAdd(`, ${arc}`);
+  if (!v.processingFromBrief) addProcessing(procs.slice(0, v.detail === "detailed" ? 2 : 1));
+  return sentence(body);
+}
+
 /** A user's own vocal words are worth quoting once they say more than "female vocals". */
 function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
   const words = vocals.rawDescription?.trim().split(/\s+/).length ?? 0;
@@ -213,25 +255,14 @@ function compose(plan: SonicPlan): string {
       const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
       const fitting = (bank: string[]) => (bank.filter(fits).length ? bank.filter(fits) : bank);
       const stylePhrase = pick2(rng, fitting(VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap));
-      const proc = (v.processing ?? []).slice(0, 2).join(" and ");
       const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
       const arc = pick2(rng, fitting(arcBank ?? VOCAL_ARC.rap));
       const identity =
         v.delivery && v.delivery.length > 15
           ? v.delivery
           : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
-
-      let vBody = `${identity} with ${stylePhrase}`;
-      if (v.language) vBody += ` in ${v.language}`;
-      vBody += `, ${arc}`;
-      if (proc) vBody += `, treated with ${proc}`;
-
-      const intros = [
-        `Vocal performance features ${vBody}.`,
-        `Lead vocals deliver ${vBody}.`,
-        `Vocals center on ${vBody}.`,
-      ];
-      sVocal = intros[template % intros.length];
+      const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][template % 3];
+      sVocal = vocalSentence(intro, identity, v, stylePhrase, arc);
     }
   } else {
     sVocal = pick2(rng, [
@@ -476,7 +507,20 @@ const PROTECTED_SHORTENINGS: ((text: string) => string)[] = [
   (t) => t.replace(VOCAL_SENTENCE, (sentence) => sentence.replace(/^([^,]*),[^.]*\./, "$1.")),
 ];
 
+/** Anchors the plan writes for the vocal ("male rap flow", "female vocals"), not the brief's own words. */
+const VOCAL_ANCHOR = /^(female|male|lead) (rap flow|vocals)$/i;
+
 function hasAnchor(text: string, anchor: string): boolean {
+  // "Houston chopped male rap cadence" already says "male rap flow"; a separate
+  // "keeps male rap flow front and center" sentence would spend characters to repeat it.
+  const vocal = anchor.match(VOCAL_ANCHOR);
+  if (vocal) {
+    // Any lead of that gender honors "female vocals", a rap flow included.
+    const kind = /rap/i.test(vocal[2])
+      ? "rap"
+      : "vocal|voice|singer|sung|croon|belt|alto|soprano|tenor|baritone|rap|flow|mc|delivery";
+    return new RegExp(`\\b${vocal[1]}\\b[^.]*\\b(${kind})`, "i").test(text);
+  }
   const esc = anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${esc}\\b`, "i").test(text);
 }

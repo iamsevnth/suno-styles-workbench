@@ -40,7 +40,7 @@ import {
   DNA_PALETTE,
 } from "./lexicon-dna.ts";
 import { allowedBassFamilies, familyKeys, fitsFamilies, hasDrops, needsSubLayer } from "./families.ts";
-import { pickVocalPhrase } from "./lexicon-vocals.ts";
+import { pickVocalParts } from "./lexicon-vocals.ts";
 import { VARIANT_PRESETS, VariantPreset } from "./presets.ts";
 import { expandMood, GENRES, matchGenre } from "./ontology.ts";
 import { PROFILE } from "./profile.ts";
@@ -895,7 +895,7 @@ function buildVocals(
     }
   }
 
-  const pairPhrase = pickVocalPhrase(rng, presentation, style, families);
+  const { phrase: pairPhrase, modifier: pairDetail } = pickVocalParts(rng, presentation, style, families);
 
   const roomNuances = [
     "centered punchy presence with close-mic intimacy",
@@ -921,13 +921,35 @@ function buildVocals(
         ? pick(rng, [...VOCAL_TIMBRE.female])
         : pick(rng, [...VOCAL_TIMBRE.male])),
     delivery: explicit?.delivery ?? pairPhrase,
+    deliveryDetail: explicit?.delivery ? undefined : pairDetail,
     style,
     language: explicit?.language,
     processing: explicit?.processing ?? pickNProc(rng, style, families),
+    processingFromBrief: explicit?.processing != null,
     rawDescription: explicit?.rawDescription,
     descriptors: explicit?.descriptors,
     textureVariations: [texture],
+    detail: vocalDetail(explicit),
   };
+}
+
+/** Vocal traits the brief named itself; four or more earn the vocal a longer sentence. */
+const DETAILED_VOCAL_TRAITS = 4;
+
+function vocalDetail(explicit: VocalPreferences | undefined): "compact" | "detailed" {
+  if (!explicit) return "compact";
+  const traits = new Set(
+    [
+      explicit.register,
+      explicit.timbre,
+      explicit.delivery,
+      explicit.language,
+      ...(explicit.descriptors ?? []),
+      ...(explicit.processing ?? []),
+    ].filter((t): t is string => Boolean(t))
+  );
+  const words = explicit.rawDescription?.trim().split(/\s+/).length ?? 0;
+  return traits.size >= DETAILED_VOCAL_TRAITS || words >= 10 ? "detailed" : "compact";
 }
 
 function pickNProc(rng: () => number, style: string | undefined, families: string[]): string[] {

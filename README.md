@@ -23,9 +23,9 @@ Brief:
 melodic R&B with flute and Rhodes electric piano
 ```
 
-One compiled prompt for that brief (seed 42, 968 characters, as of this release):
+One compiled prompt for that brief (seed 42, 955 characters, as of this release):
 
-> 92 BPM Emotional R&B and Pop R&B hybrid built for warm and polished nights — intimate R&B-forward production. Drums lead with tight pop kick and snare, gentle shaker, tight live kit with warm room inside a natural live-band groove, locking laid-back behind-the-beat pocket and gentle shuffle groove so each section has somewhere to land. Lead vocals deliver laid-back male Afro-fusion vocal with anthemic chorus lead with stacked peaks, stacking doubles only on the hook so verses stay close, treated with light autotune polish on held notes and tasteful doubles and ad-libs. The production keeps Rhodes electric piano front and center. Translation stays clear on every playback system. Mix priorities favor centered mono low end, wide harmonic upper field, keys and guitar sitting just behind the voice. Acoustic palette includes ambient chorus-modulated Rhodes, reverb-washed bamboo flute, warm electric bass guitar, soft drum kit, organic shaker, cinematic impacts.
+> 92 BPM Emotional R&B and Pop R&B hybrid built for warm and polished nights — intimate R&B-forward production. Drums lead with tight pop kick and snare, gentle shaker, tight live kit with warm room inside a natural live-band groove, locking laid-back behind-the-beat pocket and gentle shuffle groove so each section has somewhere to land. The bass conversation is warm electric bass guitar, warm detuned saw bass, moving through gospel-style bass runs into the chorus and punchy fingerstyle bass with slap and pop and bright attack. Lead vocals deliver laid-back male Afro-fusion vocal with anthemic chorus lead with stacked peaks, treated with light autotune polish on held notes. The production keeps Rhodes electric piano front and center. Translation stays clear on every playback system. Acoustic palette includes ambient chorus-modulated Rhodes, reverb-washed bamboo flute, warm electric bass guitar, soft drum kit, organic shaker, cinematic impacts.
 
 The brief names no sub-genre, tempo, bass or drum kit; the compiler chose R&B ones from the R&B family's vocabulary and kept the flute and Rhodes. The Guide compiles this example live, so it always shows the current engine's exact output.
 
@@ -39,6 +39,7 @@ The brief names no sub-genre, tempo, bass or drum kit; the compiler chose R&B on
 | Genre-faithful | Each of the 259 genres maps to one of 21 sound families with its own groove, drums, bass, harmony, textures, song forms, mix and mastering vocabulary |
 | Positive prompting | Describes what to play; never “no”, “avoid” or “without” lists |
 | No artist names | No named artists and no “in the style of” phrasing |
+| Production first | The vocal gets one short line (up to 150 characters) unless your brief describes the voice in detail, so most of the prompt describes the production |
 | Styles only | No lyric lines or section tags in the Styles text |
 
 ### UKG is not UK garage
