@@ -77,6 +77,54 @@ export const VOCAL_PAIRS: VocalPair[] = [
   { archetype: "anthemic", male: "anthemic male chorus lead", female: "anthemic female chorus lead", styles: ["sung"], families: ["future", "house", "general"] },
   { archetype: "anthemic", male: "stacked male harmonies", female: "stacked female harmonies", styles: ["sung"], families: ["future", "soul"] },
   { archetype: "anthemic", male: "cinematic dramatic male narration", female: "haunting atmospheric female vocal", styles: ["sung"], families: ["cinematic", "ritual"] },
+  // GENRE-SPECIFIC SUNG LEADS
+  { archetype: "gospel", male: "powerful male gospel lead with soulful runs", female: "powerful female gospel lead with soaring runs", styles: ["sung"], families: ["gospel", "soul"] },
+  { archetype: "gospel", male: "warm male worship leader voice", female: "clear female worship leader voice", styles: ["sung"], families: ["gospel", "pop"] },
+  { archetype: "gospel", male: "raspy male praise-break shouter", female: "fiery female praise-break belter", styles: ["sung"], families: ["gospel"] },
+  { archetype: "house", male: "soulful male house vocalist", female: "soulful female house diva", styles: ["sung"], families: ["house", "garage"] },
+  { archetype: "house", male: "deep male spoken-word house vocal", female: "breathy female deep-house vocal", styles: ["sung"], families: ["house"] },
+  { archetype: "house", male: "euphoric male dance anthem vocal", female: "euphoric female dance anthem vocal", styles: ["sung"], families: ["house", "pop", "future"] },
+  { archetype: "afro", male: "smooth male Afrobeats singer", female: "sweet female Afrobeats singer", styles: ["sung"], families: ["afro"] },
+  { archetype: "afro", male: "laid-back male Afro-fusion vocal", female: "silky female Afro-fusion vocal", styles: ["sung"], families: ["afro", "soul"] },
+  { archetype: "afro", male: "chant-style male amapiano vocal", female: "airy female amapiano vocal", styles: ["sung"], families: ["afro"] },
+  { archetype: "latin", male: "smooth male reggaeton singer", female: "sultry female reggaeton singer", styles: ["sung"], families: ["latin"] },
+  { archetype: "latin", male: "romantic male Latin pop tenor", female: "bright female Latin pop vocal", styles: ["sung"], families: ["latin", "pop"] },
+  { archetype: "latin", male: "rhythmic male dembow flow", female: "rhythmic female dembow flow", styles: ["sung"], families: ["latin"] },
+  { archetype: "dancehall", male: "melodic male dancehall toaster", female: "melodic female dancehall singer", styles: ["sung"], families: ["dancehall"] },
+  { archetype: "dancehall", male: "gravelly male deejay chant", female: "bold female deejay chant", styles: ["sung"], families: ["dancehall"] },
+  { archetype: "pop", male: "polished male pop tenor with falsetto lifts", female: "polished female pop vocal with airy high notes", styles: ["sung"], families: ["pop"] },
+  { archetype: "pop", male: "intimate male bedroom-pop vocal", female: "intimate female bedroom-pop vocal", styles: ["sung"], families: ["pop", "soul"] },
+  { archetype: "pop", male: "pitch-shifted male hyperpop vocal", female: "pitch-shifted female hyperpop vocal", styles: ["sung"], families: ["pop"] },
+  { archetype: "pop", male: "confident male dance-pop lead", female: "confident female dance-pop lead", styles: ["sung"], families: ["pop", "house"] },
+  { archetype: "soul", male: "silky male R&B falsetto", female: "silky female R&B vocal with melismatic runs", styles: ["sung"], families: ["soul"] },
+  { archetype: "soul", male: "warm male neo-soul vocal", female: "warm female neo-soul vocal", styles: ["sung"], families: ["soul"] },
+  { archetype: "ambient", male: "distant wordless male vocal pad", female: "ethereal wordless female vocal", styles: ["sung"], families: ["ambient", "cinematic"] },
+  { archetype: "ambient", male: "whispered male vocal fragments", female: "floating female vocal fragments", styles: ["sung"], families: ["ambient"] },
+  { archetype: "cinematic", male: "epic male choir", female: "angelic female choir", styles: ["sung"], families: ["cinematic", "gospel"] },
+  { archetype: "cinematic", male: "solo male operatic tenor", female: "solo female operatic soprano", styles: ["sung"], families: ["cinematic"] },
+  { archetype: "breaks", male: "soulful male liquid DnB vocal", female: "soaring female liquid DnB vocal", styles: ["sung"], families: ["breaks"] },
+  { archetype: "breaks", male: "ragga-style male MC chant", female: "energetic female MC chant", styles: ["sung"], families: ["breaks", "dancehall"] },
+  { archetype: "garage", male: "smooth male UK garage vocal", female: "sweet female UK garage vocal", styles: ["sung"], families: ["garage", "house"] },
+  { archetype: "rap", male: "laid-back male boom-bap storyteller", female: "laid-back female boom-bap storyteller", styles: ["rap", "lyrical-rap"], families: ["rap"] },
+  { archetype: "rap", male: "confident male West Coast rhymer", female: "confident female West Coast rhymer", styles: ["rap", "talk-rap"], families: ["rap"] },
+  { archetype: "rap", male: "gritty male grime MC", female: "gritty female grime MC", styles: ["rap", "lyrical-rap"], families: ["rap", "garage"] },
+  { archetype: "rap", male: "hyper male rage-rap delivery", female: "hyper female rage-rap delivery", styles: ["rap", "autotuned-rap"], families: ["rap", "trap"] },
+  { archetype: "drill", male: "menacing male UK drill flow", female: "menacing female UK drill flow", styles: ["rap"], families: ["drill"] },
+  { archetype: "drill", male: "melodic male drill singer-rapper", female: "melodic female drill singer-rapper", styles: ["rap", "melodic-rap"], families: ["drill"] },
+  { archetype: "trap", male: "nocturnal male trap crooner", female: "nocturnal female trap crooner", styles: ["sung", "melodic-rap"], families: ["trap", "soul"] },
+  { archetype: "phonk", male: "pitched-down male Memphis chant", female: "pitched-down female Memphis chant", styles: ["rap", "talk-rap"], families: ["phonk"] },
+  { archetype: "future", male: "airy male future-bass topline", female: "airy female future-bass topline", styles: ["sung"], families: ["future"] },
+  { archetype: "future", male: "emotive male melodic-bass vocal", female: "emotive female melodic-bass vocal", styles: ["sung"], families: ["future", "bass"] },
+  { archetype: "bass", male: "haunting male melodic-dubstep vocal", female: "haunting female melodic-dubstep vocal", styles: ["sung"], families: ["bass"] },
+  { archetype: "baile", male: "rapid-fire male funk-carioca MC", female: "rapid-fire female funk-carioca MC", styles: ["rap"], families: ["baile"] },
+  { archetype: "ritual", male: "deep male ceremonial chant", female: "haunting female ceremonial chant", styles: ["sung"], families: ["ritual"] },
+  { archetype: "soul", male: "velvet male quiet-storm crooner", female: "velvet female quiet-storm singer", styles: ["sung"], families: ["soul"] },
+  { archetype: "gospel", male: "soaring male gospel tenor", female: "soaring female gospel alto", styles: ["sung"], families: ["gospel"] },
+  { archetype: "pop", male: "breathy male indie-pop vocal", female: "breathy female indie-pop vocal", styles: ["sung"], families: ["pop"] },
+  { archetype: "house", male: "gospel-tinged male house vocal", female: "gospel-tinged female house vocal", styles: ["sung"], families: ["house", "gospel"] },
+  { archetype: "afro", male: "warm male highlife vocal", female: "warm female highlife vocal", styles: ["sung"], families: ["afro"] },
+  { archetype: "latin", male: "smooth male bachata-tinged tenor", female: "smooth female bachata-tinged vocal", styles: ["sung"], families: ["latin"] },
+  { archetype: "cinematic", male: "whispered male narrator voice", female: "ethereal female choir soloist", styles: ["sung"], families: ["cinematic", "ambient"] },
 ];
 
 export const VOCAL_MALE_ONLY = [
@@ -90,11 +138,11 @@ export const VOCAL_MALE_ONLY = [
   "rapid-fire male chopper rap delivery",
   "melodic trap male sung-rap topline",
   "gritty Southern male trap flow",
-  "Griselda-style gutter male lyricist",
+  "gritty sample-rap male lyricist",
   "Detroit offbeat male punchline rapper",
-  "Travis Scott-style atmospheric male autotune lead",
-  "Juice WRLD-inspired emotive male sung-rap",
-  "Drake-style nocturnal male sing-rap delivery",
+  "atmospheric male autotune lead with heavy reverb",
+  "raw emotive male sung-rap",
+  "smooth nocturnal male sing-rap delivery",
   "raw unprocessed male battle rapper",
   "sub-bass locked male boom-bap MC",
   "distorted rage-trap male hype delivery",
@@ -160,7 +208,7 @@ export const VOCAL_MODIFIERS_RAP = [
   "with hard-hitting ad-libs and crowd chant doubles",
   "with punchline delay throws and rhythmic double-tracking",
   "with hard auto-tune snap and metallic sheen",
-  "with aggressive mic presence and zero vocal harmonies",
+  "with aggressive mic presence and a single dry lead",
   "with slurred soundcloud cadence and distorted 808 ad-libs",
   "with razor-sharp consonant articulation and breathless delivery",
   "with rhythmic ad-lib echoes panned wide",
@@ -169,7 +217,7 @@ export const VOCAL_MODIFIERS_RAP = [
   "with pitched-down demon doubles on hook drops",
   "with crisp staccato punchlines and dynamic pauses",
   "with raw street energy and upfront compression",
-  "with zero singing, locked strictly to the drum grid",
+  "fully rapped and locked strictly to the drum grid",
   "with stuttering triplet flow and heavy 808 pocket sync",
   "with distorted hype ad-libs and crowd callouts",
   "with instantaneous auto-tune retune speed and pitch snaps",
@@ -239,11 +287,13 @@ export function pickVocalPhrase(
   });
 
   const rapPairs = VOCAL_PAIRS.filter((p) => p.styles.some((s) => s !== "sung"));
-  const pool = matching.length ? matching : isRap ? rapPairs : [...VOCAL_PAIRS];
+  // Pairs written for this genre win; "general" pairs only fill in when the genre has none.
+  const genrePairs = matching.filter((p) => p.families.some((f) => families.includes(f)));
+  const pool = genrePairs.length ? genrePairs : matching.length ? matching : isRap ? rapPairs : [...VOCAL_PAIRS];
   const pair = pool[Math.floor(rng() * pool.length) % pool.length];
   let phrase = gender === "male" ? pair.male : pair.female;
 
-  if (rng() > 0.35) {
+  if (genrePairs.length === 0 && rng() > 0.35) {
     const extras = gender === "male" ? VOCAL_MALE_ONLY : VOCAL_FEMALE_ONLY;
     const styleExtras = extras.filter((e) => {
       if (isRap) return /rap|mumble|autotuned|lyricist|talk-rap|drill|chopper|spoken|bars|phonk|mc/i.test(e);

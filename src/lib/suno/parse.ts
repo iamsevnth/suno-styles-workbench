@@ -364,8 +364,10 @@ function extractGenresInOrder(text: string): string[] {
   return hits.map((h) => h.name);
 }
 
+/** Whole-word match that tolerates punctuation, so "uplifting," and "dark." both count. */
 function includesPhrase(hay: string, needle: string): boolean {
-  return ` ${hay} `.includes(` ${needle} `);
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, "i").test(hay);
 }
 
 function clampBpm(n: number): number {

@@ -31,7 +31,9 @@ describe("R&B briefs", () => {
       assert.match(styles, /R&B/, styles);
       assert.match(styles, /flute/i, styles);
       assert.match(styles, /Rhodes/i, styles);
-      assert.doesNotMatch(styles, /dubstep|wub|wobble|neuro|growl|skrrt|SoundCloud/i, styles);
+      // "growl" alone can be a vocal timbre ("smoky bluesy growl"); these are growl *bass* phrases.
+      assert.doesNotMatch(styles, /dubstep|\bwubs?\b|wobble|neuro|growl stabs|growl bass|mid-bass growl|skrrt|SoundCloud/i, styles);
+      assert.doesNotMatch(styles, /\bdrops?\b/i, styles);
       assert.ok(styles.length >= MIN_CHARS && styles.length <= MAX_CHARS, `${styles.length}`);
     }
   });
@@ -50,7 +52,7 @@ describe("melodic sung-rap briefs", () => {
   it("does not pad with SoundCloud ad-lib screams or contradict the sung-rap delivery", () => {
     for (const styles of stylesFor(brief)) {
       assert.doesNotMatch(styles, /skrrt|SoundCloud-style/i, styles);
-      assert.doesNotMatch(styles, /zero sung harmonies|without ever breaking into melodic singing/i, styles);
+      assert.doesNotMatch(styles, /rap pocket with unison doubles|lead stays in rap cadence|tight, chanted stack/i, styles);
     }
   });
 
@@ -81,6 +83,20 @@ describe("prompt prose", () => {
   it("keeps mood words out of the vocal description", () => {
     for (const styles of stylesFor("140 BPM trap future bass, female vocals, high energy", 3)) {
       assert.doesNotMatch(styles, /vocals, high energy/i, styles);
+    }
+  });
+
+  it("keeps the vocal sentence when three-genre briefs run long", () => {
+    const vocalSentence = /Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features/;
+    for (const brief of [
+      "Trap + Baile Funk + Deep Dubstep, kinetic, 140 BPM",
+      "Future Bass + UK Garage + Trap, emotional, cinematic, 136 BPM",
+    ]) {
+      for (const seed of SEEDS) {
+        for (const p of generateStylesPrompts(brief, { count: 3, seed }).prompts) {
+          if (p.plan.vocals.present) assert.match(p.styles, vocalSentence, p.styles);
+        }
+      }
     }
   });
 

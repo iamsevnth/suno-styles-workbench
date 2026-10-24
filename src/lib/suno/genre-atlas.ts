@@ -350,18 +350,23 @@ export function pickFaithfulAccent(
   locked: string[],
   exclude: string[],
   band: "tame" | "weird" | "unhinged",
-  bpm?: number
+  bpm?: number,
+  accepts: (g: GenreDef) => boolean = () => true
 ): GenreDef | undefined {
   const universe = [...identity, ...ATLAS_EXTRA];
   const skip = new Set([...locked, ...exclude].map((s) => s.toLowerCase()));
   let pool = universe.filter(
-    (g) => !skip.has(g.name.toLowerCase()) && !namedBpmConflict(g.name, bpm)
+    (g) => !skip.has(g.name.toLowerCase()) && !namedBpmConflict(g.name, bpm) && accepts(g)
   );
   if (!locked.length) return pool[Math.floor(rng() * pool.length) % Math.max(1, pool.length)];
 
   if (band === "tame") {
     const clusters = new Set(locked.map(clusterOf));
     pool = pool.filter((g) => clusters.has(clusterOf(g.name)));
+    // A sibling from the same library family is the most faithful accent.
+    const lockedFamilies = new Set(universe.filter((g) => locked.includes(g.name)).map((g) => g.family));
+    const siblings = pool.filter((g) => lockedFamilies.has(g.family));
+    if (siblings.length) pool = siblings;
   } else if (band === "weird") {
     pool = pool.filter((g) =>
       locked.some((l) => {

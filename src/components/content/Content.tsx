@@ -10,7 +10,13 @@ export function ContentPage({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Section({ id, eyebrow, title, intro, children }: {
+export function Section({
+  id,
+  eyebrow,
+  title,
+  intro,
+  children,
+}: {
   id?: string;
   eyebrow?: string;
   title: string;
@@ -34,7 +40,15 @@ export function Section({ id, eyebrow, title, intro, children }: {
   );
 }
 
-export function Card({ title, children, footer }: { title: React.ReactNode; children: React.ReactNode; footer?: React.ReactNode }) {
+export function Card({
+  title,
+  children,
+  footer,
+}: {
+  title: React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
   return (
     <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] p-5 flex flex-col gap-2">
       <h3 className="text-base font-semibold text-[var(--fg)]">{title}</h3>
@@ -56,7 +70,15 @@ export function Code({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ButtonLink({ href, children, primary = false }: { href: string; children: React.ReactNode; primary?: boolean }) {
+export function ButtonLink({
+  href,
+  children,
+  primary = false,
+}: {
+  href: string;
+  children: React.ReactNode;
+  primary?: boolean;
+}) {
   return (
     <a
       href={href}
@@ -65,6 +87,104 @@ export function ButtonLink({ href, children, primary = false }: { href: string; 
           ? "bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90"
           : "border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
       }`}
+    >
+      {children}
+    </a>
+  );
+}
+
+/** A table on wider screens; a stack of labeled cards on phones, where columns get too narrow to read. */
+export function Table({ head, rows, caption }: { head: string[]; rows: React.ReactNode[][]; caption?: string }) {
+  return (
+    <>
+      <div className="md:hidden flex flex-col gap-2" aria-label={caption}>
+        {rows.map((row, r) => (
+          <div
+            key={r}
+            className="rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-sm"
+          >
+            <p className="font-semibold text-[var(--fg)]">{row[0]}</p>
+            <dl>
+              {row.slice(1).map((cell, i) => (
+                <div key={i} className="mt-2">
+                  <dt className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+                    {head[i + 1]}
+                  </dt>
+                  <dd className="text-[var(--fg-muted)] leading-relaxed">{cell}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+      <TableGrid head={head} rows={rows} caption={caption} />
+    </>
+  );
+}
+
+function TableGrid({ head, rows, caption }: { head: string[]; rows: React.ReactNode[][]; caption?: string }) {
+  return (
+    <div className="hidden md:block overflow-x-auto rounded-[var(--r-xl)] border border-[var(--border)]">
+      <table className="w-full text-sm text-left">
+        {caption && <caption className="sr-only">{caption}</caption>}
+        <thead className="bg-[var(--bg-elevated)] text-[var(--fg)]">
+          <tr>
+            {head.map((h) => (
+              <th key={h} scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, r) => (
+            <tr key={r} className="border-t border-[var(--border)] align-top">
+              {row.map((cell, i) =>
+                i === 0 ? (
+                  <th key={i} scope="row" className="px-4 py-3 font-medium text-[var(--fg)] whitespace-nowrap">
+                    {cell}
+                  </th>
+                ) : (
+                  <td key={i} className="px-4 py-3 text-[var(--fg-muted)]">
+                    {cell}
+                  </td>
+                ),
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export type ProvenanceKind = "suno" | "community" | "workbench";
+
+const PROVENANCE: Record<ProvenanceKind, { label: string; className: string }> = {
+  suno: { label: "Suno official", className: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
+  community: { label: "Community-tested", className: "border-sky-500/40 text-sky-300 bg-sky-500/10" },
+  workbench: { label: "Workbench recommendation", className: "border-amber-500/40 text-amber-200 bg-amber-500/10" },
+};
+
+/** Labels where a claim comes from, so readers can weigh it. */
+export function Provenance({ kind }: { kind: ProvenanceKind }) {
+  const { label, className } = PROVENANCE[kind];
+  return (
+    <span
+      className={`inline-block whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+export function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      className="underline underline-offset-2 text-[var(--fg)] hover:opacity-80"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
     >
       {children}
     </a>
