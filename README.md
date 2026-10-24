@@ -4,7 +4,8 @@
 
 A free, browser-only toolkit for writing songs with Suno v6. Type a one-line brief and get detailed Styles prompts that Suno can follow, then finish the lyrics and the rest of the song.
 
-**Live site:** https://iamsevnth.github.io/suno-styles-workbench/ · **Guide:** https://iamsevnth.github.io/suno-styles-workbench/#guide
+**Live site:** https://iamsevnth.github.io/suno-styles-workbench
+**Guide:** https://iamsevnth.github.io/suno-styles-workbench/#guide
 
 | Tool | What it does |
 | --- | --- |
