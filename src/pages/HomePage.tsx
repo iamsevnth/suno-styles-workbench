@@ -37,7 +37,7 @@ const STEPS = [
   },
   {
     title: "Paste into Suno",
-    body: "Copy a result into the Styles field in Custom mode. Set Variety to Off so Suno uses your Styles text word for word, and generate.",
+    body: "Copy a result into the Styles field in Advanced mode. Set Variety to Off so Suno uses your Styles text word for word, and generate.",
   },
 ];
 

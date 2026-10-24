@@ -8,7 +8,7 @@ import StudioDeck from "./components/studio/StudioDeck.tsx";
 import StylesWorkbench from "./components/styles/StylesWorkbench.tsx";
 import { useHashRoute } from "./hooks/useHashRoute.ts";
 import { copyToClipboard } from "./lib/browser/clipboard.ts";
-import GuidePage from "./pages/GuidePage.tsx";
+import GuidePage from "./pages/guide/GuidePage.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import { isStudioRoute, RouteId, StudioRouteId } from "./routes.ts";
 

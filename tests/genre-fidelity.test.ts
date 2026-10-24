@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { familyKeys } from "../src/lib/suno/families.ts";
+import { familyKeys, hasDrops } from "../src/lib/suno/families.ts";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import * as dna from "../src/lib/suno/lexicon-dna.ts";
 import * as vocals from "../src/lib/suno/lexicon-vocals.ts";
 import * as lexicon from "../src/lib/suno/lexicon.ts";
 import { allStyles } from "../src/lib/suno/ontology.ts";
-import { ARTIST_LEAK_RE } from "../src/lib/suno/validate.ts";
+import { ARTIST_LEAK_RE, NEGATIVE_RE } from "../src/lib/suno/validate.ts";
 import { parseUserInput } from "../src/lib/suno/parse.ts";
 import { MAX_CHARS, MIN_CHARS } from "../src/lib/suno/render.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
@@ -17,6 +17,7 @@ const BASS_MUSIC_WORDS = /\bwubs?\b|wobble|growl stabs|growl bass|mid-bass growl
 // "One-drop" is a reggae rhythm, not an EDM drop.
 const DROP_WORDS = /(?<!one-)\bdrops?\b|\bdrop-|(?<!one)-drop\b/i;
 // An "808 cowbell" is a drum-machine sound; these are 808 bass phrases.
+const BASS_MUSIC_FAMILIES = new Set(["bass", "riddim", "future", "garage", "breaks", "ritual"]);
 const BASS_808 = /808 (sub|bass|slides?|glides?|low end|tails?|punch)|sliding 808|tuned 808|\b808s\b/i;
 
 function promptsFor(brief: string): PromptCandidate[] {
@@ -98,6 +99,25 @@ describe("club genres", () => {
       assert.doesNotMatch(p.styles, BASS_808, p.styles);
       assert.doesNotMatch(p.styles, /trap hi-hats/i, p.styles);
     }
+  });
+});
+
+describe("whole library sweep", () => {
+  it("compiles every genre within the rules", () => {
+    const failures: string[] = [];
+    for (const genre of allStyles()) {
+      for (const seed of [1, 99]) {
+        for (const p of generateStylesPrompts(genre.name, { count: 2, seed }).prompts) {
+          const families = familyKeys([p.plan.primaryGenre, p.plan.secondaryGenre, p.plan.accentGenre]);
+          const fail = (why: string) => failures.push(`${genre.name} (seed ${seed}): ${why}`);
+          if (p.characters < MIN_CHARS || p.characters > MAX_CHARS) fail(`${p.characters} characters`);
+          if (NEGATIVE_RE.test(p.styles) || ARTIST_LEAK_RE.test(p.styles)) fail("negative wording or artist name");
+          if (!hasDrops(families) && DROP_WORDS.test(p.styles)) fail("drop wording");
+          if (!families.some((f) => BASS_MUSIC_FAMILIES.has(f)) && BASS_MUSIC_WORDS.test(p.styles)) fail("bass-music sound");
+        }
+      }
+    }
+    assert.deepEqual(failures, []);
   });
 });
 
