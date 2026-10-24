@@ -1,52 +1,22 @@
+import { fitsFamilies } from "./families.ts";
+import { BASS_SOUNDS, genreField, withGenreVocabulary } from "./lexicon-genres/index.ts";
 import { pick, pickN } from "./rng.ts";
 
-export function familyKeys(genres: (string | undefined)[]): string[] {
-  const keys = new Set<string>();
-  for (const raw of genres) {
-    if (!raw) continue;
-    const n = raw.toLowerCase();
-    if (/trapstep|edm trap|future trap|aggressive trap|melodic trap|cyber trap/.test(n) || /\btrap\b/.test(n))
-      keys.add("trap");
-    if (/future bass|melodic bass/.test(n)) keys.add("future");
-    if (/drill/.test(n)) keys.add("drill");
-    if (/phonk/.test(n)) keys.add("phonk");
-    if (/dubstep|wobble|wubby|brostep|tearout|140 bass/.test(n)) keys.add("bass");
-    if (/riddim|neuro/.test(n)) keys.add("riddim");
-    if (/garage|ukg|2-step|uk bass/.test(n)) keys.add("garage");
-    if (/baile|brazilian funk|favela/.test(n)) keys.add("baile");
-    if (/ritual/.test(n)) keys.add("ritual");
-    if (/cinematic|trailer|dark ambient/.test(n)) keys.add("cinematic");
-    if (/soul|r&b|rnb|trip-hop|neo-soul|trapsoul/.test(n)) keys.add("soul");
-    if (/house|techno|trance|disco/.test(n)) keys.add("house");
-    if (/melodic rap|emotional rap|\brap\b/.test(n)) keys.add("rap");
-    if (/dancehall|reggae|reggaeton/.test(n)) keys.add("dancehall");
-    if (/experimental|breakbeat|dnb|drum and bass/.test(n)) keys.add("breaks");
-    if (/\bfolk\b/.test(n)) keys.add("folk");
-    if (/gospel|worship|choir/.test(n)) keys.add("gospel");
-    if (/\bpop\b|hyperpop|electropop/.test(n)) keys.add("pop");
-    if (/orchestral|film score|trailer/.test(n)) keys.add("cinematic");
-    if (/\br&b\b|\brnb\b/.test(n)) keys.add("soul");
-  }
-  if (keys.size === 0) keys.add("general");
-  keys.add("general");
-  return [...keys];
-}
-
+/**
+ * Picks up to n phrases from the plan's own families. Phrases about drops are
+ * skipped for genres that have none; the neutral "general" phrases only fill a
+ * shortfall, and a bank with nothing for these families contributes nothing.
+ */
 export function pickFamily(
   rng: () => number,
   bank: Record<string, string[]>,
   families: string[],
   n: number
 ): string[] {
-  const pool: string[] = [];
-  for (const f of families) {
-    const items = bank[f];
-    if (items) pool.push(...items);
-  }
-  if (pool.length < n) pool.push(...(bank.general ?? []));
-  const uniq = [...new Set(pool)];
-  const source = uniq.length ? uniq : Object.values(bank).flat();
-  return pickN(rng, source, Math.min(n, source.length));
+  const fits = (phrase: string) => fitsFamilies(phrase, families);
+  let pool = [...new Set(families.flatMap((f) => bank[f] ?? []))].filter(fits);
+  if (pool.length < n) pool = [...new Set([...pool, ...(bank.general ?? []).filter(fits)])];
+  return pickN(rng, pool, Math.min(n, pool.length));
 }
 
 export function oneFamily(
@@ -54,21 +24,36 @@ export function oneFamily(
   bank: Record<string, string[]>,
   families: string[]
 ): string {
-  return pickFamily(rng, bank, families, 1)[0] ?? "modern bass production";
+  return pickFamily(rng, bank, families, 1)[0] ?? "polished modern production";
 }
 
-export const PRODUCTION: Record<string, string[]> = {
+
+/** Appends the bass tones or movements from lexicon-genres to a bass bank. */
+function withBassSounds(bank: Record<string, string[]>, field: "tones" | "moves"): Record<string, string[]> {
+  const merged: Record<string, string[]> = { ...bank };
+  for (const [bassFamily, sounds] of Object.entries(BASS_SOUNDS)) {
+    merged[bassFamily] = [...new Set([...(merged[bassFamily] ?? []), ...sounds[field]])];
+  }
+  return merged;
+}
+
+/** Mix, mastering, padding and song-form phrases written for each family. */
+export const FAMILY_MIX = genreField("mix");
+export const FAMILY_MASTER = genreField("master");
+export const FAMILY_PADDING = genreField("padding");
+export const FAMILY_ARRANGEMENT = genreField("arrangement");
+export const FAMILY_MOODS = genreField("moods");
+
+export const PRODUCTION: Record<string, string[]> = withGenreVocabulary({
   general: [
-    "bass-forward production",
-    "weight-driven hybrid production",
-    "club-ready bass production",
-    "modern bass production",
-    "drop-focused hybrid production",
-    "streaming-ready bass production",
-    "physical low-end production",
-    "high-impact bass production",
-    "night-drive bass production",
-    "precision hybrid production",
+    "polished modern production",
+    "warm, detailed production",
+    "wide, immersive production",
+    "punchy, clean production",
+    "organic and electronic hybrid production",
+    "dynamic, expressive production",
+    "crisp, radio-ready production",
+    "atmospheric, layered production",
   ],
   trap: [
     "808-forward trap production",
@@ -136,7 +121,7 @@ export const PRODUCTION: Record<string, string[]> = {
     "half-time dub-weight production",
     "neuro-mid hybrid production",
   ],
-};
+}, "production");
 
 export const FEELS: Record<string, string[]> = {
   "half-time": [
@@ -148,6 +133,9 @@ export const FEELS: Record<string, string[]> = {
     "monumental half-time drop frame",
     "lazy-kick half-time weight",
     "cinematic half-time sway",
+    "laid-back half-time groove",
+    "deep half-time stomp",
+    "patient half-time bounce",
   ],
   "2-step": [
     "swung 2-step groove",
@@ -155,27 +143,40 @@ export const FEELS: Record<string, string[]> = {
     "garage 2-step pulse",
     "elastic 2-step shuffle",
     "late-hat 2-step lift",
+    "rolling 2-step swing",
+    "ghost-kick 2-step skip",
   ],
   "four-on-the-floor": [
     "four-on-the-floor pulse",
     "steady four-floor drive",
     "body-moving four-floor engine",
+    "driving four-to-the-floor kick",
+    "hypnotic four-on-the-floor loop",
+    "pumping four-floor groove",
+    "disco-inflected four-floor bounce",
   ],
-  broken: [
+  "broken": [
     "broken rhythmic pocket",
     "syncopated broken groove",
     "fractured dance pocket",
     "off-grid broken bounce",
     "staggered kick-snare conversation",
+    "chopped breakbeat pocket",
+    "stuttering syncopated groove",
   ],
+  free: ["free-floating pulse", "slow, unhurried pulse", "weightless drifting tempo", "rubato breathing pulse", "barely-there heartbeat pulse"],
   "full-time": [
     "full-time driving pulse",
     "forward full-time groove",
-    "double-time hat urgency over a grounded kick",
+    "steady full-time backbeat",
+    "natural live-band groove",
+    "relaxed mid-tempo pocket",
+    "lilting full-time sway",
+    "warm, steady backbeat",
   ],
 };
 
-export const GROOVE: Record<string, string[]> = {
+export const GROOVE: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "spacious half-time pocket",
     "head-nod weight",
@@ -284,9 +285,9 @@ export const GROOVE: Record<string, string[]> = {
     "pocket-first groove",
     "silence used as a drum",
   ],
-};
+}, "groove");
 
-export const DRUMS: Record<string, string[]> = {
+export const DRUMS: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "punchy kicks",
     "sharp snares",
@@ -380,9 +381,9 @@ export const DRUMS: Record<string, string[]> = {
     "short room tails",
     "punch-first drum bus",
   ],
-};
+}, "drums");
 
-export const BASS_TONES: Record<string, string[]> = {
+export const BASS_TONES: Record<string, string[]> = withBassSounds({
   "808": [
     "heavy sliding 808s",
     "long 808 tails",
@@ -422,9 +423,9 @@ export const BASS_TONES: Record<string, string[]> = {
     "mechanical neuro motifs",
     "bitcrushed neuro chatter",
   ],
-};
+}, "tones");
 
-export const BASS_MOVES: Record<string, string[]> = {
+export const BASS_MOVES: Record<string, string[]> = withBassSounds({
   "808": [
     "pitch-gliding 808 movement",
     "rhythmically active low-end phrases",
@@ -457,9 +458,9 @@ export const BASS_MOVES: Record<string, string[]> = {
     "mechanical bass motifs",
     "neuro movement in short bursts",
   ],
-};
+}, "moves");
 
-export const HARMONY: Record<string, string[]> = {
+export const HARMONY: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "uncluttered dark harmonic bed",
     "lean minor stabs",
@@ -499,9 +500,9 @@ export const HARMONY: Record<string, string[]> = {
     "sparse dancefloor harmony",
     "minimal hook-supporting chords",
   ],
-};
+}, "harmony");
 
-export const MELODY: Record<string, string[]> = {
+export const MELODY: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "cold pluck hooks",
     "short dark bell cells",
@@ -531,9 +532,9 @@ export const MELODY: Record<string, string[]> = {
     "short identity motifs",
     "few-note hooks with strong contour",
   ],
-};
+}, "melody");
 
-export const SOUND_DESIGN: Record<string, string[]> = {
+export const SOUND_DESIGN: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "tape-stop fills",
     "gunshot-style snare rooms",
@@ -568,7 +569,7 @@ export const SOUND_DESIGN: Record<string, string[]> = {
     "short transition fills",
     "filtered noise beds",
   ],
-};
+}, "soundDesign");
 
 export const ARRANGEMENT: Record<string, string[][]> = {
   kinetic: [
@@ -632,6 +633,18 @@ export const MIX: string[] = [
   "tight club punch with heavy sidechain and loudness",
   "cinematic width with long tails only on atmosphere",
   "intimate close-mic verse image against stadium chorus width",
+  "natural room ambience on the drums",
+  "warm tape saturation on the mix bus",
+  "clear vocal intelligibility above the band",
+  "gentle bus compression for glue",
+  "smooth de-essed vocal top end",
+  "controlled low-mids for clarity",
+  "wide reverb on pads with dry lead elements",
+  "balanced dynamics with room to breathe",
+  "crisp percussion panned for width",
+  "full low end that stays tight",
+  "soft-knee limiting that keeps transients",
+  "subtle stereo widening on harmonies",
 ];
 
 export const MASTER: Record<string, string[]> = {
@@ -648,7 +661,7 @@ export const MASTER: Record<string, string[]> = {
     "streaming-ready polish",
     "wide but controlled peak loudness",
   ],
-  cinematic: ["wide dynamic contrast", "trailer-scale impact without crushing verses"],
+  cinematic: ["wide dynamic contrast", "trailer-scale impact with breathing room in the verses"],
   balanced: ["modern polished loudness", "clear transient definition", "balanced club-stream master"],
 };
 
@@ -722,7 +735,7 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "relentless pocket rider flow with sharp dynamic inflection",
   ],
   "talk-rap": [
-    "English talk-rap cadence, dry and conversational, zero singing",
+    "English talk-rap cadence, dry, conversational and fully spoken",
     "deadpan spoken-flow rap with crisp rhythmic consonants",
     "conversational talk-rap delivery over the 808 pocket, strictly spoken",
     "West Coast-style talk-rap swagger with rhythmic speech cadence",
@@ -732,20 +745,20 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "cynical street narrative talk-rap flow with crisp consonant punch",
     "laid-back conversational rap flow with rhythmic micro-pauses",
     "nonchalant deadpan talk-rap cadence with cold street delivery",
-    "monotone conversational rap delivery, zero choral melodies or singing",
+    "monotone conversational rap delivery, fully spoken",
     "Michigan punchline talk-rap flow with sudden rests and off-kilter pocket",
-    "Earl Sweatshirt-style introspective conversational spoken delivery",
+    "introspective low-key spoken delivery with murky, conversational phrasing",
     "low-register dry talk-rap monologue over heavy bass thud",
     "street dialogue talk-rap pacing with crisp breath sounds",
   ],
   "melodic-rap": [
     "English melodic sung-rap phrasing with tight autotuned pitch glides",
-    "melodic trap sung-rap flow with rhythmic pocket cadences and zero pop belting",
-    "infectious sung-rap delivery locked to the triplet hi-hat grid, no choir",
+    "melodic trap sung-rap flow with rhythmic pocket cadences and restrained, speech-like pitch",
+    "infectious sung-rap delivery locked to the triplet hi-hat grid with a solo lead voice",
     "SoundCloud-era melodic sung-rap pocket with smooth pitch correction",
     "harmonic trap sung-rap verses with autotuned ad-lib trails",
     "Atlanta melodic trap sung-rap cadence with rhythmic pitch bends",
-    "modern sing-rap hybrid topline with crisp autotune shine, no traditional singing",
+    "modern sing-rap hybrid topline with crisp autotune shine and rap-pocket phrasing",
     "melodic street-rap cadence riding sliding 808 sub-bass contours",
     "rhythmic pitched sung-rap delivery with auto-tuned chant hook",
     "atmospheric nocturnal sung-rap cadence with pitched pocket bounce",
@@ -753,16 +766,16 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "rapid melodic sung-rap flow riding distorted 808s",
     "bouncy dynamic melodic rap topline with rhythmic chirps",
     "reverb-washed atmospheric melodic sung-rap cadence with pitch snaps",
-    "melodic emo-trap sung-rap delivery with autotuned vibrato tail, zero choral harmonies",
+    "melodic emo-trap sung-rap delivery with an autotuned vibrato tail and a single lead voice",
   ],
   "sung-rap": [
     "English melodic sung-rap phrasing with tight autotuned pitch glides",
-    "melodic trap sung-rap flow with rhythmic pocket cadences and zero pop belting",
-    "infectious sung-rap delivery locked to the triplet hi-hat grid, no choir",
+    "melodic trap sung-rap flow with rhythmic pocket cadences and restrained, speech-like pitch",
+    "infectious sung-rap delivery locked to the triplet hi-hat grid with a solo lead voice",
     "SoundCloud-era melodic sung-rap pocket with smooth pitch correction",
     "harmonic trap sung-rap verses with autotuned ad-lib trails",
     "Atlanta melodic trap sung-rap cadence with rhythmic pitch bends",
-    "modern sing-rap hybrid topline with crisp autotune shine, no traditional singing",
+    "modern sing-rap hybrid topline with crisp autotune shine and rap-pocket phrasing",
     "melodic street-rap cadence riding sliding 808 sub-bass contours",
     "rhythmic pitched sung-rap delivery with auto-tuned chant hook",
     "atmospheric nocturnal sung-rap cadence with pitched pocket bounce",
@@ -770,7 +783,7 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "rapid melodic sung-rap flow riding distorted 808s",
     "bouncy dynamic melodic rap topline with rhythmic chirps",
     "reverb-washed atmospheric melodic sung-rap cadence with pitch snaps",
-    "melodic emo-trap sung-rap delivery with autotuned vibrato tail, zero choral harmonies",
+    "melodic emo-trap sung-rap delivery with an autotuned vibrato tail and a single lead voice",
   ],
   "mumble-rap": [
     "hypnotic mumble rap flow with slurred cadence and distorted 808 punch",
@@ -803,14 +816,14 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "modern futuristic autotuned trap cadence with pitch-snapped precision",
     "hyper-processed autotune rap topline with aggressive melodic slides",
     "saturated autotuned rap delivery locked into the sub-bass groove",
-    "robotic metallic autotune cadence with emotive pitch glides, zero choral singing",
+    "robotic metallic autotune cadence with emotive pitch glides and a solo lead",
     "heavily autotuned trap delivery with stereo ad-lib echoes",
     "pitch-corrected rap verses with metallic chorus chant doubling",
     "dark atmospheric autotuned rap with reverb throw ad-libs",
     "saturated rhythmic autotuned street flow with relentless triplet momentum",
     "hard pitch-quantized rage-trap rap cadence with distorted top-end",
     "robotic auto-tune topline with instantaneous retune time and wide doubles",
-    "metallic autotuned hook chant with panned octaves, zero traditional singing",
+    "metallic autotuned hook chant with panned octaves over rap verses",
     "hyperpop-adjacent autotuned rap delivery with glitchy pitch drops",
     "heavily quantized melodic trap rap with hard autotune crunch",
   ],
@@ -823,9 +836,9 @@ export const VOCAL_STYLE: Record<string, string[]> = {
     "fast-paced lyrical rap flow locked dead-center in the pocket",
     "complex breath-controlled lyrical cadence with razor-sharp rhymes",
     "authoritative street lyricist flow with dynamic vocal presence",
-    "Griselda-style gritty street lyricism with cold punchline delivery",
-    "J. Cole-style narrative lyrical bars with conversational transitions",
-    "Kendrick-style dynamic cadence shifts with multi-voice character bars",
+    "gritty, sample-driven street lyricism with cold punchline delivery",
+    "narrative storytelling bars with conversational transitions",
+    "dynamic cadence shifts with multi-voice character bars",
     "chopper-style double-time rapid rap delivery with machine-gun syllables",
     "dense poetic lyrical rap delivery over raw boom-bap drums",
     "intricate slant-rhyme lyrical flow with explosive emphasis on 4th beats",
@@ -851,18 +864,18 @@ export const VOCAL_ARC: Record<string, string[]> = {
     "stacking doubles only on the hook so verses stay close",
   ],
   rap: [
-    "keeping verses pocket-tight and hooks chant-wide with zero sung harmonies",
+    "keeping verses pocket-tight and hooks chant-wide with unison rap doubles",
     "dry rap verses exploding into stacked hook shouts and hype ad-libs",
     "leaving space after punchlines for the 808 to answer",
     "double-time bars into a half-time chanted hook",
     "aggressive verse flow building to an explosive crowd-chanted refrain",
-    "staccato verse cadence breaking into a syncopated hook chant, strictly no singing",
+    "staccato verse cadence breaking into a syncopated, fully rapped hook chant",
     "verses locked dead-center in the pocket, hooks doubled with crowd shouts",
     "punchline-heavy verses punctuated by heavy sub-bass hits and silence rests",
   ],
   "talk-rap": [
-    "spoken verses that lead into an emphatic rhythmic spoken hook, zero singing",
-    "keeping verses spoken and hook chanted with crowd ad-libs, strictly no singing",
+    "spoken verses that lead into an emphatic rhythmic spoken hook",
+    "keeping verses spoken and the hook chanted with crowd ad-libs",
     "staying conversational and deadpan until the drop demands volume",
     "close-mic rhythmic talk that widens into shouted chant doubles on the chorus",
     "dry spoken bars that let the 808 breathe between punchlines",
@@ -871,23 +884,23 @@ export const VOCAL_ARC: Record<string, string[]> = {
     "deadpan punchline delivery with intentional silence pauses before the drop",
   ],
   "melodic-rap": [
-    "melodic sung-rap trap verses leading into an autotuned earworm hook without traditional singing",
-    "triplet melodic rap cadence maintaining hip-hop pocket and pitch-snapped flow, zero choral harmonies",
+    "melodic sung-rap trap verses leading into an autotuned earworm hook in rap cadence",
+    "triplet melodic rap cadence keeping the hip-hop pocket with pitch-snapped flow",
     "half-sung melodic verses into an autotuned chant-style hook, strictly rap cadence",
     "smooth melodic rap flow shifting dynamically into aggressive punchlines",
     "autotuned melodic verses into a hypnotic repetitive melodic hook with ad-lib echoes",
-    "Drake-style atmospheric sung-rap verses dropping into an autotuned chant hook",
-    "Juice WRLD-style raw melodic verses building into an autotuned earworm hook",
+    "atmospheric nocturnal sung-rap verses dropping into an autotuned chant hook",
+    "raw emotional melodic verses building into an autotuned earworm hook",
     "pitched trap sung-rap verses with fast autotune glides and stereo doubles",
   ],
   "sung-rap": [
-    "melodic sung-rap trap verses leading into an autotuned earworm hook without traditional singing",
-    "triplet melodic rap cadence maintaining hip-hop pocket and pitch-snapped flow, zero choral harmonies",
+    "melodic sung-rap trap verses leading into an autotuned earworm hook in rap cadence",
+    "triplet melodic rap cadence keeping the hip-hop pocket with pitch-snapped flow",
     "half-sung melodic verses into an autotuned chant-style hook, strictly rap cadence",
     "smooth melodic rap flow shifting dynamically into aggressive punchlines",
     "autotuned melodic verses into a hypnotic repetitive melodic hook with ad-lib echoes",
-    "Drake-style atmospheric sung-rap verses dropping into an autotuned chant hook",
-    "Juice WRLD-style raw melodic verses building into an autotuned earworm hook",
+    "atmospheric nocturnal sung-rap verses dropping into an autotuned chant hook",
+    "raw emotional melodic verses building into an autotuned earworm hook",
     "pitched trap sung-rap verses with fast autotune glides and stereo doubles",
   ],
   "mumble-rap": [
@@ -895,7 +908,7 @@ export const VOCAL_ARC: Record<string, string[]> = {
     "spaced-out mumble bars surrounded by explosive hype ad-libs",
     "lazy flow verses exploding into high-energy trap hook chants",
     "slurred low-energy verses contrasted with hyperactive stereo ad-lib screams",
-    "Playboi Carti-style spaced-out verses leading into a repetitive chant hook",
+    "spaced-out, high-pitched verses leading into a repetitive chant hook",
     "murmured triplet verses anchored by distorted 808 hits and ad-lib bursts",
     "cloudy mumble flow shifting from lazy drawl into frantic ad-lib responses",
   ],
@@ -908,13 +921,13 @@ export const VOCAL_ARC: Record<string, string[]> = {
     "pitch-snapped autotuned verses building into a stadium-sized autotuned chant",
     "hard-tuned rap bars with wide stereo autotuned ad-lib throws",
     "metallic autotuned flow riding seamlessly across 808 slides",
-    "hyper-processed autotune verses leading into a robotic hook anthem, zero choral singing",
-    "Travis Scott-style cavernous autotuned verses bursting into a hard-tuned chant hook",
+    "hyper-processed autotune verses leading into a robotic hook anthem",
+    "cavernous reverb-soaked autotuned verses bursting into a hard-tuned chant hook",
     "distorted autotuned rap bars with stereo pitch-quantized echoes",
     "fast-retune autotuned flow accelerating into an explosive pitch-snapped refrain",
   ],
   "lyrical-rap": [
-    "relentless 16-bar lyrical assault with zero wasted syllables",
+    "relentless 16-bar lyrical assault packed with dense internal rhymes",
     "dense multi-syllable verses exploding into an aggressive crowd-chanted hook",
     "breathless technical flow building in intensity through every verse",
     "rapid-fire lyrical bars leading into a hard-hitting staccato hook",
@@ -926,7 +939,7 @@ export const VOCAL_ARC: Record<string, string[]> = {
     "chops answering the lead like a second percussionist",
   ],
   hybrid: [
-    "verses rapped, choruses chanted with autotune doubles, zero choral singing",
+    "verses rapped, choruses chanted with autotune doubles",
   ],
 };
 
@@ -938,7 +951,7 @@ export const VOCAL_PROC: string[] = [
   "tight third-above stacks on the hook",
   "octave doubles on peak syllables",
   "short slap delay in verses, longer throws on the drop",
-  "light autotune as shine, not as the performance",
+  "light autotune polish on held notes",
   "stereo chopped answers after the lead line",
   "reverb gated so lyrics stay intelligible",
   "whisper-stack under the main take",
@@ -951,7 +964,7 @@ export const VOCAL_PROC: string[] = [
 ];
 
 export const VOCAL_PROC_RAP: string[] = [
-  "dry verse vocal, short room only, zero vocal harmonies",
+  "dry verse vocal in a short, tight room",
   "hard auto-tune retune speed with metallic shine",
   "heavy SoundCloud-style vocal saturation and 1176 compression",
   "doubles on the hook only with crowd shout ad-libs",
@@ -964,7 +977,7 @@ export const VOCAL_PROC_RAP: string[] = [
   "pitched-down demon vocal doubles on the hook drop",
   "high-passed ad-libs panned hard left and right",
   "tape saturation with aggressive de-essing for cutting rap consonants",
-  "fast pitch-snapped retune on sung-rap hooks without traditional harmonizing",
+  "fast pitch-snapped retune on sung-rap hooks",
   "heavily distorted vocal distortion on aggressive hype ad-libs",
   "crisp transient shaping for high-speed lyrical consonant articulation",
   "sidechained stereo delay throws filling gaps between rap punchlines",
@@ -1026,11 +1039,11 @@ export const VOCAL_INST: Record<string, string[]> = {
     "breathless male chopper rap bars",
     "Detroit offbeat male talk-rap delivery",
     "bar-for-bar male underground lyrical MC",
-    "Travis Scott-style cavernous autotuned male lead",
-    "Griselda-style gutter male lyricist",
+    "cavernous autotuned male lead drenched in reverb",
+    "gritty sample-rap male lyricist",
     "nonchalant West Coast male talk-rap delivery",
-    "Juice WRLD-style melodic emo-rap vocal",
-    "Drake-style nocturnal male sung-rap delivery",
+    "raw melodic emo-rap vocal",
+    "nocturnal male sung-rap delivery",
     "hardcore street-corner male rap delivery",
     "distorted rage-trap male ad-lib shouts",
   ],
@@ -1058,7 +1071,7 @@ export const PRODUCTION_VERBS = {
     "keep the emotional center clear",
     "anchor the harmony",
     "hold the tonal mood",
-    "support the topline without crowding bass",
+    "support the topline while the bass keeps its own space",
     "leave a midrange pocket for the vocal",
     "bloom only on the drop so verses stay lean",
   ],
@@ -1101,7 +1114,7 @@ export const GENRE_GLUE: string[] = [
   "{p}-{s} hybrid language, {a} ornaments",
 ];
 
-export const TITLES: Record<string, string[]> = {
+export const TITLES: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "Trap Future Voltage",
     "Hat Storm Drop",
@@ -1326,59 +1339,59 @@ export const TITLES: Record<string, string[]> = {
     "Pristine Mix Engine",
     "Resonant Hybrid Wave",
   ],
-};
+}, "titles");
 
 export const PADDING: string[] = [
-  "Dynamic arc moves from restrained detail into explosive half-time weight, then returns to reflective space before a final expanded release.",
-  "Stereo design keeps kick, sub, and core vocal centered while pads, harmonies, and ambience widen on emotional peaks.",
-  "Organic and synthetic layers trade focus across the form, preserving human warmth against engineered bass pressure.",
-  "Section transitions favor rising percussion density, filtered bass teases, and spatial expansion rather than constant full-band intensity.",
-  "Motivic writing favors few notes with strong identity over constant ornamental motion.",
-  "Performance energy targets modern club translation with streaming-ready clarity and controlled saturation.",
-  "Percussion and bass trade leadership so the track stays physical without overcrowding the midrange.",
-  "Silence and negative space are treated as arrangement tools, not empty gaps.",
-  "High-energy passages still leave air around the vocal so the hook stays readable on small speakers.",
-  "Drop weight arrives in phrases, not as a constant wall, so each return hits harder.",
-  "Hats accelerate into section peaks, then thin out so the bass and vocal can own the pocket.",
-  "Chord stacks bloom with the sidechain, then recede so verses feel close and human.",
-  "Ad-libs and ear-candy appear as answers, never as a second lead competing with the hook.",
-  "The second drop adds one new layer only — a harmony, a wobble syllable, or a hat pattern — so the lift is audible.",
-  "Low-end mono compatibility stays non-negotiable even when the upper field goes widescreen.",
-  "Festival brightness is reserved for choruses; verses keep a drier, closer image.",
-  "Groove humanization is light: hats can swing, kicks stay grid-true for club punch.",
-  "Vocal consonants stay dry enough to cut through 808 tails and supersaw wash.",
-  "Each bass phrase has a clear start and stop so the drop never turns into drone.",
+  "The arrangement builds from a restrained opening into a fuller, wider final section.",
+  "Kick, bass and lead vocal stay centered while pads, harmonies and ambience spread wide.",
+  "Organic and synthetic layers trade focus, keeping human warmth against electronic weight.",
+  "Section changes are marked by rising percussion, filter sweeps and wider stereo space.",
+  "Melodic motifs stay short and memorable, repeating with small variations.",
+  "Clear, polished production keeps every part distinct at low and high volume.",
+  "Percussion and bass trade leadership so the groove stays physical and clear.",
+  "Short pauses and space between phrases give the rhythm room to breathe.",
+  "The hook stays readable on small speakers with a clear midrange.",
+  "Drop weight arrives in phrases, each return hitting harder than the last.",
+  "Hats speed up into section peaks, then thin out to give the vocal room.",
+  "Chord stacks swell with the sidechain, then pull back so verses feel close.",
+  "Ad-libs and ear-candy answer the main hook in the gaps between lines.",
+  "The second drop adds one new layer, such as a harmony, a wobble syllable or a new hat pattern.",
+  "Low end stays mono and steady while the upper layers go wide.",
+  "Choruses open up bright and wide; verses keep a drier, closer image.",
+  "Hats swing lightly while the kick stays tight on the grid.",
+  "Vocal consonants stay crisp enough to cut through long bass tails.",
+  "Each bass phrase has a clear start and stop, leaving space before the next hit.",
   "Impact FX mark section borders instead of looping under the whole hook.",
-  "If energy is high, density is still scored — more motion in hats and vocals, not more competing mids.",
-  "The hook motif is short enough to chant and strong enough to survive a stripped breakdown.",
-  "Filter automation tells the story: darker verses, open drops, a brief closed tunnel before the last hit.",
-  "Layer count stays honest: sub, mid-bass, drums, one harmonic bed, one lead, optional vocal stack.",
-  "Club systems should feel the kick and sub as a single fist, with wobble or Reese living above that fist.",
-  "Streaming translation needs the hook audible at low volume, not only the drop at high volume.",
-  "Breakdowns subtract before they add, so the next drop feels like a decision, not a default.",
-  "Harmonic rhythm stays slower than the hats; chords hold while percussion talks.",
-  "Any guitar, pluck, or bell is a cameo, not a new genre.",
-  "The record should still read as the named hybrid if you mute the vocal for a DJ tool edit.",
+  "High-energy sections add motion in the hats and vocals rather than more midrange layers.",
+  "The hook motif is short enough to chant and strong enough to carry a stripped breakdown.",
+  "Filter automation shapes the journey: darker verses, open choruses and a brief closed tunnel before the last section.",
+  "The layer count stays focused: sub, bass, drums, one harmonic bed, one lead and an optional vocal stack.",
+  "Kick and sub land together as one punch, with the mid-bass sitting above them.",
+  "The hook stays audible at low volume, so the track works on headphones and phones.",
+  "Breakdowns strip back before building again, so the next section feels earned.",
+  "Chords change slowly while the percussion keeps moving underneath.",
+  "Guitar, pluck and bell parts appear as short accents around the main hook.",
+  "Warm saturation and gentle compression glue the full mix together.",
 ];
 
 export const RAP_PADDING: string[] = [
-  "Vocal delivery stays strictly in the rap pocket with zero sung harmonies, letting 808 slides and kick transients punch through cleanly.",
-  "Ad-libs, chant doubles, and delay throws punctuate punchlines without ever breaking into melodic singing or choir chords.",
+  "Vocal delivery stays strictly in the rap pocket with unison doubles, letting 808 slides and kick transients punch through cleanly.",
+  "Ad-libs, chant doubles, and delay throws punctuate punchlines while the lead stays in rap cadence.",
   "Mono lead rap vocal stays upfront with fast-attack compression, flanked by hard-panned ad-libs and hype accents.",
   "Cadence is locked to the drum grid, leaving intentional pocket gaps between bars for sub-bass responses.",
   "Hook impact relies on chant doubling and crowd shouts rather than vocal harmonizing.",
   "Consonant punch and rhythmic delivery drive the topline energy from intro to outro.",
   "Fast retune auto-tune and saturation provide the melodic texture while preserving pure rap cadence.",
   "Verses keep a bone-dry, in-your-face center image so the flow remains distinct on small speakers.",
-  "Ad-lib layers use telephone bandpass filtering and stereo delay throws to create space without cluttering the center lead.",
+  "Ad-lib layers use telephone bandpass filtering and stereo delay throws to create space around a clean center lead.",
   "Drum pockets leave space after every fourth bar for an aggressive punchline delivery.",
   "Bass and kick work as a single low-end fist while the rapper drives the rhythmic counterpoint.",
-  "Pitched-down vocal doubles anchor the hook without traditional choral stacks.",
+  "Pitched-down vocal doubles anchor the hook as a tight, chanted stack.",
   "High-hat rolls and triplet snare fills wrap around the rap cadence rather than clashing with syllables.",
   "Punchlines land on dry rests before the 808 bass drops back in.",
-  "Lead rapper commands the front-to-back depth with tight slapback delay and zero choral reverb wash.",
+  "Lead rapper commands the front-to-back depth with tight slapback delay and a dry, close vocal image.",
   "SoundCloud-style distorted ad-lib screams ('skrrt', 'aye') bounce across the stereo field around the dry center lead.",
-  "Sung-rap melodic topline maintains strict hip-hop pocket timing without slipping into traditional R&B singing.",
+  "Sung-rap melodic topline keeps strict hip-hop pocket timing throughout.",
   "Autotuned pitch snaps lock tightly to minor scale steps, avoiding choir pads or vocal harmony stacks.",
   "Lyrical bars flow continuously with razor-sharp consonant articulation and breathless internal rhymes.",
   "Conversational talk-rap delivery uses deadpan dynamic restraint to contrast with explosive 808 drops.",
@@ -1389,21 +1402,26 @@ export const RAP_PADDING: string[] = [
 ];
 
 export const MICROS: string[] = [
-  "Clear club translation remains essential.",
-  "Motif identity stays simple and memorable.",
-  "Dynamic contrast stays intentional rather than constant.",
-  "Low-end mono compatibility anchors the mix.",
-  "Upper layers expand on emotional releases.",
-  "Bass phrases stay short enough to breathe.",
-  "The hook must survive a phone speaker.",
-  "Drop gaps are part of the groove.",
-  "Energy comes from motion, not clutter.",
-  "Keep the vocal pocket sacred.",
-  "One new layer per lift is enough.",
-  "Silence is a drum hit.",
-  "Sidechain is a feel, not a gimmick.",
-  "Hats talk; kicks decide.",
-  "The last drop earns its extra voice.",
+  "Clean low-end translation.",
+  "Simple, memorable motifs.",
+  "Intentional dynamic contrast.",
+  "Mono-compatible low end.",
+  "Upper layers widen on the peaks.",
+  "Short, breathing bass phrases.",
+  "Hook clear on phone speakers.",
+  "Space is part of the groove.",
+  "Motion over clutter.",
+  "Warm analog saturation.",
+  "Crisp transient detail.",
+  "Wide stereo atmosphere.",
+  "Polished vocal presence.",
+  "Tight, punchy drums.",
+  "Smooth, airy top end.",
+  "Rich harmonic texture.",
+  "Natural room ambience.",
+  "Deep, round low end.",
+  "Gentle sidechain movement.",
+  "Clear section contrast.",
 ];
 
 export function pickTitleLex(
@@ -1420,7 +1438,11 @@ export function pickTitleLex(
   return phrase.split(/\s+/).slice(0, 6).join(" ");
 }
 
-export function pickArc(rng: () => number, energy: string): string[] {
-  const bank = ARRANGEMENT[energy] ?? ARRANGEMENT.balanced;
-  return [...pick(rng, bank ?? ARRANGEMENT.balanced)];
+/** A three-stage song form: the family's own forms first, the energy bank when the family has none. */
+export function pickArc(rng: () => number, energy: string, families: string[]): string[] {
+  const fits = (arc: string[]) => arc.every((stage) => fitsFamilies(stage, families));
+  const familyArcs = families.flatMap((f) => FAMILY_ARRANGEMENT[f] ?? []).filter(fits);
+  const energyArcs = (ARRANGEMENT[energy] ?? ARRANGEMENT.balanced).filter(fits);
+  const pool = familyArcs.length ? familyArcs : energyArcs.length ? energyArcs : ARRANGEMENT.emotional;
+  return [...pick(rng, pool)];
 }

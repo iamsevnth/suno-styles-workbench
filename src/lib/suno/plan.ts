@@ -4,7 +4,10 @@ import {
   BASS_MOVES,
   BASS_TONES,
   DRUMS,
-  familyKeys,
+  FAMILY_ARRANGEMENT,
+  FAMILY_MASTER,
+  FAMILY_MIX,
+  FAMILY_MOODS,
   FEELS,
   GROOVE,
   HARMONY,
@@ -36,150 +39,13 @@ import {
   DNA_MIX,
   DNA_PALETTE,
 } from "./lexicon-dna.ts";
+import { allowedBassFamilies, familyKeys, fitsFamilies, hasDrops, needsSubLayer } from "./families.ts";
 import { pickVocalPhrase } from "./lexicon-vocals.ts";
+import { VARIANT_PRESETS, VariantPreset } from "./presets.ts";
 import { expandMood, GENRES, matchGenre } from "./ontology.ts";
 import { PROFILE } from "./profile.ts";
 import { mulberry32, pick } from "./rng.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
-
-export interface VariantPreset {
-  axes: string[];
-  bassFamily: string;
-  rhythmFamily: string;
-  energy: string;
-  titleBank: string[];
-}
-
-export const VARIANT_PRESETS: VariantPreset[] = [
-  {
-    axes: ["genre hierarchy", "rhythm", "bass"],
-    bassFamily: "wub",
-    rhythmFamily: "ukg",
-    energy: "balanced",
-    titleBank: [
-      "Swung Emotional Bass",
-      "Garage Hybrid Lift",
-      "Elastic Bass Motion",
-      "Skippy Two Step",
-      "London Night Swung Grid",
-      "Sub-Loaded Two Step",
-      "Shuffle And Chop Flow",
-      "Late Night Garage Bounce",
-    ],
-  },
-  {
-    axes: ["bass architecture", "atmosphere", "arrangement"],
-    bassFamily: "808",
-    rhythmFamily: "trap",
-    energy: "heavy",
-    titleBank: [
-      "Heavy 808 Pressure",
-      "Monumental Trap Weight",
-      "Sub Authority Drop",
-      "Subsonic Atlanta Rumble",
-      "Titan 808 Architecture",
-      "Distorted Low-End Authority",
-      "Midnight Rollers Arc",
-      "Chrome Trap Bloom",
-    ],
-  },
-  {
-    axes: ["emotional profile", "vocals", "harmony"],
-    bassFamily: "growl",
-    rhythmFamily: "half-time",
-    energy: "emotional",
-    titleBank: [
-      "Bittersweet Release",
-      "Intimate Peak Drop",
-      "Melodic Bass Bloom",
-      "Prismatic Sidechain Surge",
-      "Vivid Emotional Ascent",
-      "Radiant Drop Explosion",
-      "Lush Hybrid Rise",
-      "Supersaw Bloom",
-    ],
-  },
-  {
-    axes: ["rhythm donor", "percussion", "mix"],
-    bassFamily: "reese",
-    rhythmFamily: "drill",
-    energy: "kinetic",
-    titleBank: [
-      "Syncopated Street Pulse",
-      "Drill Pocket Engine",
-      "Sliding Bass Tension",
-      "Cold Drill Pressure",
-      "Gliding Slide Cadence",
-      "Frostbite Sub Glide",
-      "Urban Menace Rhythm",
-      "Coldfront 808 Warp",
-    ],
-  },
-  {
-    axes: ["atmosphere", "sound design", "dynamic arc"],
-    bassFamily: "neuro",
-    rhythmFamily: "ritual",
-    energy: "cinematic",
-    titleBank: [
-      "Cinematic Ritual Weight",
-      "Processional Sub Arc",
-      "Ominous Impact Field",
-      "Ancient Percussion Canon",
-      "Temple Sub Resonance",
-      "Primal Ceremonial Descent",
-      "Sacred Horn Echo",
-      "Mystic Sub-Bass Horizon",
-    ],
-  },
-  {
-    axes: ["genre hierarchy", "instrumentation", "vocals"],
-    bassFamily: "wub",
-    rhythmFamily: "baile",
-    energy: "club",
-    titleBank: [
-      "Kinetic Club Hybrid",
-      "Physical Groove Engine",
-      "Global Percussion Bass",
-      "Rio Tambor Ignition",
-      "Dynamic Floor Ignition",
-      "Favela Bass Collision",
-      "Kicking Volt Percussion",
-      "Favela Rhythm Stash",
-    ],
-  },
-  {
-    axes: ["harmony", "vocals", "groove"],
-    bassFamily: "808",
-    rhythmFamily: "trap",
-    energy: "emotional",
-    titleBank: [
-      "Warm Nocturnal Soul",
-      "Quiet Fire Hybrid",
-      "Late Night Croon",
-      "Velvet Rhodes Serenade",
-      "Sub-Bass Heartbeat",
-      "Dusk Till Dawn Groove",
-      "Neo-Soul Satin Touch",
-      "Golden Hour Chords",
-    ],
-  },
-  {
-    axes: ["rhythm", "atmosphere", "mix"],
-    bassFamily: "808",
-    rhythmFamily: "ukg",
-    energy: "kinetic",
-    titleBank: [
-      "Skippy Two Step",
-      "Garage Hybrid Lift",
-      "Elastic Bass Motion",
-      "South London Rhythm Box",
-      "Late Night Garage Bounce",
-      "Whiplash Bass Accent",
-      "Silk And Shuffler",
-      "Syncopated Roller Groove",
-    ],
-  },
-];
 
 export function buildPlans(
   parsed: ParsedInput,
@@ -268,47 +134,51 @@ export function buildOnePlan(
     }
   }
 
+  // Moods: the brief's own, else the hybrid bass profile's (bass-music plans only), else the genre's.
+  const familyMoods = [...new Set(families.flatMap((f) => FAMILY_MOODS[f] ?? []))];
+  const useProfileMoods = parsed.profileEnabled && (hasDrops(families) || familyMoods.length === 0);
   const moodPool =
     parsed.moods.length > 0
       ? parsed.moods
-      : parsed.profileEnabled
+      : useProfileMoods
       ? shufflePick(rng, ["dark", "cinematic", "emotional", "nocturnal", "aggressive", "kinetic"])
+      : familyMoods.length
+      ? shufflePick(rng, familyMoods)
       : ["atmospheric"];
   const moodPrimary = moodPool[Math.floor(rng() * moodPool.length) % moodPool.length];
   const moodSecondary = parsed.moods.length
     ? moodPool.find((m) => m !== moodPrimary)
     : rng() > 0.5
-    ? pick(rng, ["cinematic", "nocturnal", "emotional", "kinetic"])
+    ? moodPool.find((m) => m !== moodPrimary)
     : undefined;
 
   const atmosphere = [...parsed.atmospheres, ...expandMood(moodPrimary).slice(0, 1)];
-  if (atmosphere.length === 0) atmosphere.push(pick(rng, ["nocturnal", "club", "underground"]));
+  if (atmosphere.length === 0) {
+    atmosphere.push(pick(rng, useProfileMoods ? ["nocturnal", "club", "underground"] : ["spacious", "warm", "intimate"]));
+  }
   if (parsed.atmospheres.includes("ritual") || parsed.moods.includes("ritualistic")) {
     atmosphere.unshift("ritualistic");
   }
-  if (parsed.moods.length === 0 && parsed.atmospheres.length === 0 && rng() > 0.55) {
+  if (useProfileMoods && parsed.moods.length === 0 && parsed.atmospheres.length === 0 && rng() > 0.55) {
     atmosphere.push(pick(rng, ["cavernous", "neon", "industrial", "haze"]));
   }
 
-  const feelCycle = ["half-time", "2-step", "broken", "four-on-the-floor"];
+  // Each genre has a home feel; only garage, Brazilian funk and trap rotate between idiomatic feels.
+  const garageFeels = ["half-time", "2-step", "broken", "four-on-the-floor"];
   let metricFeel = primaryDef?.metricFeel ?? "half-time";
-  if (
-    secondaryGenre === "UK Garage" ||
-    primaryGenre === "UK Garage" ||
-    preset.rhythmFamily === "ukg"
-  ) {
-    metricFeel = feelCycle[(rank + Math.floor(rng() * feelCycle.length)) % feelCycle.length];
+  if (families.includes("garage") || preset.rhythmFamily === "ukg") {
+    metricFeel = garageFeels[(rank + Math.floor(rng() * garageFeels.length)) % garageFeels.length];
   } else if (
     preset.rhythmFamily === "baile" ||
     primaryGenre === "Baile Funk" ||
     secondaryGenre === "Baile Funk"
   ) {
     metricFeel = rng() > 0.4 ? "broken" : "half-time";
-  } else if (preset.rhythmFamily === "trap" || primaryGenre === "Trap") {
+  } else if (families.includes("trap") && !families.includes("soul")) {
     metricFeel = rng() > 0.35 ? "half-time" : "broken";
-  } else {
-    metricFeel = feelCycle[Math.floor(rng() * feelCycle.length) % feelCycle.length];
   }
+  // Ambient music floats rather than grooves.
+  if (families.includes("ambient") && !hasDrops(families)) metricFeel = "free";
   if (parsed.grooveHints.includes("half-time")) metricFeel = "half-time";
   else if (parsed.grooveHints.includes("2-step")) metricFeel = "2-step";
   else if (parsed.grooveHints.includes("four-on-the-floor")) metricFeel = "four-on-the-floor";
@@ -317,7 +187,7 @@ export function buildOnePlan(
   }
 
   const lockedBass = lockedBassFamily(parsed.bassHints);
-  const bassFamilies = isBassMusic(families) ? ALL_BASS_FAMILIES : ["808"];
+  const bassFamilies = allowedBassFamilies(families);
   const presetIndex = Math.max(0, bassFamilies.indexOf(preset.bassFamily));
   const bassFamily =
     lockedBass ??
@@ -329,9 +199,9 @@ export function buildOnePlan(
   const harmony = buildHarmony(families, moodPrimary, parsed, rng);
   const melody = buildMelody(families, moodPrimary, parsed, rng);
   const soundDesign = buildSoundDesign(families, moodPrimary, parsed, rng);
-  const arrangement = buildArrangement(preset.energy, parsed, rng);
-  const mix = buildMix(parsed, rng);
-  const master = buildMaster(preset.energy, rng);
+  const arrangement = buildArrangement(preset.energy, families, parsed, rng);
+  const mix = buildMix(families, parsed, rng);
+  const master = buildMaster(preset.energy, families, rng);
   const vocals = buildVocals(parsed, rank, rng, attempt, families);
   const instruments = selectInstruments(
     bass,
@@ -437,6 +307,12 @@ function pickCompatiblePreset(
   if (families.includes("baile")) want.add("baile");
   if (families.includes("cinematic") || families.includes("ritual")) want.add("ritual");
   if (families.includes("riddim") || families.includes("bass")) want.add("half-time");
+  if (["soul", "gospel", "pop", "folk"].some((f) => families.includes(f)) || (families.includes("rap") && !families.includes("trap"))) {
+    want.add("song");
+  }
+  if (families.includes("house") || families.includes("breaks")) want.add("club");
+  if (["afro", "latin", "dancehall"].some((f) => families.includes(f))) want.add("world");
+  if (families.includes("ambient")) want.add("ambient");
 
   let pool = VARIANT_PRESETS.filter((p) => want.size === 0 || want.has(p.rhythmFamily));
   if (!pool.length) pool = [...VARIANT_PRESETS];
@@ -479,7 +355,10 @@ function diversifyGenres(
       const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "unhinged", parsed.bpm);
       if (extra) genres.push(extra.name);
     } else if (genres.length === 1) {
-      const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "tame", parsed.bpm);
+      // The accent must share the brief's drop-or-song character: an ambient brief gets no bass-music accent.
+      const lockedHasDrops = hasDrops(familyKeys(locked));
+      const sameCharacter = (g: { name: string }) => hasDrops(familyKeys([g.name])) === lockedHasDrops;
+      const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "tame", parsed.bpm, sameCharacter);
       if (extra) genres.push(extra.name);
     }
     return genres.slice(0, 3);
@@ -510,14 +389,6 @@ function diversifyGenres(
     [primary.name, secondary.name]
   );
   return [primary.name, secondary.name, accent.name];
-}
-
-const ALL_BASS_FAMILIES = ["wub", "808", "growl", "reese", "neuro"];
-const BASS_MUSIC_FAMILIES = new Set(["bass", "riddim", "future", "garage", "breaks"]);
-
-/** Wub, growl, Reese and neuro tones belong to bass music; trap, rap, R&B and pop plans stay on 808s. */
-function isBassMusic(families: string[]): boolean {
-  return families.some((f) => BASS_MUSIC_FAMILIES.has(f));
 }
 
 function lockedBassFamily(hints: string[]): string | undefined {
@@ -588,7 +459,7 @@ function pickTitle(
     ...(TITLES[moodKey] ?? []),
     ...families.flatMap((f) => TITLES[f] ?? []),
     ...(TITLES.general ?? []),
-  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0 && fitsFamilies(x, families));
   const len = combined.length || 1;
   const idx = Math.abs(seed + rank * 17 + Math.floor(rng() * len)) % len;
   let phrase = combined[idx] ?? "Modern Bass Hybrid";
@@ -612,7 +483,7 @@ function buildGroove(
   g.push(...pickFamily(rng, GROOVE, keys, 3));
   g.push(...pickFamily(rng, DNA_GROOVE, keys, 1));
   if (parsed.moods.some((m) => /kinetic|energetic|high energy|hype/.test(m))) {
-    g.push(oneFamily(rng, GROOVE, ["future", "trap", "general"]));
+    g.push(oneFamily(rng, GROOVE, families));
   }
   return unique(g).slice(0, 4);
 }
@@ -633,50 +504,36 @@ function buildBass(
   const behavior: string[] = [];
   const userBass = parsed.bassHints.length > 0;
 
-  if (
-    !userBass &&
-    families.includes("soul") &&
-    !families.includes("trap") &&
-    !families.includes("bass")
-  ) {
-    bass.push("round electric bass");
-    behavior.push(
-      pick(rng, [
-        "conversational bass movement around the chords",
-        "warm low-end support under sparse chords",
-        "melodic bass answers to the vocal phrases",
-      ])
-    );
-    return { bass: unique(bass).slice(0, 4), bassBehavior: unique(behavior).slice(0, 3) };
+  const fits = (x: string) => fitsFamilies(x, families);
+  const fitting = (bank: string[]) => (bank.filter(fits).length ? bank.filter(fits) : bank);
+  const tone = pick(rng, fitting(BASS_TONES[family] ?? BASS_TONES["808"]));
+  if (needsSubLayer(family) && !/\bsub\b/i.test(tone)) {
+    if (userBass) bass.push("deep mono sub");
+    else bass.unshift("deep mono sub");
   }
+  bass.push(tone);
+  behavior.push(pick(rng, fitting(BASS_MOVES[family] ?? BASS_MOVES["808"])));
 
-  if (userBass) bass.push("deep mono sub");
-  else bass.unshift("deep mono sub");
+  const hasBassDna = families.some((f) => DNA_BASS[f]);
+  if (hasBassDna && rng() > 0.4) behavior.push(...pickFamily(rng, DNA_BASS, families, 1));
 
-  const toneBank = BASS_TONES[family] ?? BASS_TONES["808"];
-  const moveBank = BASS_MOVES[family] ?? BASS_MOVES["808"];
-  bass.push(pick(rng, [...toneBank]));
-  behavior.push(pick(rng, [...moveBank]));
-
-  if (rng() > 0.4) behavior.push(...pickFamily(rng, DNA_BASS, families, 1));
-  if (rng() > 0.4 && !userBass && isBassMusic(families)) {
-    const others = Object.keys(BASS_TONES).filter((f) => f !== family);
-    const extra = pick(rng, others);
-    if (rng() > 0.3) bass.push(pick(rng, [...BASS_TONES[extra]]));
-    if (rng() > 0.35) behavior.push(pick(rng, [...BASS_MOVES[extra]]));
+  // A second bass color, only from families this plan actually contains.
+  const otherFamilies = allowedBassFamilies(families).filter((f) => f !== family);
+  if (!userBass && otherFamilies.length && rng() > 0.4) {
+    const extra = pick(rng, otherFamilies);
+    if (rng() > 0.3) bass.push(pick(rng, fitting(BASS_TONES[extra])));
+    if (rng() > 0.35) behavior.push(pick(rng, fitting(BASS_MOVES[extra])));
   }
-  if (!userBass && families.includes("bass") && family !== "wub" && rng() > 0.45) {
-    bass.push(pick(rng, [...BASS_TONES.wub]));
-  }
-  if (!userBass && families.includes("trap") && family !== "808" && rng() > 0.45) {
-    bass.push(pick(rng, [...BASS_TONES["808"]]));
-  }
-  if (!userBass && families.includes("future") && rng() > 0.5) {
-    bass.push(pick(rng, [...BASS_TONES.reese]));
-  }
-  if (behavior.length === 0) behavior.push("sustained sub pressure under moving mid-bass");
+  if (behavior.length === 0) behavior.push("sustained low end under the moving parts");
   return { bass: unique(bass).slice(0, 4), bassBehavior: unique(behavior).slice(0, 3) };
 }
+
+const DARK_HARMONY = /dark|minor|cold|shadow|eerie|tense|haunting|brooding|ominous|sinister/i;
+
+/** The harmony bank narrowed to dark voicings, used when the mood is dark. */
+const DARK_HARMONY_BANK: Record<string, string[]> = Object.fromEntries(
+  Object.entries(HARMONY).map(([family, phrases]) => [family, phrases.filter((x) => DARK_HARMONY.test(x))])
+);
 
 function buildHarmony(
   families: string[],
@@ -699,17 +556,19 @@ function buildHarmony(
 
   const h: string[] = [];
   if (parsed.key) h.push(`${parsed.key} tonal center`);
-  const harmFamilies = isRap ? ["trap", "general"] : families;
+  // Rap harmony comes from rap, trap and drill banks only, so sung-chorus voicings stay out.
+  const rapFamilies = ["rap", ...families.filter((f) => f === "trap" || f === "drill")];
+  const harmFamilies = isRap ? rapFamilies : families;
   h.push(...pickFamily(rng, HARMONY, harmFamilies, 2));
   if (rng() > 0.4) {
-    const raw = pickFamily(rng, DNA_HARMONY, isRap ? ["trap", "general"] : families, 1);
+    const raw = pickFamily(rng, DNA_HARMONY, harmFamilies, 1);
     const filtered = isRap
       ? raw.filter((x) => !/harmonies|soaring|stacked harmonies|soulful lifts/i.test(x))
       : raw;
     h.push(...(filtered.length ? filtered : ["minimal trap-key stabs"]));
   }
   if (["dark", "ominous", "melancholic", "menacing", "nocturnal", "aggressive"].includes(mood)) {
-    h.push(oneFamily(rng, HARMONY, ["trap", "general"]));
+    h.push(oneFamily(rng, DARK_HARMONY_BANK, harmFamilies));
   }
   return unique(h).slice(0, 3);
 }
@@ -855,7 +714,7 @@ function buildSoundDesign(
   if (/cinematic|ritual/.test(mood)) keys.push("cinematic");
   s.push(...pickFamily(rng, SOUND_DESIGN, keys, 2 + Math.floor(rng() * 2)));
   if (rng() > 0.45) s.push(...pickFamily(rng, DNA_PALETTE, keys, 1));
-  if (rng() > 0.7) s.push(pick(rng, [...DNA_FX]));
+  if (rng() > 0.7) s.push(pick(rng, DNA_FX.filter((x) => fitsFamilies(x, families))));
   if (families.includes("trap") && families.includes("future") && rng() > 0.55) {
     s.push(DNA_HYBRID["trap future-bass"]);
   } else if (families.includes("trap") && families.includes("cinematic") && rng() > 0.55) {
@@ -866,9 +725,9 @@ function buildSoundDesign(
   return unique(s).slice(0, 4);
 }
 
-function buildArrangement(energy: string, parsed: ParsedInput, rng: () => number): string[] {
+function buildArrangement(energy: string, families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const a = [...parsed.arrangementHints];
-  a.push(...pickArc(rng, energy));
+  a.push(...pickArc(rng, energy, families));
   const isRap =
     parsed.vocals?.style === "rap" ||
     parsed.vocals?.style === "talk-rap" ||
@@ -882,7 +741,7 @@ function buildArrangement(energy: string, parsed: ParsedInput, rng: () => number
     parsed.genres.some((g) => /rap|trap|drill|boom bap|hip hop/i.test(g));
 
   if (rng() > 0.4) {
-    const raw = pick(rng, [...DNA_ARRANGE]);
+    const raw = pick(rng, DNA_ARRANGE.filter((x) => fitsFamilies(x, families)));
     if (isRap && /harmonies|soaring|belt/i.test(raw)) {
       a.push("tight verse-to-chorus transition with rhythmic handoff and minimal trap motif");
     } else {
@@ -896,29 +755,34 @@ function buildArrangement(energy: string, parsed: ParsedInput, rng: () => number
         "hypnotic hook repetition with pitch-bent autotuned ad-libs",
         "staccato punchline hook with wide stereo hype doubles",
         "catchy single-note synth hook locked dead-center in the 808 pocket",
-        "earworm chanted refrain with layered ad-lib calls and zero sung harmonies",
+        "earworm chanted refrain with layered ad-lib calls and unison doubles",
         "menacing drill slide hook with syncopated triplet pauses",
         "repetitive melodic trap sung-rap hook riding distorted 808 slides",
         "deadpan spoken hook with crisp punchline pauses and heavy bass answers",
       ];
-      a.push(pick(rng, rapHooks));
+      a.push(pick(rng, rapHooks.filter((x) => fitsFamilies(x, families))));
     } else {
-      a.push(pick(rng, [...DNA_HOOK]));
+      a.push(pick(rng, DNA_HOOK.filter((x) => fitsFamilies(x, families))));
     }
   }
   return unique(a).slice(0, 4);
 }
 
-function buildMix(parsed: ParsedInput, rng: () => number): string[] {
+function buildMix(families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const m = [...parsed.mixHints];
   m.push("centered mono low end", "wide harmonic upper field");
-  const extras = [...MIX].sort(() => rng() - 0.5).slice(0, 3);
-  m.push(...extras);
-  if (rng() > 0.5) m.push(pick(rng, [...DNA_MIX]));
+  const familyMix = families.flatMap((f) => FAMILY_MIX[f] ?? []);
+  if (familyMix.length) m.push(...[...familyMix].sort(() => rng() - 0.5).slice(0, 2));
+  const fits = (x: string) => fitsFamilies(x, families);
+  m.push(...MIX.filter(fits).sort(() => rng() - 0.5).slice(0, familyMix.length ? 1 : 3));
+  if (rng() > 0.5) m.push(pick(rng, DNA_MIX.filter(fits)));
   return unique(m).slice(0, 5);
 }
 
-function buildMaster(energy: string, rng: () => number): string[] {
+/** The family's own mastering language when it has some; otherwise the energy bank. */
+function buildMaster(energy: string, families: string[], rng: () => number): string[] {
+  const familyMasters = families.flatMap((f) => FAMILY_MASTER[f] ?? []);
+  if (familyMasters.length) return [pick(rng, familyMasters)];
   const bank = MASTER[energy] ?? MASTER.balanced;
   return [pick(rng, [...(bank ?? MASTER.balanced)])];
 }
@@ -972,23 +836,34 @@ function buildVocals(
     "mumble-rap",
     "melodic-rap",
   ];
+  const isRapFamily = families.some((f) => f === "rap" || f === "trap" || f === "drill" || f === "phonk");
+  const asksForSinging =
+    /\b(vocals?|singer|singing|sung|croon|belt|falsetto|choir)\b/i.test(parsed.raw) &&
+    !/\b(rap|rapper|rapping|bars|flow)\b/i.test(parsed.raw);
+
   let style = explicit?.style;
   if (!style) {
     if (/Soul|R&B/i.test(parsed.genres[0] ?? "")) {
       // The brief leads with R&B or soul and names no rap style: keep the lead sung.
       style = "sung";
+    } else if (asksForSinging && isRapFamily) {
+      // "female vocals" over trap reads as a sung topline far more often than a rap verse.
+      style = pick(rng, ["sung", "sung", "melodic-rap"]);
     } else if (parsed.genres.some((g) => /Melodic Rap|Emotional Rap/i.test(g))) {
       style = pick(rng, ["melodic-rap", "autotuned-rap", "rap"]);
     } else if (parsed.genres.some((g) => /Drill/i.test(g))) {
       style = pick(rng, ["rap", "lyrical-rap", "talk-rap"]);
     } else if (parsed.genres.some((g) => /Trap/i.test(g))) {
       style = pick(rng, ["rap", "autotuned-rap", "mumble-rap", "melodic-rap", "talk-rap"]);
-    } else if (parsed.genres.some((g) => /Boom Bap|Conscious Hip Hop|Underground Rap/i.test(g))) {
+    } else if (parsed.genres.some((g) => /Hip-Hop|Boom Bap|Grime|UK Rap/i.test(g))) {
       style = pick(rng, ["lyrical-rap", "rap", "talk-rap"]);
     } else if (parsed.genres.some((g) => /Soul|R&B/i.test(g))) {
       style = pick(rng, ["sung", "sung", "melodic-rap"]);
-    } else {
+    } else if (isRapFamily) {
       style = styleCycle[(rank + attempt + Math.floor(rng() * 3)) % styleCycle.length];
+    } else {
+      // House, pop, gospel, world and ambient leads are sung unless the brief asks for rap.
+      style = "sung";
     }
   }
 
@@ -1020,14 +895,14 @@ function buildVocals(
     delivery: explicit?.delivery ?? pairPhrase,
     style,
     language: explicit?.language,
-    processing: explicit?.processing ?? pickNProc(rng, style),
+    processing: explicit?.processing ?? pickNProc(rng, style, families),
     rawDescription: explicit?.rawDescription,
     descriptors: explicit?.descriptors,
     textureVariations: [texture],
   };
 }
 
-function pickNProc(rng: () => number, style?: string): string[] {
+function pickNProc(rng: () => number, style: string | undefined, families: string[]): string[] {
   const isRap =
     style === "rap" ||
     style === "talk-rap" ||
@@ -1039,7 +914,7 @@ function pickNProc(rng: () => number, style?: string): string[] {
     style === "autotuned-rap" ||
     style === "lyrical-rap";
   const source = isRap ? VOCAL_PROC_RAP : VOCAL_PROC;
-  const copy = [...source];
+  const copy = source.filter((x) => fitsFamilies(x, families));
   const n = 2;
   const out: string[] = [];
   while (out.length < n && copy.length) {
@@ -1149,6 +1024,24 @@ const INSTRUMENT_TEXTURES: Record<string, string[]> = {
   ],
 };
 
+/** Drum kits by family, in priority order; the first family the plan contains wins. */
+const KIT_BY_FAMILY: [string, string[]][] = [
+  ["rap", ["hard-hitting hip-hop drums"]],
+  ["soul", ["soft drum kit", "organic shaker"]],
+  ["gospel", ["live church drum kit", "tambourine"]],
+  ["pop", ["tight pop drum kit", "handclaps"]],
+  ["garage", ["skippy garage percussion kit"]],
+  ["baile", ["baile percussion kit"]],
+  ["ritual", ["ceremonial hand percussion"]],
+  ["house", ["909 drum machine", "shakers"]],
+  ["breaks", ["chopped breakbeat kit"]],
+  ["afro", ["congas and shakers", "talking drum"]],
+  ["latin", ["dembow drum kit", "timbales"]],
+  ["dancehall", ["riddim drum machine", "rimshots"]],
+  ["ambient", ["soft hand percussion"]],
+  ["cinematic", ["taiko drums", "orchestral timpani"]],
+];
+
 function selectInstruments(
   bass: string[],
   _drums: string[],
@@ -1187,8 +1080,9 @@ function selectInstruments(
     }
   }
 
-  // 2. Add bass foundation if not already covered
+  // 2. Add the bass instrument if the user did not name one
   if (!inst.some((i) => /808|sub|bass/i.test(i))) {
+    const bassTone = bass.find((b) => b !== "deep mono sub");
     if (bass.some((b) => /808/i.test(b)) || families.includes("trap") || families.includes("drill")) {
       inst.push(pick(rng, ["sliding 808 sub bass", "deep tuned 808", "saturated 808 low end"]));
     } else if (bass.some((b) => /wub|wobble/i.test(b))) {
@@ -1196,25 +1090,21 @@ function selectInstruments(
     } else if (bass.some((b) => /reese/i.test(b))) {
       inst.push("Reese mid-bass");
     } else {
-      inst.push("deep sub bass");
+      inst.push(bassTone ?? "deep sub bass");
     }
   }
 
-  // 3. Add drums / percussion
-  if (!inst.some((i) => /drums?|percussion|kit|hats/i.test(i))) {
-    if (families.includes("soul") && !families.includes("trap") && !isRap) {
-      inst.push("soft drum kit", "organic shaker");
-    } else if (families.includes("garage")) {
-      inst.push("skippy garage percussion kit");
-    } else if (families.includes("baile")) {
-      inst.push("baile percussion kit");
-    } else if (families.includes("ritual")) {
-      inst.push("ceremonial hand percussion");
+  // 3. Add the drum kit that belongs to the genre
+  if (!inst.some((i) => /drums?|percussion|kit|hats|taiko|timpani|congas|shakers/i.test(i))) {
+    // Trap-family plans, and rap vocals over non-hip-hop genres, keep the trap kit.
+    const usesTrapKit =
+      families.some((f) => f === "trap" || f === "drill" || f === "phonk") || (isRap && !families.includes("rap"));
+    const familyKit = usesTrapKit ? undefined : KIT_BY_FAMILY.find(([family]) => families.includes(family));
+    if (familyKit) {
+      inst.push(...familyKit[1]);
     } else {
       inst.push(pick(rng, ["punchy electronic drums", "crisp trap drum kit", "tight rhythm kit"]));
-      if (families.includes("trap") || isRap) {
-        inst.push("rapid trap hi-hats");
-      }
+      if (families.includes("trap") || isRap) inst.push("rapid trap hi-hats");
     }
   }
 

@@ -2,7 +2,7 @@ import { MAX_CHARS, MIN_CHARS } from "./render.ts";
 import { HardGates, SonicPlan } from "./types.ts";
 
 export const ARTIST_LEAK_RE =
-  /\b(taylor swift|drake|kanye|the weeknd|billie eilish|travis scott|metro boomin|skrillex|illenium|flume|deadmau5|fred again|calvin harris|beyonc[eé]|weeknd|playboi carti|future\s+hendrix)\b/i;
+  /\b(taylor swift|drake|kanye|the weeknd|billie eilish|travis scott|metro boomin|skrillex|illenium|flume|deadmau5|fred again|calvin harris|beyonc[eé]|weeknd|playboi carti|future\s+hendrix|juice wrld|kendrick(?: lamar)?|j\. ?cole|griselda|earl sweatshirt|lil (?:uzi|baby|wayne)|21 savage|young thug|post malone|bad bunny|burna boy|wizkid)\b/i;
 export const NEGATIVE_RE =
   /\b(avoid|exclude|excluding|without\s+(?:any|the|a)\b|don't|do not|never\s+use|no\s+(?:vocals|drums|bass|guitars?|synths?)\b)/i;
 export const LYRICS_RE =
