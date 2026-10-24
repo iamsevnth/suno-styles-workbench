@@ -186,7 +186,7 @@ export const ATLAS_EXTRA: GenreDef[] = [
   s("Cinematic EDM Trap", { family: "trap", cluster: "cinematicRitual", bpm: 140 }),
   s("Wobble Trap", { family: "trap", cluster: "dubstep", bpm: 140 }),
   s("808 Dubstep", { family: "bass", cluster: "dubstep", bpm: 140 }),
-  s("UKG Riddim", { family: "bass", cluster: "ukg140", bpm: 140 }),
+  s("UKG Riddim", { family: "ukg", cluster: "ukgDubstep", bpm: 140 }),
   s("Baile Riddim", { family: "bass", cluster: "brazilian", bpm: 140 }),
   s("Baile Trapstep", { family: "hybrid", cluster: "brazilian", bpm: 140 }),
   s("Phonk Riddim", { family: "bass", cluster: "trapHop", bpm: 140 }),
@@ -245,10 +245,11 @@ for (const n of ATLAS_EXTRA) {
 }
 
 export const TAME_NEIGHBORS: Record<string, string[]> = {
-  hybridBass: ["trapHop", "ukg140", "dubstep", "cinematicRitual", "pop"],
-  trapHop: ["hybridBass", "soulRnB", "brazilian", "ukg140"],
+  hybridBass: ["trapHop", "ukg140", "ukgDubstep", "dubstep", "cinematicRitual", "pop"],
+  trapHop: ["hybridBass", "soulRnB", "brazilian", "ukg140", "ukgDubstep"],
+  ukgDubstep: ["trapHop", "dubstep", "hybridBass"],
   ukg140: ["hybridBass", "trapHop", "dubstep", "houseClub"],
-  dubstep: ["hybridBass", "ukg140", "cinematicRitual"],
+  dubstep: ["hybridBass", "ukg140", "ukgDubstep", "cinematicRitual"],
   brazilian: ["trapHop", "hybridBass", "world"],
   soulRnB: ["trapHop", "gospel", "pop", "hybridBass"],
   houseClub: ["ukg140", "pop", "hybridBass"],
@@ -268,6 +269,7 @@ export const WEIRD_NEIGHBORS: Record<string, string[]> = {
   pop: ["dubstep", "cinematicRitual", "trapHop"],
   world: ["dubstep", "gospel", "cinematicRitual"],
   ukg140: ["gospel", "soulRnB", "pop"],
+  ukgDubstep: ["cinematicRitual", "brazilian", "breaks"],
   brazilian: ["gospel", "dubstep", "cinematicRitual"],
   soulRnB: ["dubstep", "breaks", "ukg140"],
   houseClub: ["gospel", "trapHop", "cinematicRitual"],
@@ -287,8 +289,10 @@ export function clusterOf(name: string): string {
   const n = name.toLowerCase();
   if (/gospel|worship/.test(n)) return "gospel";
   if (/\br&b\b|\brnb\b|soul|trapsoul/.test(n)) return "soulRnB";
+  // UKG (UKG dubstep) is its own cluster, so blends never swap it for UK garage.
+  if (/\bukg\b/.test(n)) return "ukgDubstep";
   if (/dubstep|riddim|brostep|tearout|deathstep|wobble|wubby/.test(n)) return "dubstep";
-  if (/ukg|garage|\b140\b/.test(n)) return "ukg140";
+  if (/garage|\b140\b/.test(n)) return "ukg140";
   if (/trap|drill|phonk|rage|plugg/.test(n)) return "trapHop";
   if (/baile|favela|brazilian/.test(n)) return "brazilian";
   if (/house|techno|disco/.test(n)) return "houseClub";

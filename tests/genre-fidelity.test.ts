@@ -10,6 +10,7 @@ import { ARTIST_LEAK_RE, NEGATIVE_RE } from "../src/lib/suno/validate.ts";
 import { parseUserInput } from "../src/lib/suno/parse.ts";
 import { MAX_CHARS, MIN_CHARS } from "../src/lib/suno/render.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
+import { withoutGenreNames } from "./helpers.ts";
 
 const SEEDS = [3, 11, 42, 777, 2026, 90210];
 // "Riddim" is ordinary dancehall vocabulary, so it is not on this list.
@@ -113,7 +114,9 @@ describe("whole library sweep", () => {
           if (p.characters < MIN_CHARS || p.characters > MAX_CHARS) fail(`${p.characters} characters`);
           if (NEGATIVE_RE.test(p.styles) || ARTIST_LEAK_RE.test(p.styles)) fail("negative wording or artist name");
           if (!hasDrops(families) && DROP_WORDS.test(p.styles)) fail("drop wording");
-          if (!families.some((f) => BASS_MUSIC_FAMILIES.has(f)) && BASS_MUSIC_WORDS.test(p.styles)) fail("bass-music sound");
+          // Genre names ("UKG Dubstep") are not sound vocabulary, so only the compiler's own phrases are checked.
+          const phrases = withoutGenreNames(p);
+          if (!families.some((f) => BASS_MUSIC_FAMILIES.has(f)) && BASS_MUSIC_WORDS.test(phrases)) fail("bass-music sound");
         }
       }
     }

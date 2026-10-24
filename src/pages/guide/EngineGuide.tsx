@@ -56,6 +56,7 @@ const FAMILY_LABELS: Record<string, string> = {
   ritual: "Ritual bass",
   soul: "R&B and soul",
   trap: "Trap",
+  ukg: "UKG (UKG dubstep)",
 };
 
 function familyCoverage(): [string, string, string][] {

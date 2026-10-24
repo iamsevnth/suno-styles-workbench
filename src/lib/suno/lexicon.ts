@@ -72,9 +72,9 @@ export const PRODUCTION: Record<string, string[]> = withGenreVocabulary({
     "drift-phonk night production",
   ],
   garage: [
-    "swung UKG bass production",
+    "swung UK garage bass production",
     "skippy 2-step hybrid production",
-    "140 UK bass production",
+    "late-night London club production",
   ],
   ritual: [
     "ceremonial ritual-bass production",
@@ -216,7 +216,7 @@ export const GROOVE: Record<string, string[]> = withGenreVocabulary({
     "swung 2-step pocket",
     "skippy syncopation",
     "elastic forward momentum",
-    "UKG swing over half-time weight",
+    "garage swing over a rolling sub",
     "shuffle lift",
     "late snare chatter",
     "skippy rims against sparse kicks",

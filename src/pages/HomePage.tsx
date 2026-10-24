@@ -1,5 +1,6 @@
 import { ButtonLink, Card, ContentPage, Section } from "../components/content/Content.tsx";
 import OfflineDownloadLink from "../components/layout/OfflineDownloadLink.tsx";
+import { LIBRARY_STATS } from "../lib/suno/families.ts";
 import { MAX_CHARS, MIN_CHARS } from "../lib/suno/render.ts";
 import { hrefFor } from "../routes.ts";
 
@@ -29,7 +30,7 @@ const TOOLS = [
 const STEPS = [
   {
     title: "Write a brief",
-    body: "Name what matters: genres, a BPM, the voice, a few instruments, the mood. One line is enough, and anything you leave out is filled from a 258-style library.",
+    body: `Name what matters: genres, a BPM, the voice, a few instruments, the mood. One line is enough, and anything you leave out is filled from a ${LIBRARY_STATS.genres}-style library.`,
   },
   {
     title: "Generate and compare",

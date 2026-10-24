@@ -116,6 +116,23 @@ export const BASS_SOUNDS: Record<string, BassLexicon> = {
       "low tones that rise with the tension",
     ],
   },
+  pressure: {
+    tones: [
+      "heavy sub-pressure 808",
+      "massive low-end sub weight",
+      "distorted 808 over a deep sub layer",
+      "dark tuned 808 with long sub tails",
+      "chest-rattling sub bass",
+      "saturated 808 with mono sub pressure",
+    ],
+    moves: [
+      "808 holds that press under the half-time snare",
+      "sub pressure swelling into each drop",
+      "808 slides answering the skippy hats",
+      "sustained sub weight that fills every gap",
+      "808 hits locked to the kick for maximum pressure",
+    ],
+  },
   garage: {
     tones: ["warped garage sub", "bouncy speed-garage bass", "deep organ-style bassline", "rubbery 2-step bass"],
     moves: [

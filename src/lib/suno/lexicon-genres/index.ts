@@ -3,6 +3,7 @@ import { BASS, DRILL, FUTURE, PHONK, RIDDIM, RITUAL, TRAP } from "./bass-music.t
 import { BREAKS, GARAGE, HOUSE } from "./club.ts";
 import { GOSPEL, POP, RAP, SOUL } from "./song.ts";
 import { FamilyLexicon } from "./types.ts";
+import { UKG } from "./ukg.ts";
 import { AFRO, BAILE, DANCEHALL, LATIN } from "./world.ts";
 
 export { BASS_SOUNDS } from "./bass-sounds.ts";
@@ -30,6 +31,7 @@ export const GENRE_LEXICON: Record<string, FamilyLexicon> = {
   ritual: RITUAL,
   soul: SOUL,
   trap: TRAP,
+  ukg: UKG,
 };
 
 type ListField = Exclude<keyof FamilyLexicon, "arrangement">;

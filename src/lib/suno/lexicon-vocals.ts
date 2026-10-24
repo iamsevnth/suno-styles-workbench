@@ -114,7 +114,9 @@ export const VOCAL_PAIRS: VocalPair[] = [
   { archetype: "trap", male: "nocturnal male trap crooner", female: "nocturnal female trap crooner", styles: ["sung", "melodic-rap"], families: ["trap", "soul"] },
   { archetype: "phonk", male: "pitched-down male Memphis chant", female: "pitched-down female Memphis chant", styles: ["rap", "talk-rap"], families: ["phonk"] },
   { archetype: "future", male: "airy male future-bass topline", female: "airy female future-bass topline", styles: ["sung"], families: ["future"] },
-  { archetype: "future", male: "emotive male melodic-bass vocal", female: "emotive female melodic-bass vocal", styles: ["sung"], families: ["future", "bass"] },
+  { archetype: "future", male: "emotive male melodic-bass vocal", female: "emotive female melodic-bass vocal", styles: ["sung"], families: ["future", "bass", "ukg"] },
+  { archetype: "ukg", male: "dark melodic male vocal over heavy sub", female: "airy female vocal floating over sub pressure", styles: ["sung"], families: ["ukg"] },
+  { archetype: "ukg", male: "low menacing male rap flow riding the skippy hats", female: "sharp female rap flow riding the skippy hats", styles: ["rap", "melodic-rap"], families: ["ukg"] },
   { archetype: "bass", male: "haunting male melodic-dubstep vocal", female: "haunting female melodic-dubstep vocal", styles: ["sung"], families: ["bass"] },
   { archetype: "baile", male: "rapid-fire male funk-carioca MC", female: "rapid-fire female funk-carioca MC", styles: ["rap"], families: ["baile"] },
   { archetype: "ritual", male: "deep male ceremonial chant", female: "haunting female ceremonial chant", styles: ["sung"], families: ["ritual"] },
@@ -242,6 +244,7 @@ export const VOCAL_GENRE_PAIRS: Record<string, { male: string; female: string }>
   future: { male: "modern clean male pop vocal", female: "modern clean female pop vocal" },
   house: { male: "modern clean male pop vocal", female: "modern clean female pop vocal" },
   garage: { male: "warm male crooner", female: "intimate female crooner" },
+  ukg: { male: "dark melodic male bass vocal", female: "airy female melodic-bass vocal" },
 };
 
 export function pickVocalPhrase(

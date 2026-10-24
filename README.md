@@ -36,10 +36,21 @@ The brief names no sub-genre, tempo, bass or drum kit; the compiler chose R&B on
 | Fits the field | 925–975 characters, inside Suno's 1,000-character Styles limit |
 | One tempo | A single whole-number BPM: yours, or the genre's home tempo |
 | Keeps your words | Genres, BPM, named instruments and your vocal description appear in every variation |
-| Genre-faithful | Each of the 258 genres maps to one of 20 sound families with its own groove, drums, bass, harmony, textures, song forms, mix and mastering vocabulary |
+| Genre-faithful | Each of the 259 genres maps to one of 21 sound families with its own groove, drums, bass, harmony, textures, song forms, mix and mastering vocabulary |
 | Positive prompting | Describes what to play; never “no”, “avoid” or “without” lists |
 | No artist names | No named artists and no “in the style of” phrasing |
 | Styles only | No lyric lines or section tags in the Styles text |
+
+### UKG is not UK garage
+
+The two are different styles, and the compiler keeps them apart:
+
+| You type | Compiles as |
+| --- | --- |
+| `UKG`, `UKG dubstep`, `ukg-dubstep` | **UKG Dubstep**: 140 BPM half-time trap drums under heavy sub and 808 pressure, with a skippy, syncopated hi-hat and shaker layer on top |
+| `UK garage`, `garage`, `2-step` | **UK Garage**: swung 2-step drums, warm chords and soulful vocals around 134 BPM |
+
+Every genre with "UKG" in its name (140 UKG, Half-Time UKG, Deep UKG-Dubstep, UKG Trap and others) belongs to the UKG family, so none of them borrow UK garage's 2-step swing, organ stabs or diva vocals, and UK Garage prompts never mention UKG, dubstep, wobble or growl bass.
 
 ## Using it with Suno
 
@@ -69,7 +80,7 @@ Suno does not publish slider defaults or ideal values; the last three rows are s
 | Render | `src/lib/suno/render.ts` | Writes the plan as prose in a fixed sentence order and fits it to the character window, protecting the vocal, the tempo and the brief's anchors |
 | Validate | `src/lib/suno/validate.ts` | Checks the quality gates and repairs or recompiles until they pass |
 
-Vocabulary lives in `src/lib/suno/lexicon.ts` and, for each sound family, in `src/lib/suno/lexicon-genres/`: about 2,900 phrases in all.
+Vocabulary lives in `src/lib/suno/lexicon.ts` and, for each sound family, in `src/lib/suno/lexicon-genres/`: about 2,950 phrases in all.
 
 ### Adding vocabulary for a genre family
 
@@ -96,7 +107,8 @@ Every push to `main` runs the type-check, the tests and the build, then deploys 
 | --- | --- |
 | `tests/acceptance.test.ts` | Core compiler behavior: tempo, genres, vocals, instrumentals, recipe uniqueness, exports |
 | `tests/regressions.test.ts` | Bugs that were fixed and must stay fixed: R&B parsing, vocal sentence survival, prompt wording |
-| `tests/genre-fidelity.test.ts` | Genre families, drop-free genres, sung leads, house and DnB feel, a sweep of all 258 genres, and phrase-library hygiene |
+| `tests/genre-fidelity.test.ts` | Genre families, drop-free genres, sung leads, house and DnB feel, a sweep of every genre in the library, and phrase-library hygiene |
+| `tests/ukg.test.ts` | UKG dubstep and UK garage stay separate: how briefs are read, 140 BPM half-time trap drums with the skippy hat and shaker layer, and no shared vocabulary |
 | `tests/lyrics.test.ts` | Lyrics generator sections and phonetic respellings |
 | `tests/build-offline.test.ts` | The offline-file builder inlines assets and refuses files outside the build folder |
 
