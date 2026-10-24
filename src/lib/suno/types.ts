@@ -48,6 +48,16 @@ export interface VocalPreferences {
   rawDescription?: string;
   descriptors?: string[];
   textureVariations?: string[];
+  /** An optional extra trait for the generated vocal phrase, used only when the vocal sentence has room. */
+  deliveryDetail?: string;
+  /** True when the brief itself named the vocal processing (autotune, slapback); false when it was planned. */
+  processingFromBrief?: boolean;
+  /**
+   * How much of the Styles text the vocal may take. "compact" when the brief only names the basics
+   * ("male rap", "female vocals"), so the characters go to the production; "detailed" when the
+   * brief describes the voice at length.
+   */
+  detail?: "compact" | "detailed";
 }
 
 export interface SonicPlan {

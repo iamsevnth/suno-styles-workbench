@@ -1,7 +1,7 @@
 import { Card, Code, Prose, Section, Table } from "../../components/content/Content.tsx";
 import { LIBRARY_STATS } from "../../lib/suno/families.ts";
 import { generateStylesPrompts } from "../../lib/suno/generate.ts";
-import { MAX_CHARS, MIN_CHARS } from "../../lib/suno/render.ts";
+import { MAX_CHARS, MIN_CHARS, VOCAL_BUDGET } from "../../lib/suno/render.ts";
 import { hrefFor } from "../../routes.ts";
 
 const BRIEF_SIGNALS: [string, string, string][] = [
@@ -139,6 +139,12 @@ export default function BriefGuide() {
             vocal description such as <Code>smooth male vocal tone, laid back cadence, prominent autotune gloss</Code>{" "}
             is quoted in the prompt word for word, and mood words that trail it (“high energy”) are kept out of the
             vocal line.
+          </p>
+          <p>
+            The production comes first. When the brief only names the basics, such as <Code>male rap</Code> or{" "}
+            <Code>female vocals</Code>, the vocal gets one sentence of at most {VOCAL_BUDGET.compact} characters and the
+            rest of the prompt describes drums, bass, harmony, texture and mix. Describe the voice in detail (four or
+            more traits such as tone, register, delivery and effects) and the vocal line grows to hold your words.
           </p>
           <p>
             You can also paste an existing Styles prompt as the brief. The compiler picks out its genres, tempo, vocals

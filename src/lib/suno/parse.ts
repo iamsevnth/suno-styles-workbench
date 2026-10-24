@@ -564,7 +564,7 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
 
   // Extract rawDescription segment
   const vocalSegmentRegex =
-    /(?:(?:black\s+|white\s+|african\s+)?(?:male|female|lead)\s+vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
+    /(?:(?:[a-z-]+\s+){0,2}(?:black\s+|white\s+|african\s+)?\b(?:male|female|lead)\s+(?:[a-z-]+\s+){0,2}vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
   const match = text.match(vocalSegmentRegex);
   if (match && match[0].trim().length > 10) {
     vocals.rawDescription = dropNonVocalClauses(match[0].trim());

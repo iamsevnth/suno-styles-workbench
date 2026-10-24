@@ -247,12 +247,17 @@ export const VOCAL_GENRE_PAIRS: Record<string, { male: string; female: string }>
   ukg: { male: "dark melodic male bass vocal", female: "airy female melodic-bass vocal" },
 };
 
-export function pickVocalPhrase(
+/**
+ * The vocal phrase ("Houston chopped male rap cadence") and, separately, an optional extra
+ * trait ("with sung-rap melodic bounce"), so the renderer can drop the trait when the vocal
+ * sentence has no room for it.
+ */
+export function pickVocalParts(
   rng: () => number,
   presentation: string | undefined,
   style: string | undefined,
   families: string[]
-): string {
+): { phrase: string; modifier?: string } {
   const gender = presentation === "male" ? "male" : "female";
   const isRap =
     style === "rap" ||
@@ -319,6 +324,5 @@ export function pickVocalPhrase(
 
   const modPool = isRap ? VOCAL_MODIFIERS_RAP : VOCAL_MODIFIERS;
   const mod = modPool[Math.floor(rng() * modPool.length) % modPool.length];
-  if (rng() > 0.25) phrase = `${phrase} ${mod}`;
-  return phrase;
+  return rng() > 0.25 ? { phrase, modifier: mod } : { phrase };
 }
