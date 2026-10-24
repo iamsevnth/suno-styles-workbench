@@ -128,7 +128,8 @@ export function buildOnePlan(
       PROFILE.preferredBpmCenters[primaryGenre] ??
       primaryDef?.defaultBpm ??
       (parsed.profileEnabled ? 140 : 128);
-    if (rank > 0) {
+    // UKG is a 140 BPM style, so every UKG variation keeps 140 unless the brief names a tempo.
+    if (rank > 0 && !familyKeys([primaryGenre]).includes("ukg")) {
       const deltas = [0, 2, -2, 4, -4, 6];
       bpm = clamp(bpm + (deltas[(rank + Math.floor(rng() * 3)) % deltas.length] ?? 0), 70, 180);
     }
@@ -164,9 +165,12 @@ export function buildOnePlan(
   }
 
   // Each genre has a home feel; only garage, Brazilian funk and trap rotate between idiomatic feels.
+  // UKG dubstep stays half-time: its skip lives in the hat and shaker topline, not the kick pattern.
   const garageFeels = ["half-time", "2-step", "broken", "four-on-the-floor"];
   let metricFeel = primaryDef?.metricFeel ?? "half-time";
-  if (families.includes("garage") || preset.rhythmFamily === "ukg") {
+  if (families.includes("ukg") && !families.includes("garage")) {
+    metricFeel = "half-time";
+  } else if (families.includes("garage") || preset.rhythmFamily === "garage") {
     metricFeel = garageFeels[(rank + Math.floor(rng() * garageFeels.length)) % garageFeels.length];
   } else if (
     preset.rhythmFamily === "baile" ||
@@ -182,7 +186,11 @@ export function buildOnePlan(
   if (parsed.grooveHints.includes("half-time")) metricFeel = "half-time";
   else if (parsed.grooveHints.includes("2-step")) metricFeel = "2-step";
   else if (parsed.grooveHints.includes("four-on-the-floor")) metricFeel = "four-on-the-floor";
-  else if (parsed.grooveHints.includes("swung") || parsed.grooveHints.includes("syncopated")) {
+  else if (
+    (parsed.grooveHints.includes("swung") || parsed.grooveHints.includes("syncopated")) &&
+    !(families.includes("ukg") && !families.includes("garage"))
+  ) {
+    // In UKG ("UKG-Swung Drill"), swing and syncopation live in the hat topline over half-time drums.
     metricFeel = rng() > 0.5 ? "2-step" : "broken";
   }
 
@@ -273,7 +281,7 @@ export function buildOnePlan(
 }
 
 function rhythmDonor(family: string, primary: string, secondary?: string): string {
-  if (family === "ukg" || secondary === "UK Garage" || primary === "UK Garage") return "UK Garage";
+  if (family === "garage" || secondary === "UK Garage" || primary === "UK Garage") return "UK Garage";
   if (family === "trap") return "Trap";
   if (family === "drill") return "Drill";
   if (family === "ritual") return "Ritual Bass";
@@ -302,7 +310,11 @@ function pickCompatiblePreset(
     want.add("trap");
     want.add("half-time");
   }
-  if (families.includes("garage")) want.add("ukg");
+  if (families.includes("garage")) want.add("garage");
+  if (families.includes("ukg")) {
+    want.add("trap");
+    want.add("half-time");
+  }
   if (families.includes("drill")) want.add("drill");
   if (families.includes("baile")) want.add("baile");
   if (families.includes("cinematic") || families.includes("ritual")) want.add("ritual");
@@ -356,8 +368,18 @@ function diversifyGenres(
       if (extra) genres.push(extra.name);
     } else if (genres.length === 1) {
       // The accent must share the brief's drop-or-song character: an ambient brief gets no bass-music accent.
-      const lockedHasDrops = hasDrops(familyKeys(locked));
-      const sameCharacter = (g: { name: string }) => hasDrops(familyKeys([g.name])) === lockedHasDrops;
+      const lockedFamilies = familyKeys(locked);
+      const lockedHasDrops = hasDrops(lockedFamilies);
+      // UKG and UK garage never stand in for each other, and a UKG brief keeps its trap drums and
+      // sub pressure: its accent may add trap but not wobble, riddim or other bass-music families.
+      const sameCharacter = (g: { name: string }) => {
+        const families = familyKeys([g.name]);
+        if (hasDrops(families) !== lockedHasDrops) return false;
+        if (lockedFamilies.includes("ukg")) {
+          return families.every((f) => f === "ukg" || f === "trap" || lockedFamilies.includes(f));
+        }
+        return !(lockedFamilies.includes("garage") && families.includes("ukg"));
+      };
       const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "tame", parsed.bpm, sameCharacter);
       if (extra) genres.push(extra.name);
     }
@@ -476,7 +498,7 @@ function buildGroove(
 ): string[] {
   const g = [...parsed.grooveHints];
   const keys = [...families];
-  if (family === "ukg" && !keys.includes("garage")) keys.push("garage");
+  if (family === "garage" && !keys.includes("garage") && !keys.includes("ukg")) keys.push("garage");
   if (family === "trap" && !keys.includes("trap")) keys.push("trap");
   if (family === "baile" && !keys.includes("baile")) keys.push("baile");
   if (family === "ritual" && !keys.includes("cinematic")) keys.push("cinematic");
@@ -488,9 +510,15 @@ function buildGroove(
   return unique(g).slice(0, 4);
 }
 
+/** UKG's defining layer: every UKG prompt names its skippy hi-hat and shaker topline. */
+const UKG_TOPLINE = /skipp|shuffl|syncopated/i;
+
 function buildDrums(families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const d = [...parsed.drumHints];
   d.push(...pickFamily(rng, DRUMS, families, 3 + Math.floor(rng() * 2)));
+  if (families.includes("ukg") && !d.some((x) => UKG_TOPLINE.test(x))) {
+    d.splice(parsed.drumHints.length, 0, pick(rng, DRUMS.ukg.filter((x) => UKG_TOPLINE.test(x))));
+  }
   return unique(d).slice(0, 5);
 }
 
@@ -1030,6 +1058,7 @@ const KIT_BY_FAMILY: [string, string[]][] = [
   ["soul", ["soft drum kit", "organic shaker"]],
   ["gospel", ["live church drum kit", "tambourine"]],
   ["pop", ["tight pop drum kit", "handclaps"]],
+  ["ukg", ["trap drum kit", "skippy hi-hat and shaker topline"]],
   ["garage", ["skippy garage percussion kit"]],
   ["baile", ["baile percussion kit"]],
   ["ritual", ["ceremonial hand percussion"]],
@@ -1098,7 +1127,8 @@ function selectInstruments(
   if (!inst.some((i) => /drums?|percussion|kit|hats|taiko|timpani|congas|shakers/i.test(i))) {
     // Trap-family plans, and rap vocals over non-hip-hop genres, keep the trap kit.
     const usesTrapKit =
-      families.some((f) => f === "trap" || f === "drill" || f === "phonk") || (isRap && !families.includes("rap"));
+      !families.includes("ukg") &&
+      (families.some((f) => f === "trap" || f === "drill" || f === "phonk") || (isRap && !families.includes("rap")));
     const familyKit = usesTrapKit ? undefined : KIT_BY_FAMILY.find(([family]) => families.includes(family));
     if (familyKit) {
       inst.push(...familyKit[1]);

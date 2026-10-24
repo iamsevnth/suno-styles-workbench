@@ -30,6 +30,7 @@ const FAMILIES_BY_LIBRARY_FAMILY: Record<string, string[]> = {
   score: ["cinematic"],
   soul: ["soul"],
   trap: ["trap"],
+  ukg: ["ukg"],
   world: ["bass"],
 };
 
@@ -41,7 +42,9 @@ const FAMILIES_BY_NAME: [RegExp, string][] = [
   [/dubstep|wobble|wubby|brostep|tearout|140 bass|deathstep|psydub/, "bass"],
   [/riddim/, "riddim"],
   [/\bneuro\b/, "bass"],
-  [/garage|ukg|2-step|uk bass|bassline|uk funky|grime/, "garage"],
+  // UKG (UKG dubstep) is its own family; UK garage is "garage".
+  [/\bukg\b/, "ukg"],
+  [/garage|2-step|uk bass|bassline|uk funky|grime/, "garage"],
   [/baile|brazilian|favela/, "baile"],
   [/ritual/, "ritual"],
   [/cinematic|trailer|dark ambient|orchestral|film score/, "cinematic"],
@@ -69,10 +72,17 @@ export function familyKeys(genres: (string | undefined)[]): string[] {
   for (const raw of genres) {
     if (!raw) continue;
     const name = raw.toLowerCase();
-    for (const key of FAMILIES_BY_LIBRARY_FAMILY[LIBRARY_FAMILY_OF.get(name) ?? ""] ?? []) keys.add(key);
+    const nameKeys = new Set(FAMILIES_BY_LIBRARY_FAMILY[LIBRARY_FAMILY_OF.get(name) ?? ""] ?? []);
     for (const [pattern, key] of FAMILIES_BY_NAME) {
-      if (pattern.test(name)) keys.add(key);
+      if (pattern.test(name)) nameKeys.add(key);
     }
+    // UKG genres carry their own sub pressure and skippy toplines, so "Dubstep" in a UKG name
+    // does not pull in wobble-and-growl bass music, and "UKG" never means UK garage.
+    if (nameKeys.has("ukg")) {
+      nameKeys.delete("bass");
+      nameKeys.delete("garage");
+    }
+    for (const key of nameKeys) keys.add(key);
   }
   if (keys.size === 0) keys.add("general");
   return [...keys];
@@ -91,6 +101,7 @@ const DROP_FAMILIES = new Set([
   "drill",
   "baile",
   "ritual",
+  "ukg",
 ]);
 
 export function hasDrops(families: string[]): boolean {
@@ -110,7 +121,8 @@ const BASS_FAMILIES_BY_FAMILY: Record<string, string[]> = {
   bass: ["wub", "growl", "reese", "neuro", "808"],
   riddim: ["wub", "growl", "neuro"],
   future: ["808", "reese"],
-  garage: ["garage", "reese", "wub"],
+  garage: ["garage", "reese"],
+  ukg: ["pressure", "808"],
   breaks: ["rolling", "reese", "neuro"],
   trap: ["808"],
   drill: ["808"],
@@ -137,8 +149,25 @@ export function allowedBassFamilies(families: string[]): string[] {
 }
 
 /** Bass families that sit on a separate sub layer; live, synth and drone basses carry their own low end. */
-const SUB_LAYER_BASS = new Set(["808", "wub", "growl", "reese", "neuro", "rolling", "garage", "house", "logdrum"]);
+const SUB_LAYER_BASS = new Set([
+  "808",
+  "wub",
+  "growl",
+  "reese",
+  "neuro",
+  "rolling",
+  "garage",
+  "house",
+  "logdrum",
+  "pressure",
+]);
 
 export function needsSubLayer(bassFamily: string): boolean {
   return SUB_LAYER_BASS.has(bassFamily);
 }
+
+/** Library size for the site's copy, so the numbers on the page never drift from the data. */
+export const LIBRARY_STATS = {
+  genres: allStyles().length,
+  families: new Set(allStyles().flatMap((g) => familyKeys([g.name]))).size,
+};

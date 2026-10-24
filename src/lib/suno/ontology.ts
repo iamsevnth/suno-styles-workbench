@@ -79,11 +79,20 @@ export const GENRES: GenreDef[] = [
     tags: ["uk", "sub", "club"],
     tier: 1,
   }),
+  // UK garage (2-step, swung, soulful) and UKG dubstep (140 BPM trap drums under heavy sub pressure)
+  // are different styles. A bare "UKG" means UKG dubstep, so it is UKG Dubstep's alias, not this one's.
   g("UK Garage", {
     family: "garage",
     bpm: 134,
-    aliases: ["ukg", "uk garage", "garage", "2-step", "2step", "deep ukg"],
+    aliases: ["uk garage", "garage", "2-step", "2step", "two-step garage"],
     tags: ["swing", "shuffle", "skippy"],
+    tier: 1,
+  }),
+  g("UKG Dubstep", {
+    family: "ukg",
+    bpm: 140,
+    aliases: ["ukg dubstep", "ukg-dubstep", "ukg"],
+    tags: ["trap drums", "sub pressure", "skippy hats"],
     tier: 1,
   }),
   g("UK Bass", {
@@ -437,28 +446,28 @@ export const GENRES: GenreDef[] = [
     tier: 2,
   }),
   g("140 UKG", {
-    family: "hybrid",
+    family: "ukg",
     bpm: 140,
     aliases: ["140 ukg", "140 uk garage", "140 ukg bass"],
     tags: ["ukg", "140", "swing"],
     tier: 2,
   }),
   g("Deep UKG", {
-    family: "garage",
-    bpm: 134,
+    family: "ukg",
+    bpm: 140,
     aliases: ["deep ukg"],
     tags: ["deep", "ukg"],
     tier: 2,
   }),
   g("Half-Time UKG", {
-    family: "hybrid",
+    family: "ukg",
     bpm: 140,
     aliases: ["half-time ukg", "halftime ukg"],
     tags: ["ukg", "half-time"],
     tier: 2,
   }),
   g("UKG-Influenced Deep Bass", {
-    family: "hybrid",
+    family: "ukg",
     bpm: 140,
     aliases: ["ukg-influenced deep bass"],
     tags: ["ukg", "deep bass"],
@@ -479,9 +488,9 @@ export const GENRES: GenreDef[] = [
     tier: 2,
   }),
   g("Deep UKG-Dubstep", {
-    family: "hybrid",
+    family: "ukg",
     bpm: 140,
-    aliases: ["deep ukg-dubstep", "ukg dubstep"],
+    aliases: ["deep ukg-dubstep", "deep ukg dubstep"],
     tags: ["ukg", "deep dubstep"],
     tier: 2,
   }),

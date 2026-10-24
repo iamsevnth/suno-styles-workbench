@@ -154,8 +154,9 @@ export function parseUserInput(
     );
 
   const genres = extractGenresInOrder(text);
-  if (/\bukg\b/i.test(text) && !genres.includes("UK Garage") && !genres.includes("140 UKG")) {
-    genres.push("UK Garage");
+  // "UKG" on its own means UKG dubstep, never UK garage.
+  if (/\bukg\b/i.test(text) && !genres.some((g) => /\bukg\b/i.test(g))) {
+    genres.push("UKG Dubstep");
   }
   if (/\britual\s+bass\b/i.test(text) && !genres.some((g) => /ritual/i.test(g))) {
     genres.push("Ritual Bass");
@@ -346,18 +347,27 @@ function extractGenresInOrder(text: string): string[] {
     const cleaned = chunk.replace(/\b\d{2,3}\s*bpm\b/gi, "").trim();
     const found = matchGenre(cleaned);
     if (found && !hits.some((h) => h.name === found.name)) {
-      const idx = lower.indexOf(found.name.toLowerCase());
-      hits.push({
-        name: found.name,
-        index: idx >= 0 ? idx : lower.length,
-        len: found.name.length,
-      });
+      // Locate the longest spelling the brief used ("ukg-dubstep" for UKG Dubstep), and let it
+      // replace shorter names found inside it ("dubstep"), as the name scan above does.
+      const spelling = [found.name.toLowerCase(), ...found.aliases]
+        .filter((s) => lower.includes(s))
+        .sort((a, b) => b.length - a.length)[0];
+      const idx = spelling ? lower.indexOf(spelling) : -1;
+      const len = spelling ? spelling.length : found.name.length;
+      if (idx >= 0) {
+        for (let i = hits.length - 1; i >= 0; i--) {
+          const h = hits[i];
+          if (h.index >= idx && h.index + h.len <= idx + len && h.len < len) hits.splice(i, 1);
+        }
+      }
+      hits.push({ name: found.name, index: idx >= 0 ? idx : lower.length, len });
     }
   }
 
+  // A "UKG" not already inside a longer genre name ("UKG Trap", "140 UKG") is UKG dubstep.
   const ukg = lower.search(/\bukg\b/);
-  if (ukg >= 0 && !hits.some((h) => h.name === "UK Garage" || h.name === "140 UKG")) {
-    hits.push({ name: "UK Garage", index: ukg, len: 3 });
+  if (ukg >= 0 && !hits.some((h) => /\bukg\b/i.test(h.name))) {
+    hits.push({ name: "UKG Dubstep", index: ukg, len: 3 });
   }
 
   hits.sort((a, b) => a.index - b.index);
@@ -559,7 +569,9 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
   if (match && match[0].trim().length > 10) {
     vocals.rawDescription = dropNonVocalClauses(match[0].trim());
   } else if (hasVocalMention) {
-    const clauses = text.split(/(?<=[.!?;])\s+|\n+/);
+    // Comma and "+" separate genres from the vocal in one-line briefs ("Melodic Trap, male rap"),
+    // so only the part that names the vocal is quoted, never the genre list.
+    const clauses = text.split(/(?<=[.!?;])\s+|\n+|\s*[,+]\s*/);
     const vc = clauses.find((c) =>
       /\b(vocal|vocals|voice|singer|singing|rapper|rap|sung-rap|melodic-rap)\b/i.test(c)
     );

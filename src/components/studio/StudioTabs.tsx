@@ -1,3 +1,4 @@
+import { LIBRARY_STATS } from "../../lib/suno/families.ts";
 import { hrefFor, StudioRouteId } from "../../routes.ts";
 
 interface StudioTab {
@@ -8,7 +9,12 @@ interface StudioTab {
 }
 
 export const STUDIO_TABS: StudioTab[] = [
-  { route: "styles", title: "Styles Compiler", subtitle: "925–975 character Styles prompts", badge: "258 Genres" },
+  {
+    route: "styles",
+    title: "Styles Compiler",
+    subtitle: "925–975 character Styles prompts",
+    badge: `${LIBRARY_STATS.genres} Genres`,
+  },
   { route: "lyrics", title: "Lyrics Studio", subtitle: "Section builder & American phonetics", badge: "Lyrics & Vocal" },
   { route: "skills", title: "Skills Studio", subtitle: "8 production playbooks & sliders", badge: "Playbooks" },
 ];

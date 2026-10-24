@@ -1,4 +1,5 @@
 import { Card, Code, ExternalLink, Prose, Provenance, Section, Table } from "../../components/content/Content.tsx";
+import { LIBRARY_STATS } from "../../lib/suno/families.ts";
 import { MAX_CHARS, MIN_CHARS } from "../../lib/suno/render.ts";
 import { SKILLS } from "../../lib/suno/skills/catalog.ts";
 import { SOURCES, SOURCES_CHECKED } from "./sources.ts";
@@ -11,6 +12,11 @@ const GLOSSARY: [string, string][] = [
   ],
   ["Four-on-the-floor", "A kick drum on every beat, the backbone of house and techno."],
   ["2-step", "UK garage's swung, skipping kick pattern that leaves out some downbeats."],
+  [
+    "UKG (UKG dubstep)",
+    "140 BPM half-time trap drums under heavy sub and 808 pressure, with a skippy, syncopated hi-hat and shaker layer on top. A different style from UK garage.",
+  ],
+  ["UK garage", "Swung 2-step club music around 130–135 BPM with soulful vocals, warm chords and skipping kicks."],
   ["Broken beat", "Syncopated drums that avoid a steady kick pattern, as in breakbeat and drum and bass."],
   ["808", "A tuned, sliding sub-bass drum sound from trap, drill and hip-hop."],
   ["Wub / wobble", "A bass whose tone is swept rhythmically by a filter, central to dubstep."],
@@ -41,7 +47,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "Which genres does it know?",
-    "All 258 genres in the Genre coverage table above, grouped into 20 sound families. For a genre outside the library, name the closest library genre and describe what makes yours different: its instruments, groove and mood.",
+    `All ${LIBRARY_STATS.genres} genres in the Genre coverage table above, grouped into ${LIBRARY_STATS.families} sound families. For a genre outside the library, name the closest library genre and describe what makes yours different: its instruments, groove and mood.`,
   ],
   [
     "Does it work for other music generators?",

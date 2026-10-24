@@ -1,4 +1,5 @@
 import { Card, Code, Prose, Section, Table } from "../../components/content/Content.tsx";
+import { LIBRARY_STATS } from "../../lib/suno/families.ts";
 import { generateStylesPrompts } from "../../lib/suno/generate.ts";
 import { MAX_CHARS, MIN_CHARS } from "../../lib/suno/render.ts";
 import { hrefFor } from "../../routes.ts";
@@ -6,7 +7,7 @@ import { hrefFor } from "../../routes.ts";
 const BRIEF_SIGNALS: [string, string, string][] = [
   [
     "Genres",
-    "Any of 258 genre names or their short forms (r&b, dnb, ukg, edm). Join several with +, /, commas, “and” or “x”. The first one leads.",
+    `Any of ${LIBRARY_STATS.genres} genre names or their short forms (r&b, dnb, edm). Join several with +, /, commas, “and” or “x”. The first one leads. “UKG” means UKG dubstep; write “UK garage” or “2-step” for UK garage.`,
     "Trap + Baile Funk, dark r&b, Drum and Bass",
   ],
   [
@@ -158,6 +159,14 @@ export default function BriefGuide() {
               Style models respond to the words that are present. “No 808 slides” still puts “808 slides” in front of
               the model. Describe the sound you want in Styles, and use Suno's separate Exclude field for anything you
               want kept out.
+            </p>
+          </Card>
+          <Card title="UKG is not UK garage">
+            <p>
+              <Code>UKG</Code> and <Code>UKG dubstep</Code> compile as UKG dubstep: 140 BPM half-time trap drums under
+              heavy sub and 808 pressure, with a skippy, syncopated hi-hat and shaker layer on top.{" "}
+              <Code>UK garage</Code>, <Code>garage</Code> and <Code>2-step</Code> compile as UK garage: swung 2-step
+              drums, warm chords and soulful vocals around 134 BPM. Neither borrows the other's vocabulary.
             </p>
           </Card>
           <Card title="Why fewer genres work better">

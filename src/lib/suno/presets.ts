@@ -15,8 +15,8 @@ export interface VariantPreset {
 export const VARIANT_PRESETS: VariantPreset[] = [
   {
     axes: ["genre hierarchy", "rhythm", "bass"],
-    bassFamily: "wub",
-    rhythmFamily: "ukg",
+    bassFamily: "garage",
+    rhythmFamily: "garage",
     energy: "balanced",
     titleBank: [
       "Swung Emotional Bass",
@@ -128,7 +128,7 @@ export const VARIANT_PRESETS: VariantPreset[] = [
   {
     axes: ["rhythm", "atmosphere", "mix"],
     bassFamily: "808",
-    rhythmFamily: "ukg",
+    rhythmFamily: "garage",
     energy: "kinetic",
     titleBank: [
       "Skippy Two Step",
