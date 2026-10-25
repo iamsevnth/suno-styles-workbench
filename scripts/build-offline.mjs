@@ -51,8 +51,20 @@ function inlineFonts(css, cssUrl) {
  * place a bundle contains them (React writes "<script></script>" into innerHTML). The result is
  * then parsed, so an occurrence anywhere else fails the build instead of shipping broken code.
  */
+const DANGEROUS_IN_SCRIPT = ['</script', '<script', '<!--'];
+
 function escapeForInlineScript(code) {
-  const escaped = code.replace(/<(?=\/?script|!--)/gi, '\\x3C');
+  // Walk every "<" and rewrite the ones that open a dangerous sequence, in any letter case. Each
+  // candidate is compared on its own slice, so positions stay aligned with the original code.
+  let escaped = '';
+  let from = 0;
+  for (let at = code.indexOf('<'); at >= 0; at = code.indexOf('<', at + 1)) {
+    if (DANGEROUS_IN_SCRIPT.some((seq) => code.slice(at, at + seq.length).toLowerCase() === seq)) {
+      escaped += code.slice(from, at) + '\\x3C';
+      from = at + 1;
+    }
+  }
+  escaped += code.slice(from);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'offline-check-'));
   try {
     const file = path.join(tmp, 'bundle.mjs');

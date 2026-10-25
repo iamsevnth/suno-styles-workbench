@@ -115,7 +115,7 @@ describe("offline build script escaping", () => {
 
   it("leaves no sequence that could end or confuse the inline script or style", () => {
     const { result, output } = build(
-      "const d = document.createElement('div'); d.innerHTML = \"<script></script>\"; const c = `<!-- <SCRIPT>`; console.log(/<\\/script>/i.test(c), d, c);",
+      "const t = 'İİ'; const d = document.createElement('div'); d.innerHTML = \"<script></script>\"; const c = `<!-- <SCRIPT>`; console.log(/<\\/script>/i.test(c), d, c);",
     );
     assert.equal(result.status, 0, result.stderr);
     const inside = output.slice(output.indexOf('<script type="module">') + 22, output.lastIndexOf("</script>"));
