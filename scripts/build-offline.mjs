@@ -12,10 +12,48 @@ const dist = distRealPath;
 const indexPath = fileInBuildDir(distRealPath, 'index.html');
 const outPath = fileInBuildDir(distRealPath, 'suno-workbench.html');
 
-// One pass over the original HTML: the inlined bundle itself contains tag-like strings
-// (React's warnings mention <link rel="stylesheet" href="%s">), so it must never be rescanned.
-const ASSET_TAG =
-  /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical|apple-touch-icon)"[^>]*>/g;
+/** Links that mean nothing in a local file: preload hints, the canonical URL and the home-screen icon. */
+const DROPPED_LINKS = new Set(['modulepreload', 'canonical', 'apple-touch-icon']);
+
+/**
+ * The tags in Vite's index.html that the offline file replaces, found with a tag scanner: each
+ * external <script src> (with its closing tag), each stylesheet <link>, and each dropped <link>.
+ * Only the original page is scanned, never the inlined code, whose strings contain tag-like text
+ * (React's warnings mention <link rel="stylesheet" href="%s">).
+ */
+function* assetTags(html) {
+  for (let at = html.indexOf('<'); at >= 0; at = html.indexOf('<', at + 1)) {
+    const close = html.indexOf('>', at);
+    if (close < 0) return;
+    const tag = html.slice(at, close + 1);
+    const name = (tag.match(/^<([a-z]+)/i)?.[1] ?? '').toLowerCase();
+    const attrs = Object.fromEntries([...tag.matchAll(/([a-z-]+)="([^"]*)"/gi)].map(([, k, v]) => [k.toLowerCase(), v]));
+    if (name === 'script' && attrs.src) {
+      const end = html.indexOf('</script>', close);
+      if (end < 0 || html.slice(close + 1, end).trim()) throw new Error(`Unexpected script tag: ${tag}`);
+      yield { start: at, end: end + '</script>'.length, kind: 'script', url: attrs.src };
+      at = end;
+    } else if (name === 'link' && attrs.rel === 'stylesheet' && attrs.href) {
+      yield { start: at, end: close + 1, kind: 'style', url: attrs.href };
+    } else if (name === 'link' && DROPPED_LINKS.has(attrs.rel)) {
+      yield { start: at, end: close + 1, kind: 'drop' };
+    }
+  }
+}
+
+/** Rewrites each "<" that opens one of `sequences` (any letter case) as `replacement`. */
+function escapeSequences(text, sequences, replacement) {
+  let out = '';
+  let from = 0;
+  for (let at = text.indexOf('<'); at >= 0; at = text.indexOf('<', at + 1)) {
+    // Each candidate is compared on its own slice, so positions stay aligned with the original text.
+    if (sequences.some((seq) => text.slice(at, at + seq.length).toLowerCase() === seq)) {
+      out += text.slice(from, at) + replacement;
+      from = at + 1;
+    }
+  }
+  return out + text.slice(from);
+}
 
 function readAsset(url, encoding = 'utf8') {
   const file = path.resolve(distRealPath, url.replace(/^\.?\//, ''));
@@ -54,17 +92,7 @@ function inlineFonts(css, cssUrl) {
 const DANGEROUS_IN_SCRIPT = ['</script', '<script', '<!--'];
 
 function escapeForInlineScript(code) {
-  // Walk every "<" and rewrite the ones that open a dangerous sequence, in any letter case. Each
-  // candidate is compared on its own slice, so positions stay aligned with the original code.
-  let escaped = '';
-  let from = 0;
-  for (let at = code.indexOf('<'); at >= 0; at = code.indexOf('<', at + 1)) {
-    if (DANGEROUS_IN_SCRIPT.some((seq) => code.slice(at, at + seq.length).toLowerCase() === seq)) {
-      escaped += code.slice(from, at) + '\\x3C';
-      from = at + 1;
-    }
-  }
-  escaped += code.slice(from);
+  const escaped = escapeSequences(code, DANGEROUS_IN_SCRIPT, '\\x3C');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'offline-check-'));
   try {
     const file = path.join(tmp, 'bundle.mjs');
@@ -84,22 +112,31 @@ const styleHashes = [];
 
 const sha256 = (text) => `'sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}'`;
 
-const html = fs.readFileSync(indexPath, 'utf8').replace(ASSET_TAG, (_tag, scriptSrc, styleHref) => {
-  if (scriptSrc) {
+function inlined(tag) {
+  if (tag.kind === 'script') {
     scripts++;
     // Inline module scripts run from file:// (external ones are blocked by CORS there).
-    const code = escapeForInlineScript(readAsset(scriptSrc));
+    const code = escapeForInlineScript(readAsset(tag.url));
     scriptHashes.push(sha256(code));
     return `<script type="module">${code}</script>`;
   }
-  if (styleHref) {
+  if (tag.kind === 'style') {
     styles++;
-    const css = inlineFonts(readAsset(styleHref), styleHref).replace(/<(?=\/style)/gi, '\\3C');
+    const css = escapeSequences(inlineFonts(readAsset(tag.url), tag.url), ['</style'], '\\3C');
     styleHashes.push(sha256(css));
     return `<style>${css}</style>`;
   }
-  return ''; // Preload hints, the canonical URL and the home-screen icon mean nothing in a local file.
-});
+  return '';
+}
+
+const source = fs.readFileSync(indexPath, 'utf8');
+let html = '';
+let cursor = 0;
+for (const tag of assetTags(source)) {
+  html += source.slice(cursor, tag.start) + inlined(tag);
+  cursor = tag.end;
+}
+html += source.slice(cursor);
 
 if (scripts === 0 || styles === 0) {
   throw new Error(`Expected at least one script and one stylesheet in ${indexPath}; found ${scripts} and ${styles}.`);
