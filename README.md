@@ -8,8 +8,10 @@
 
 A free, browser-only toolkit for writing songs with Suno v6. Type a one-line brief and get detailed Styles prompts that Suno can follow, then finish the lyrics and the rest of the song.
 
-**Live site:** https://iamsevnth.github.io/suno-styles-workbench
-**Guide:** https://iamsevnth.github.io/suno-styles-workbench/#guide
+**Live site:** https://sunoworkbench.com
+**Guide:** https://sunoworkbench.com/guide
+
+Each tool has its own address: [/compiler](https://sunoworkbench.com/compiler), [/lyrics](https://sunoworkbench.com/lyrics), [/skills](https://sunoworkbench.com/skills) and [/guide](https://sunoworkbench.com/guide). Older links such as `#styles` still work and are moved to the new address.
 
 | Tool | What it does |
 | --- | --- |
@@ -87,7 +89,7 @@ Every genre with "UKG" in its name (140 UKG, Half-Time UKG, Deep UKG-Dubstep, UK
 | Weirdness | 20–30% | Workbench recommendation |
 | Style Influence | 75–85% | Workbench recommendation |
 
-Suno does not publish slider defaults or ideal values; the last three rows are starting points from testing compiled prompts. The [Guide](https://iamsevnth.github.io/suno-styles-workbench/#guide) covers brief writing, a worked example, genre coverage, quality gates, troubleshooting, a glossary and all sources.
+Suno does not publish slider defaults or ideal values; the last three rows are starting points from testing compiled prompts. The [Guide](https://sunoworkbench.com/guide) covers brief writing, a worked example, genre coverage, quality gates, troubleshooting, a glossary and all sources.
 
 ## How the compiler works
 
@@ -114,7 +116,7 @@ npm ci           # installs the exact versions in package-lock.json
 npm run dev      # http://127.0.0.1:3000 (this computer only; add -- --host to test on a phone)
 npm test         # all node:test suites via tsx
 npm run lint     # TypeScript type-check
-npm run build    # dist/ with index.html and the offline dist/suno-workbench.html, then checks their CSP
+npm run build    # dist/ with index.html, one page per address, sitemap.xml and the offline dist/suno-workbench.html, then checks their CSP
 npm run preview  # serve the production build
 ```
 
@@ -129,6 +131,8 @@ Every push to `main` runs the type-check, the tests and the build, then deploys 
 | `tests/genre-fidelity.test.ts` | Genre families, drop-free genres, sung leads, house and DnB feel, a sweep of every genre in the library, and phrase-library hygiene |
 | `tests/ukg.test.ts` | UKG dubstep and UK garage stay separate: how briefs are read, 140 BPM half-time trap drums with the skippy hat and shaker layer, and no shared vocabulary |
 | `tests/lyrics.test.ts` | Lyrics generator sections and phonetic respellings |
+| `tests/routes.test.ts` | Page addresses, old `#` links, and that the build's page list matches the app's |
+| `tests/build-routes.test.ts` | One page file per address with its own title and canonical link, plus 404, sitemap and robots files |
 | `tests/build-offline.test.ts` | The offline-file builder inlines assets and refuses files outside the build folder |
 
 ### Project layout
@@ -136,7 +140,7 @@ Every push to `main` runs the type-check, the tests and the build, then deploys 
 ```
 src/
   App.tsx                 page switch, dialog
-  routes.ts               hash routes (#/, #styles, #lyrics, #skills, #guide)
+  routes.ts               page addresses (/, /compiler, /lyrics, /skills, /guide) and their titles
   pages/                  Home page and the Guide (pages/guide/)
   components/
     content/              shared building blocks for content pages
@@ -150,7 +154,9 @@ src/
     suno/                 the compiler (see "How the compiler works")
     lyrics/               lyrics generator and phonetics
     browser/              clipboard and file download helpers
-scripts/build-offline.mjs inlines the built JS and CSS into one HTML file
+scripts/
+  build-routes.mjs        one page file per address, plus 404.html, sitemap.xml and robots.txt
+  build-offline.mjs       inlines the built JS and CSS into one HTML file
 tests/                    node:test suites
 ```
 
@@ -160,7 +166,7 @@ The current brief and results are kept in the tab's `sessionStorage`, and Styles
 
 ## Light and dark mode
 
-The sun and moon button in the header switches between light and dark mode. The site follows your device's setting until you pick one, then remembers your choice in this browser. Light mode uses the brand palette (pearl canvas `#F3F6FB`, white cards, near-black text, blue `#0059F8` and violet `#6005E7` actions, and the logo's spectrum for highlights); dark mode keeps the original monochrome look. Theme colors are CSS variables in `src/index.css`, and every text and color pair in light mode meets WCAG AA contrast (4.5:1).
+The sun and moon button in the header switches between light and dark mode. The site follows your device's setting until you pick one, then remembers your choice in this browser. Light mode uses the brand palette (pearl canvas `#F3F6FB`, white cards, near-black text, blue `#0059F8` and violet `#6005E7` actions, and the logo's spectrum for highlights); dark mode uses the same brand colors on the near-black canvas (the blue-to-orange gradient on main buttons, brighter blue links and violet focus rings). Theme colors are CSS variables in `src/index.css`. Every text and color pair meets WCAG AA contrast (4.5:1) in light mode, and the brand text colors in dark mode reach 7:1 or better.
 
 ## Credits
 

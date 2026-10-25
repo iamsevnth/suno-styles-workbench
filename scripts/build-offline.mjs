@@ -77,7 +77,9 @@ function inlineFonts(css, cssUrl) {
   const cssDir = path.posix.dirname(cssUrl.replace(/^\.?\//, ''));
   return css.replace(/url\((['"]?)([^'")]+\.woff2)\1\)/g, (_m, _q, fontUrl) => {
     fontsInlined++;
-    const data = readAsset(path.posix.join(cssDir, fontUrl), null).toString('base64');
+    // "/assets/x.woff2" is relative to the site root; "./x.woff2" to the stylesheet.
+    const fontPath = fontUrl.startsWith('/') ? fontUrl : path.posix.join(cssDir, fontUrl);
+    const data = readAsset(fontPath, null).toString('base64');
     return `url("data:font/woff2;base64,${data}")`;
   });
 }

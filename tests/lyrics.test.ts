@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { generateLyrics } from "../src/lib/lyrics/generator.ts";
-import { convertToPhonetics } from "../src/lib/lyrics/phonetics.ts";
+import { convertToPhonetics, wordToAmericanPhonetic } from "../src/lib/lyrics/phonetics.ts";
 import { DEFAULT_STRUCTURE } from "../src/lib/lyrics/types.ts";
 
 describe("lyrics generator", () => {
@@ -32,6 +32,10 @@ I probably feel the sub bass tension dropping tonight`;
   it("leaves section tags untouched", () => {
     assert.equal(result.lines[0].isTag, true);
     assert.equal(result.lines[0].phonetic, "[Chorus]");
+  });
+
+  it("preserves words with an existing ay spelling", () => {
+    assert.equal(convertToPhonetics("day").fullPhonetic, "day");
   });
 
   it("respells loanwords and casual speech", () => {

@@ -1,5 +1,6 @@
 import { ShowDialog } from "../Dialog.tsx";
 import { useStylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
+import { hrefFor } from "../../routes.ts";
 import BriefPanel from "./BriefPanel.tsx";
 import HistoryPanel from "./HistoryPanel.tsx";
 import PromptCard from "./PromptCard.tsx";
@@ -24,7 +25,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
         <section aria-label="Results" className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--fg)]">
-              <Icon name="zap" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-violet-fg)]" />
+              <Icon name="zap" size={16} className="text-[var(--tile-violet-fg)]" />
               {heading}
             </h2>
             {wb.prompts.length > 0 && (
@@ -55,7 +56,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               </p>
               <p className="text-xs text-[var(--fg-subtle)] mt-3">
                 In Suno, set Variety to Off so your Styles text is used word for word.{" "}
-                <a href="#guide" className="underline underline-offset-2 hover:text-[var(--fg)] light:text-[var(--link)]">
+                <a href={hrefFor("guide")} className="underline underline-offset-2 hover:text-[var(--fg)] text-[var(--link)]">
                   Read the settings guide
                 </a>
                 .
