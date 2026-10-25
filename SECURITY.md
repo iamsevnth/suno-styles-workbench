@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the current `main` branch, which is what https://iamsevnth.github.io/suno-styles-workbench/ serves, receives fixes. Download a fresh copy of the offline file after a fix to pick it up.
+Only the current `main` branch, which is what https://sunoworkbench.com serves, receives fixes. Download a fresh copy of the offline file after a fix to pick it up.
 
 ## How the site handles data
 

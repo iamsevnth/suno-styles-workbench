@@ -493,7 +493,6 @@ function algorithmicPhonetics(word: string, mode: "rap" | "natural" = "rap"): st
     .replace(/eigh/g, "ay")
     .replace(/ough/g, "aw")
     .replace(/augh/g, "aw")
-    .replace(/ee/g, "ee")
     .replace(/ea/g, "ee")
     .replace(/ai/g, "ay")
     .replace(/ay/g, "ay")

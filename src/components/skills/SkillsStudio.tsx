@@ -80,7 +80,7 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
               aria-pressed={selected}
               className={`group text-left rounded-[var(--r-md)] border p-3 transition-all flex items-center gap-3 ${
                 selected
-                  ? "border-[var(--border-strong)] light:border-[#a98af5] bg-[var(--bg-elevated)] light:bg-[#f7f3ff] light:shadow-[inset_3px_0_0_#6005e7]"
+                  ? "border-[var(--selected-border)] bg-[var(--selected-bg)] shadow-[inset_3px_0_0_var(--selected-bar)]"
                   : "border-[var(--border)] bg-[var(--bg)] light:bg-[var(--bg-elevated)] hover:border-[var(--border-strong)]"
               }`}
             >
@@ -88,7 +88,7 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
               <span className="flex-1 min-w-0">
                 <strong className="block text-sm font-semibold text-[var(--fg)]">{s.title}</strong>
                 <span className="block text-xs text-[var(--fg-muted)] mt-1 leading-relaxed">{s.blurb}</span>
-                <span className="label-caps-sm block mt-1.5 light:text-[var(--tile-violet-fg)]">{s.pack}</span>
+                <span className="label-caps-sm block mt-1.5 text-[var(--tile-violet-fg)]">{s.pack}</span>
               </span>
               <Icon name="chevronRight" size={16} className="text-[var(--fg-subtle)] shrink-0" />
             </button>
