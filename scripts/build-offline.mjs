@@ -1,5 +1,6 @@
 // Inlines the Vite build's script and stylesheet into dist/suno-workbench.html,
 // so the whole site runs from one file opened straight from disk.
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -30,16 +31,24 @@ function readAsset(url) {
 
 let scripts = 0;
 let styles = 0;
+const scriptHashes = [];
+const styleHashes = [];
+
+const sha256 = (text) => `'sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}'`;
 
 const html = fs.readFileSync(indexPath, 'utf8').replace(ASSET_TAG, (_tag, scriptSrc, styleHref) => {
   if (scriptSrc) {
     scripts++;
     // Inline module scripts run from file:// (external ones are blocked by CORS there).
-    return `<script type="module">${readAsset(scriptSrc).replace(/<\/script/gi, '<\\/script')}</script>`;
+    const code = readAsset(scriptSrc).replace(/<\/script/gi, '<\\/script');
+    scriptHashes.push(sha256(code));
+    return `<script type="module">${code}</script>`;
   }
   if (styleHref) {
     styles++;
-    return `<style>${readAsset(styleHref).replace(/<\/style/gi, '<\\/style')}</style>`;
+    const css = readAsset(styleHref).replace(/<\/style/gi, '<\\/style');
+    styleHashes.push(sha256(css));
+    return `<style>${css}</style>`;
   }
   return ''; // modulepreload hints and the canonical URL mean nothing in a local file.
 });
@@ -48,5 +57,24 @@ if (scripts === 0 || styles === 0) {
   throw new Error(`Expected at least one script and one stylesheet in ${indexPath}; found ${scripts} and ${styles}.`);
 }
 
-fs.writeFileSync(outPath, html, 'utf8');
+// The hosted page allows only same-origin files ('self'); this file's code is inline and opened
+// from disk, so script-src and style-src name the exact inlined code by hash instead.
+const CSP_META = /(<meta\s+http-equiv="Content-Security-Policy"\s+content=")([^"]*)(")/i;
+const withCsp = html.replace(CSP_META, (_m, open, policy, close) => {
+  const directives = policy
+    .replace(/&#39;|&#x27;/gi, "'")
+    .split(';')
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .map((d) => {
+      const name = d.split(/\s+/)[0];
+      if (name === 'script-src') return `script-src ${scriptHashes.join(' ')}`;
+      if (name === 'style-src') return `style-src ${styleHashes.join(' ')}`;
+      // 'self' means nothing for a file:// page; the inline code is all it needs.
+      return d.replace(/\s'self'/g, '').replace(/^(\S+)$/, "$1 'none'");
+    });
+  return `${open}${directives.join('; ')}${close}`;
+});
+
+fs.writeFileSync(outPath, withCsp, 'utf8');
 console.log(`Wrote ${path.relative(process.cwd(), outPath)} (${(Buffer.byteLength(html) / 1024).toFixed(0)} KB, ${scripts} script, ${styles} stylesheet inlined)`);

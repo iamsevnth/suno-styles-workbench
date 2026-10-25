@@ -106,15 +106,15 @@ Each family in `src/lib/suno/lexicon-genres/` is one `FamilyLexicon` object with
 Requires Node.js 22 or later.
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000
+npm ci           # installs the exact versions in package-lock.json
+npm run dev      # http://127.0.0.1:3000 (this computer only; add -- --host to test on a phone)
 npm test         # all node:test suites via tsx
 npm run lint     # TypeScript type-check
-npm run build    # dist/ with index.html and the offline dist/suno-workbench.html
+npm run build    # dist/ with index.html and the offline dist/suno-workbench.html, then checks their CSP
 npm run preview  # serve the production build
 ```
 
-Every push to `main` runs the type-check, the tests and the build, then deploys `dist/` to GitHub Pages (`.github/workflows/deploy.yml`). Pull requests run the same checks without deploying.
+Every push to `main` runs the type-check, the tests and the build, then deploys `dist/` to GitHub Pages (`.github/workflows/deploy.yml`). Pull requests run the same checks without deploying, plus CodeQL and a dependency review that blocks newly added packages with known vulnerabilities. Dependabot opens weekly update pull requests for npm packages and GitHub Actions, and every Action is pinned to a full commit SHA.
 
 ### Tests
 
@@ -152,7 +152,7 @@ tests/                    node:test suites
 
 ## Privacy
 
-The current brief and results are kept in the tab's `sessionStorage`, and Styles history in the browser's `localStorage` until you clear it. Export History is the only way data leaves the page, as a file saved to your own computer. See [SECURITY.md](SECURITY.md) to report a vulnerability.
+The current brief and results are kept in the tab's `sessionStorage`, and Styles history in the browser's `localStorage` until you clear it. History keeps the newest 200 runs; when it fills up, or the browser runs out of storage, the oldest runs are removed and the page says so. Stored data is checked when it is read back, so an old or damaged entry is skipped instead of breaking the page. Export History is the only way data leaves the page, as a file saved to your own computer. The site ships with a Content Security Policy that lets it load only its own files and blocks every network request. See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## Not affiliated with Suno
 
