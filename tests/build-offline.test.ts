@@ -69,6 +69,16 @@ describe("offline build Content Security Policy", () => {
   });
 });
 
+describe("build folder argument", () => {
+  it("refuses a build folder outside the project and the temp folder", () => {
+    for (const script of [buildScript, checkScript]) {
+      const result = spawnSync(process.execPath, [script, "/"], { encoding: "utf8" });
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /Build folder must be inside the project or the temp folder/);
+    }
+  });
+});
+
 describe("offline build asset paths", () => {
   it("inlines assets contained in the build directory", () => {
     const { root, dist } = createBuildDirectory();

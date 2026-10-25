@@ -3,11 +3,12 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileInBuildDir, resolveBuildDir } from './build-dir.mjs';
 
-const dist = path.resolve(process.argv[2] ?? 'dist');
-const distRealPath = fs.realpathSync(dist);
-const indexPath = path.join(dist, 'index.html');
-const outPath = path.join(dist, 'suno-workbench.html');
+const { dir: distRealPath } = resolveBuildDir(process.argv[2]);
+const dist = distRealPath;
+const indexPath = fileInBuildDir(distRealPath, 'index.html');
+const outPath = fileInBuildDir(distRealPath, 'suno-workbench.html');
 
 // One pass over the original HTML: the inlined bundle itself contains tag-like strings
 // (React's warnings mention <link rel="stylesheet" href="%s">), so it must never be rescanned.
