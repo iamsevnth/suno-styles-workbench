@@ -1,6 +1,6 @@
 {
   "name": "Suno Workbench",
-  "description": "Browser-only Suno v6 toolkit: compile briefs into 925–975 character Styles prompts, finish lyrics with American phonetics, and run production playbooks.",
+  "description": "Browser-only Suno v6 toolkit: create or repair 925–975 character Styles prompts and build structured lyrics with American phonetics.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

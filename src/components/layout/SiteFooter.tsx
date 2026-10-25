@@ -13,7 +13,10 @@ export default function SiteFooter() {
         </p>
         <nav aria-label="Footer" className="flex flex-wrap gap-4">
           <a href={hrefFor("guide")} className="hover:text-[var(--fg)]">
-            Guide &amp; Privacy
+            Guide
+          </a>
+          <a href={hrefFor("privacy")} className="hover:text-[var(--fg)]">
+            Privacy Policy
           </a>
           <a href={CONTACT_HREF} className="hover:text-[var(--fg)]">
             Contact or Report Broken Feature

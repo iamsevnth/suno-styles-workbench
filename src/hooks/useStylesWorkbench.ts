@@ -21,11 +21,13 @@ import { formatAllPromptsTxt } from "../lib/suno/v6.ts";
 const STORAGE_KEY = "suno-styles-generator:v1";
 const SUGGEST_KEY = "suno-styles-suggestions:v1";
 export const DEFAULT_COUNT = 3;
+export type CompilerMode = "create" | "fix";
 
 type Parsed = GenerateResult["parsed"];
 
 interface SessionSnapshot {
   input: string;
+  compilerMode: CompilerMode;
   count: number;
   profileEnabled: boolean;
   generation: number;
@@ -61,6 +63,7 @@ function readSession(): StoredSession {
   const count = num(r.count);
   return {
     input: str(r.input),
+    compilerMode: r.compilerMode === "fix" ? "fix" : "create",
     count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
     profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
     generation: num(r.generation),
@@ -73,6 +76,7 @@ function readSession(): StoredSession {
 
 interface StoredSession {
   input?: string;
+  compilerMode?: CompilerMode;
   count?: number;
   profileEnabled?: boolean;
   generation?: number;
@@ -85,6 +89,7 @@ interface StoredSession {
 function saveSession(s: SessionSnapshot): void {
   const stored: StoredSession = {
     input: s.input,
+    compilerMode: s.compilerMode,
     count: s.count,
     profileEnabled: s.profileEnabled,
     generation: s.generation,
@@ -134,6 +139,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const restored = stored.hasResults ? stored.result : undefined;
 
   const [input, setInput] = useState(stored.input ?? "");
+  const [compilerMode, setCompilerMode] = useState<CompilerMode>(stored.compilerMode ?? "create");
   const [count, setCount] = useState(stored.count ?? DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState(stored.profileEnabled ?? true);
   const [generation, setGeneration] = useState(stored.generation ?? 0);
@@ -148,13 +154,17 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed });
+  }, [input, compilerMode, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed]);
 
   const generate = () => {
     const brief = input.trim();
     if (!brief) {
-      setLastAction("Enter a creative brief first — nothing was generated.");
+      setLastAction(
+        compilerMode === "fix"
+          ? "Paste an existing Suno Styles prompt first — nothing was generated."
+          : "Enter a creative brief first — nothing was generated."
+      );
       return;
     }
 
@@ -165,7 +175,13 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
         .filter((e) => e.brief.trim() === brief)
         .flatMap((e) => (e.prompts || []).map((p) => p.recipeId).filter(Boolean))
         .slice(-80) as string[];
-      const out = generateStylesPrompts(brief, { count, profileEnabled, seed, avoidFingerprints });
+      const out = generateStylesPrompts(brief, {
+        count,
+        profileEnabled,
+        seed,
+        avoidFingerprints,
+        mode: compilerMode === "fix" ? "rewrite" : undefined,
+      });
       const nextGeneration = generation + 1;
 
       setSeedUsed(seed);
@@ -178,7 +194,9 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
       const head = out.prompts[0]?.styles.slice(0, 48).replace(/\s+/g, " ") ?? "";
       const bpmNote = out.parsed.bpm != null ? `${out.parsed.bpm} BPM` : "BPM inferred";
-      setLastAction(`seed ${seed} · ${bpmNote} · ${out.prompts.length} styles · "${head}..."`);
+      setLastAction(
+        `${compilerMode === "fix" ? "fixed" : "created"} · seed ${seed} · ${bpmNote} · ${out.prompts.length} styles · "${head}..."`
+      );
       if (saved.reason === "quota") {
         showDialog(
           "error",
@@ -202,13 +220,14 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const reset = () => {
     setInput("");
+    setCompilerMode("create");
     setCount(DEFAULT_COUNT);
     setProfileEnabled(true);
     setGeneration(0);
     setSeedUsed(0);
     setPrompts([]);
     setParsed(null);
-    setLastAction("Reset — brief and current variations cleared. History kept.");
+    setLastAction("Reset — input, mode and current variations cleared. History kept.");
     briefRef.current?.focus();
   };
 
@@ -225,6 +244,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   };
 
   const applySuggestion = (text: string) => {
+    setCompilerMode("create");
     setInput(text);
     setLastAction("Brief filled from an example — press Generate Styles to compile.");
     briefRef.current?.focus();
@@ -284,6 +304,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   return {
     briefRef,
     input,
+    compilerMode,
+    setCompilerMode,
     setInput,
     count,
     setCount,

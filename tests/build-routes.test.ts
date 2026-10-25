@@ -29,13 +29,13 @@ describe("page files for clean addresses", () => {
       assert.match(compiler, /<title>Styles Compiler \| Suno Workbench<\/title>/);
       assert.match(compiler, /<link rel="canonical" href="https:\/\/sunoworkbench.com\/compiler" \/>/);
       assert.match(compiler, /<meta property="og:url" content="https:\/\/sunoworkbench.com\/compiler" \/>/);
-      for (const file of ["lyrics.html", "skills.html", "guide.html", "404.html", "sitemap.xml", "robots.txt"]) {
+      for (const file of ["lyrics.html", "guide.html", "privacy-policy.html", "404.html", "sitemap.xml", "robots.txt"]) {
         assert.ok(readFileSync(path.join(dist, file), "utf8").length > 0, file);
       }
       assert.match(readFileSync(path.join(dist, "404.html"), "utf8"), /<meta name="robots" content="noindex" \/>/);
       assert.match(
         readFileSync(path.join(dist, "sitemap.xml"), "utf8"),
-        /<loc>https:\/\/sunoworkbench.com\/guide<\/loc>/,
+        /<loc>https:\/\/sunoworkbench.com\/privacy-policy<\/loc>/,
       );
     } finally {
       rmSync(dist, { recursive: true, force: true });

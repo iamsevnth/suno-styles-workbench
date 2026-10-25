@@ -1,56 +1,84 @@
 import { Card, Code, Prose, Section, Table } from "../../components/content/Content.tsx";
 import { LIBRARY_STATS } from "../../lib/suno/families.ts";
-import { generateStylesPrompts } from "../../lib/suno/generate.ts";
 import { MAX_CHARS, MIN_CHARS, VOCAL_BUDGET } from "../../lib/suno/render.ts";
 import { hrefFor } from "../../routes.ts";
 
 const BRIEF_SIGNALS: [string, string, string][] = [
   [
     "Genres",
-    `Any of ${LIBRARY_STATS.genres} genre names or their short forms (r&b, dnb, edm). Join several with +, /, commas, “and” or “x”. The first one leads. “UKG” means UKG dubstep; write “UK garage” or “2-step” for UK garage.`,
-    "Trap + Baile Funk, dark r&b, Drum and Bass",
+    `Sets the musical vocabulary the compiler is allowed to draw from. The first recognized genre leads the plan; later genres act as secondary or accent influences. The compiler maps each genre into sound families so its groove, drums, bass, harmony, texture and form stay stylistically coherent instead of borrowing random production language. Any of ${LIBRARY_STATS.genres} recognized styles can be named directly or through common short forms.`,
+    "Trap + Baile Funk, dark R&B, Drum and Bass",
   ],
   [
     "Tempo",
-    "A whole number followed by BPM, kept between 60 and 200. If you give two, the last one wins. Leave it out and the genre's home tempo is used.",
-    "140 BPM, 92bpm",
+    "Locks the plan to one whole-number BPM between 60 and 200. If a prompt contains more than one BPM, the last recognized value wins so the final Styles text never carries conflicting tempo instructions. If you omit tempo, the compiler uses the lead genre's home tempo or another genre-aware fallback.",
+    "140 BPM, 92 bpm",
   ],
   [
     "Vocals",
-    "Gender, register, tone, delivery, effects or a rap style. A full description is quoted as written. “instrumental” removes the vocal entirely.",
-    "female vocals, male tenor, melodic sung-rap, autotune gloss",
+    `Controls whether a singer or rapper is planned and how much of the Styles budget is reserved for the voice. Gender, register, timbre, delivery, rap/sung style and processing cues can all be recognized. A short request stays compact; a detailed voice description can use up to ${VOCAL_BUDGET.detailed} characters so the production still has room to be described.`,
+    "female alto, melodic rap, close-mic",
   ],
   [
     "Instruments",
-    "Named instruments appear in every variation; only their tone and treatment change.",
-    "flute, Rhodes electric piano, strings, guitar",
+    "Turns named instruments into protected anchors. Those instruments must survive every variation even when their tone, articulation or processing changes. This is the best way to keep a signature sound—Rhodes, flute, strings, guitar, pads or a particular bass voice—present across multiple generated Styles prompts.",
+    "flute, Rhodes, strings, guitar",
   ],
   [
-    "Bass and drums",
-    "Locks the bass sound or adds drum details on top of the genre's own.",
-    "808, Reese, wobble, growl, skippy hats",
+    "Bass and Drums",
+    "Adds explicit low-end or drum behavior on top of the genre's normal toolkit. Bass-music families can use wobble, growl, Reese, neuro and sub language; trap, drill and phonk stay centered on 808 behavior. Song, world, cinematic and other non-drop families are prevented from inheriting dubstep-style drop vocabulary simply because the phrase library contains it.",
+    "808, Reese, wobble, skippy hats",
   ],
-  ["Groove", "Overrides the genre's home feel.", "half-time, 2-step, swung, four-on-the-floor"],
   [
-    "Mood and setting",
-    "Shapes harmony, textures and atmosphere. Punctuation after a mood word is fine.",
-    "dark, euphoric, uplifting, cinematic, late-night",
+    "Groove",
+    "Overrides or sharpens the genre's default metric feel. Use this when the pocket matters as much as the genre: half-time changes perceived weight, 2-step changes kick placement, swing changes subdivision feel and four-on-the-floor establishes a steady club pulse.",
+    "half-time, 2-step, swung, four-on-the-floor",
   ],
-  ["Key", "Adds a tonal center to the harmony.", "F minor, A major"],
-  ["Exploration", "Widens the genre search when you want surprises.", "surprise me, explore, something new"],
+  [
+    "Mood and Setting",
+    "Steers harmony, texture, density, space and arrangement without replacing the core genre. Mood works best as a production modifier—dark, intimate, euphoric, cinematic, nocturnal—rather than as a substitute for genre, tempo or groove.",
+    "dark, euphoric, cinematic, late-night",
+  ],
+  [
+    "Key",
+    "Adds a tonal center that the harmonic plan can honor. Key information is useful when the prompt must coordinate with existing vocals, samples or instruments, although Suno may still interpret harmonic detail creatively.",
+    "F minor, A major",
+  ],
+  [
+    "Exploration",
+    "Signals that the compiler may widen its genre choices when the brief leaves the core style open. This is different from Suno's Variety control: exploration changes the Workbench plan before you paste it into Suno; Variety can change Suno's interpretation of the Styles prompt at generation time.",
+    "surprise me, explore, something new",
+  ],
 ];
 
-const BEFORE_AFTER: [string, string, string][] = [
-  ["Name the genre first", "a chill song for late at night", "Bedroom R&B, intimate, 88 BPM"],
+const HABITS: [string, string, string, string][] = [
   [
-    "Say what you want, not what you don't",
+    "Lead With the Musical Identity",
+    "Put the main genre, tempo or groove near the front so the hierarchy is obvious. Decorative mood words should support those anchors, not replace them.",
+    "a chill song for late at night",
+    "Bedroom R&B, intimate, 88 BPM",
+  ],
+  [
+    "Write Positive Targets",
+    "Describe the sound you want instead of naming the sound you do not want. Negative phrases still put the unwanted concept into the Styles text. Use Suno's Exclude Styles field for exclusions and keep Workbench input focused on the desired production.",
     "trap but no autotune and no 808 slides",
     "trap, dry natural vocal, punchy short 808 hits",
   ],
-  ["Describe the voice", "female vocals", "breathy female alto, close-mic, light autotune gloss"],
-  ["Pick two genres, not five", "trap dubstep house afrobeats pop", "Afrobeats + Pop, sunny, 108 BPM"],
   [
-    "Describe the sound instead of an artist",
+    "Describe the Voice",
+    "A generic word such as vocals leaves register, tone and delivery open. Add the traits that actually matter: singer/rapper role, range, timbre, cadence and processing. The compiler then protects that information inside one controlled vocal sentence.",
+    "female vocals",
+    "breathy female alto, close-mic, light autotune gloss",
+  ],
+  [
+    "Use Fewer, Stronger Genres",
+    `Every genre competes for the same ${MAX_CHARS}-character budget. One or two strong genres leave space for drums, bass, harmony, instruments, vocal behavior and mix. Five loosely related genres often force the plan to spend its budget reconciling identities instead of describing a clear record.`,
+    "trap dubstep house afrobeats pop",
+    "Afrobeats + Pop, sunny, 108 BPM",
+  ],
+  [
+    "Translate References Into Production Language",
+    "Instead of asking for a named artist, describe the high-level attributes you actually need: era, groove, vocal weight, instrumentation, arrangement, texture and mix. This produces a more reusable prompt and avoids making imitation the organizing principle.",
     "sounds like a famous rapper",
     "dark melodic trap, hazy autotuned vocal, sparse 808s",
   ],
@@ -58,92 +86,67 @@ const BEFORE_AFTER: [string, string, string][] = [
 
 const VOCAL_RULES: [string, string, string][] = [
   [
-    "Nothing about the voice",
-    `A vocal the genre suits, in one sentence of up to ${VOCAL_BUDGET.compact} characters.`,
+    "No Vocal Detail",
+    `The compiler chooses a voice that fits the genre and keeps it within the compact ${VOCAL_BUDGET.compact}-character budget.`,
     "dark trap",
   ],
   [
-    "The basics: gender and rap or singing",
-    `One sentence of up to ${VOCAL_BUDGET.compact} characters, built around the voice you named.`,
+    "Basic Voice",
+    `Gender plus sung/rap identity is preserved, while optional delivery and effect details are added only if they fit inside the compact ${VOCAL_BUDGET.compact}-character budget.`,
     "male rap, female vocals",
   ],
   [
-    "Four or more vocal traits",
-    `Up to ${VOCAL_BUDGET.detailed} characters, so your tone, register, delivery and effects all fit.`,
-    "breathy female alto, close-mic, light autotune, slapback delay",
+    "Detailed Voice",
+    `Four or more vocal traits unlock the detailed budget of up to ${VOCAL_BUDGET.detailed} characters so register, timbre, delivery and processing can stay together instead of being truncated.`,
+    "breathy female alto, close-mic, slapback",
   ],
   [
-    "A full vocal description",
-    "Your own words, quoted as written, plus a short note on the vocal's space in the mix.",
-    "smooth male vocal tone, laid back cadence, prominent autotune gloss",
+    "Full Description",
+    "When the brief already contains a natural voice description, that wording is treated as an anchor rather than replaced by generic vocal planning. The compiler then adds only the minimum extra mix context that fits.",
+    "smooth male vocal, laid-back cadence, autotune gloss",
   ],
-  ["Instrumental", "No vocal sentence; the whole prompt describes the production.", "instrumental"],
+  [
+    "Instrumental",
+    "No singer is planned and the vocal sentence is removed. The recovered character budget is spent on production, arrangement, texture and mix instead.",
+    "instrumental",
+  ],
 ];
-
-const EXAMPLE_BRIEF = "melodic R&B with flute and Rhodes electric piano";
-const EXAMPLE_SEED = 42;
-
-function WorkedExample() {
-  const { prompts, parsed } = generateStylesPrompts(EXAMPLE_BRIEF, { count: 1, seed: EXAMPLE_SEED });
-  const prompt = prompts[0];
-  const plan = prompt.plan;
-  const rows: [string, string][] = [
-    ["Genres", [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(" + ")],
-    ["Tempo", `${plan.bpm} BPM (${parsed.bpm == null ? "the genre's home tempo" : "from your brief"})`],
-    ["Feel", plan.metricFeel],
-    ["Bass", plan.bass.join(", ")],
-    [
-      "Vocal",
-      plan.vocals.present ? `${plan.vocals.presentation ?? "lead"}, ${plan.vocals.style ?? "sung"}` : "instrumental",
-    ],
-    ["Instruments", plan.instruments.join(", ")],
-  ];
-  return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-[var(--r-xl)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 flex flex-col gap-3">
-        <p className="label-caps">Brief</p>
-        <p className="font-mono text-sm text-[var(--fg)]">{EXAMPLE_BRIEF}</p>
-        <p className="label-caps pt-2">Compiled Styles prompt · {prompt.characters} characters</p>
-        <p className="text-sm text-[var(--fg-muted)] leading-relaxed">{prompt.styles}</p>
-      </div>
-      <div className="flex flex-col gap-3">
-        <Table
-          head={["Decision", "What the compiler chose"]}
-          rows={rows}
-          caption="Sonic plan behind the example prompt"
-        />
-        <p className="text-xs text-[var(--fg-subtle)] leading-relaxed">
-          This example is compiled live by the page you are reading, with a fixed seed, so it always matches the current
-          engine. The brief names no sub-genre, tempo, bass or drum kit; the compiler chose them from the R&B family's
-          vocabulary and kept the flute and Rhodes in the instrument list.
-        </p>
-      </div>
-    </div>
-  );
-}
 
 export default function BriefGuide() {
   return (
     <>
-      <Section id="quick-start" title="Quick start">
+      <Section id="quick-start" title="Quick Start">
         <Prose>
-          <ol className="list-decimal pl-5 flex flex-col gap-2">
+          <ol className="list-decimal pl-5 flex flex-col gap-3">
             <li>
-              Open the{" "}
-              <a className="underline underline-offset-2 text-[var(--fg)]" href={hrefFor("styles")}>
-                Styles Compiler
-              </a>
-              , type a brief such as <Code>140 BPM trap future bass, female vocals, high energy</Code>, and press
-              Generate Styles.
-            </li>
-            <li>Pick the variation closest to the record in your head and press Copy Style.</li>
-            <li>
-              In Suno, open Advanced mode (the full-control screen with separate Lyrics and Styles fields), paste into
-              Styles, set Variety to Off, and generate. Add lyrics from Lyrics Studio if the song has vocals.
+              Open the <a className="underline underline-offset-2 text-[var(--fg)]" href={hrefFor("styles")}>Styles Compiler</a>.
+              Use <strong>Create From Brief</strong> for a new idea, or <strong>Fix Existing Prompt</strong> when you
+              already have a Suno Styles prompt that is vague, contradictory or difficult to control.
             </li>
             <li>
-              Generate a few takes. If one is close, keep the prompt and change one thing at a time: the brief, a
-              slider, or the lyrics.
+              In Create mode, type a compact brief such as <Code>140 BPM trap + future bass, female vocal, high energy</Code>.
+              <strong> Example Briefs</strong> are ready-made inputs you can click to learn the syntax. Refresh changes
+              the set. The first card, <strong>Always Available</strong>, is the persistent exploration brief that asks
+              the compiler to range across the full library.
+            </li>
+            <li>
+              Set <strong>Variations</strong> from 1 to 6. Each variation keeps your anchors but builds a different sonic
+              plan and wording recipe. More variations are useful when the musical identity is settled but you want
+              alternate grooves, bass choices, textures or arrangements.
+            </li>
+            <li>
+              Leave <strong>Hybrid Bass Profile</strong> on when you want the compiler's built-in hybrid-bass taste to
+              fill gaps in an open brief. Turn it off for neutral library choices or when you want the named genre to
+              dominate without profile-driven bass hybrids.
+            </li>
+            <li>
+              In <strong>Fix Existing Prompt</strong>, paste the Styles prompt that already ran. Workbench reparses the
+              musical intent and rebuilds it with a clearer hierarchy, positive wording, genre-aware vocabulary and one
+              consistent tempo while preserving detected genres, BPM, instruments and vocal traits.
+            </li>
+            <li>
+              Copy the best result into Suno's Styles field in Songs → Advanced. If you need the Styles tags preserved
+              as written, set Suno's Variety control to 0 / Off before generating.
             </li>
           </ol>
         </Prose>
@@ -151,89 +154,64 @@ export default function BriefGuide() {
 
       <Section
         id="briefs"
-        title="Writing a brief"
-        intro="The compiler reads your brief for the signals below. Everything you name is kept; everything you leave out is planned from the genre."
+        title="Writing a Brief"
+        intro="A strong brief names the few musical facts that must survive, then lets the compiler fill the production gaps from the right genre family."
       >
-        <Table head={["Signal", "What it does", "Examples"]} rows={BRIEF_SIGNALS} caption="Brief signals" />
+        <Table head={["Signal", "What It Does", "Examples"]} rows={BRIEF_SIGNALS} caption="Brief signals" />
         <Prose>
           <p>
-            Short briefs work: <Code>dark r&amp;b, 90 bpm</Code> is enough. Longer briefs give you more control. A full
-            vocal description such as <Code>smooth male vocal tone, laid back cadence, prominent autotune gloss</Code>{" "}
-            is quoted in the prompt word for word, and mood words that trail it (“high energy”) are kept out of the
-            vocal line.
+            Short input is valid. <Code>dark R&amp;B, 90 BPM</Code> gives the engine enough information to select an
+            R&amp;B-appropriate groove, bass, harmony and vocal plan. Add details only when they matter to the identity
+            of the record.
           </p>
           <p>
-            You can also paste an existing Styles prompt as the brief. The compiler picks out its genres, tempo, vocals
-            and instruments and builds new {MIN_CHARS}–{MAX_CHARS} character prompts around them.
+            The genre-family guardrails are deliberate. R&amp;B, gospel, pop, hip-hop, Afro, Latin, dancehall, ambient
+            and cinematic plans do not suddenly inherit EDM drop language. Bass-music families keep their full low-end
+            vocabulary, while trap/drill/phonk remain 808-centered. The goal is not to make every genre use the same
+            dramatic structure; it is to make each family sound like itself.
           </p>
         </Prose>
       </Section>
 
       <Section
         id="vocals"
-        title="How vocals are written"
-        intro="The production carries a Styles prompt, so the vocal gets one sentence and the rest of the characters describe the sonic plan. How long that sentence is depends on how much your brief says about the voice."
+        title="Vocal Logic"
+        intro="The vocal is one controlled part of the Styles prompt, not the whole prompt. Workbench budgets the vocal sentence according to how much vocal information you actually supply."
       >
-        <Table head={["Your brief says", "The vocal sentence", "Example"]} rows={VOCAL_RULES} caption="Vocal rules" />
+        <Table head={["Input Level", "What the Compiler Does", "Example"]} rows={VOCAL_RULES} caption="Vocal logic" />
         <Prose>
-          <ul className="list-disc pl-5 flex flex-col gap-2">
-            <li>
-              The sentence is built from the voice outward: who sings comes first, then any effects you named, then
-              planned details (a delivery trait, a performance arc, one effect) only while they fit.
-            </li>
-            <li>
-              Planned wording uses “with” at most once and never repeats a word already in the sentence, so it reads as
-              one clear line instead of a pile of clauses.
-            </li>
-            <li>
-              When your brief describes the voice in its own words, the prompt quotes that description instead of
-              replacing it with planned wording.
-            </li>
-            <li>
-              Naming the voice once is enough. When the vocal sentence already names the voice you asked for, no second
-              “keeps the vocals front and center” sentence is added to repeat it.
-            </li>
-            <li>
-              Write <Code>instrumental</Code> to leave the vocal out entirely and give every character to the
-              production.
-            </li>
-          </ul>
+          <p>
+            Voice identity is assembled from the outside in: presentation first, then register/timbre, delivery, style
+            and processing. User-provided traits outrank planned traits. The renderer avoids repeating the same vocal
+            descriptor in multiple clauses and limits connective wording so the sentence stays readable instead of
+            becoming a stack of instructions.
+          </p>
+          <p>
+            If the brief contains a detailed natural-language voice description, Workbench protects that description
+            rather than translating it into a different persona. If the brief says <Code>instrumental</Code>, the voice
+            is removed entirely rather than described as “no vocals,” keeping the Styles text positively framed.
+          </p>
         </Prose>
       </Section>
 
-      <Section
-        id="better-briefs"
-        title="Five habits of strong briefs"
-        intro="Each row shows a weak brief and a stronger one for the same idea."
-      >
-        <Table head={["Habit", "Weak brief", "Stronger brief"]} rows={BEFORE_AFTER} caption="Brief habits" />
-        <div className="grid gap-3 md:grid-cols-2">
-          <Card title="Why positive wording matters">
+      <Section id="better-briefs" title="Five Habits of Strong Briefs">
+        <Table head={["Habit", "Why It Matters", "Weak Brief", "Stronger Brief"]} rows={HABITS} caption="Five habits of strong briefs" />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Card title="Positive Wording Is a Routing Tool">
             <p>
-              Style models respond to the words that are present. “No 808 slides” still puts “808 slides” in front of
-              the model. Describe the sound you want in Styles, and use Suno's separate Exclude field for anything you
-              want kept out.
+              Positive wording does more than sound cleaner. It gives the planner a target it can map into a sound
+              family. “Dry natural vocal” maps to a production choice; “no autotune” leaves the unwanted concept inside
+              the instruction. Put exclusions in Suno's Exclude Styles control.
             </p>
           </Card>
-          <Card title="UKG is not UK garage">
+          <Card title="Genre Count Controls Detail Density">
             <p>
-              <Code>UKG</Code> and <Code>UKG dubstep</Code> compile as UKG dubstep: 140 BPM half-time trap drums under
-              heavy sub and 808 pressure, with a skippy, syncopated hi-hat and shaker layer on top.{" "}
-              <Code>UK garage</Code>, <Code>garage</Code> and <Code>2-step</Code> compile as UK garage: swung 2-step
-              drums, warm chords and soulful vocals around 134 BPM. Neither borrows the other's vocabulary.
-            </p>
-          </Card>
-          <Card title="Why fewer genres work better">
-            <p>
-              Every genre you add competes for the same {MAX_CHARS} characters. Two genres leave room for drums, bass,
-              vocal and mix detail; five leave room for little more than the genre list.
+              Each added genre consumes planning and rendering space. If three or more genres are essential, order them
+              by importance and make the role of each one clear—lead genre, rhythmic donor, texture accent—rather than
+              expecting all of them to carry equal weight.
             </p>
           </Card>
         </div>
-      </Section>
-
-      <Section id="example" title="Worked example" intro="One brief, one compiled prompt, and the decisions behind it.">
-        <WorkedExample />
       </Section>
     </>
   );

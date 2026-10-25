@@ -10,7 +10,7 @@ const HEADINGS: Record<StudioRouteId, { title: string; intro: string; chip: stri
   styles: {
     title: "Styles Compiler",
     intro:
-      "Type a brief, press Generate Styles, then paste a result into Suno's Styles field. Nothing compiles until you press Generate. Reset clears the brief; your history stays below until you clear it.",
+      "Create a Styles prompt from a brief or switch to Fix Existing Prompt to rebuild a prompt that is vague, conflicted or hard for Suno to follow. Everything compiles locally in your browser.",
     chip: "925–975 characters",
   },
   lyrics: {
@@ -18,12 +18,6 @@ const HEADINGS: Record<StudioRouteId, { title: string; intro: string; chip: stri
     intro:
       "Build a song structure with exact section and line counts, draft or finish lyrics, then convert them to American English phonetic spellings for Suno's Lyrics field.",
     chip: "Structure & phonetics",
-  },
-  skills: {
-    title: "Skills Studio",
-    intro:
-      "Eight playbooks for the work around a prompt: fix a prompt that missed, plan covers and mashups, write lyrics, run Editor and Studio checklists, and check rights before you publish.",
-    chip: "8 playbooks",
   },
 };
 

@@ -3,19 +3,18 @@ import Dialog, { CLOSED_DIALOG, DialogState, ShowDialog } from "./components/Dia
 import SiteFooter from "./components/layout/SiteFooter.tsx";
 import SiteHeader from "./components/layout/SiteHeader.tsx";
 import LyricsStudio from "./components/LyricsStudio.tsx";
-import SkillsStudio from "./components/skills/SkillsStudio.tsx";
 import StudioDeck from "./components/studio/StudioDeck.tsx";
 import StylesWorkbench from "./components/styles/StylesWorkbench.tsx";
 import { useRoute } from "./hooks/useRoute.ts";
 import { copyToClipboard } from "./lib/browser/clipboard.ts";
 import GuidePage from "./pages/guide/GuidePage.tsx";
 import HomePage from "./pages/HomePage.tsx";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage.tsx";
 import { isStudioRoute, RouteId, StudioRouteId } from "./routes.ts";
 
 function StudioTool({ route, showDialog }: { route: StudioRouteId; showDialog: ShowDialog }) {
   if (route === "styles") return <StylesWorkbench showDialog={showDialog} />;
-  if (route === "lyrics") return <LyricsStudio onShowDialog={showDialog} copyToClipboard={copyToClipboard} />;
-  return <SkillsStudio showDialog={showDialog} />;
+  return <LyricsStudio onShowDialog={showDialog} copyToClipboard={copyToClipboard} />;
 }
 
 function Page({ route, showDialog }: { route: RouteId; showDialog: ShowDialog }) {
@@ -26,7 +25,9 @@ function Page({ route, showDialog }: { route: RouteId; showDialog: ShowDialog })
       </StudioDeck>
     );
   }
-  return route === "guide" ? <GuidePage /> : <HomePage />;
+  if (route === "guide") return <GuidePage />;
+  if (route === "privacy") return <PrivacyPolicyPage />;
+  return <HomePage />;
 }
 
 export default function App() {
