@@ -1,5 +1,5 @@
-export type RouteId = "home" | "styles" | "lyrics" | "skills" | "guide";
-export type StudioRouteId = "styles" | "lyrics" | "skills";
+export type RouteId = "home" | "styles" | "lyrics" | "guide" | "privacy";
+export type StudioRouteId = "styles" | "lyrics";
 
 /** The public site's address. */
 export const SITE_URL = "https://sunoworkbench.com";
@@ -9,36 +9,36 @@ export const ROUTE_PATHS: Record<RouteId, string> = {
   home: "/",
   styles: "/compiler",
   lyrics: "/lyrics",
-  skills: "/skills",
   guide: "/guide",
+  privacy: "/privacy-policy",
 };
 
 /** Page title and search/link-preview description for each address. */
 export const ROUTE_META: Record<RouteId, { title: string; description: string }> = {
   home: {
-    title: "Suno Workbench: Styles Compiler, Lyrics Studio and Skills",
+    title: "Suno Workbench: Styles Compiler and Lyrics Studio",
     description:
-      "Free, browser-only tools for Suno v6: compile a one-line brief into 925–975 character Styles prompts, build and phonetically respell lyrics, and run production playbooks.",
+      "Free, browser-only tools for Suno v6: compile or repair detailed Styles prompts and build structured lyrics. Everything stays in your browser.",
   },
   styles: {
     title: "Styles Compiler | Suno Workbench",
     description:
-      "Turn a one-line brief into Suno v6 Styles prompts of 925–975 characters, each naming the tempo, genres, groove, bass, harmony, vocal, mix and instruments.",
+      "Create or fix Suno v6 Styles prompts of 925–975 characters with clear tempo, genres, groove, bass, harmony, vocals, mix and instruments.",
   },
   lyrics: {
     title: "Lyrics Studio | Suno Workbench",
     description:
       "Lay out a song section by section, generate or finish lyrics with Suno section tags, and respell them the way they are spoken in American English.",
   },
-  skills: {
-    title: "Skills Studio | Suno Workbench",
-    description:
-      "Eight playbooks for Suno v6: fix a prompt that missed, plan covers and mashups, rewrite lyrics, run Song Editor and Studio checklists, and check rights.",
-  },
   guide: {
     title: "Guide | Suno Workbench",
     description:
-      "How to write a brief, how the Styles Compiler works, the Suno v6 settings that keep a prompt intact, troubleshooting, a glossary and sources.",
+      "Practical guidance for writing briefs, understanding the Styles Compiler, using Suno Create mode, editing songs, Studio workflows and rights-aware uploads.",
+  },
+  privacy: {
+    title: "Privacy Policy | Suno Workbench",
+    description:
+      "SEVNTHLABS privacy policy for Suno Workbench: client-side processing, local browser storage, GitHub Pages hosting and no site analytics or tracking.",
   },
 };
 
@@ -72,14 +72,13 @@ export function hrefFor(route: RouteId): string {
 }
 
 export function isStudioRoute(route: RouteId): route is StudioRouteId {
-  return route === "styles" || route === "lyrics" || route === "skills";
+  return route === "styles" || route === "lyrics";
 }
 
 export const NAV_ITEMS: { route: RouteId; label: string }[] = [
   { route: "home", label: "Home" },
   { route: "styles", label: "Styles Compiler" },
   { route: "lyrics", label: "Lyrics Studio" },
-  { route: "skills", label: "Skills Studio" },
   { route: "guide", label: "Guide" },
 ];
 

@@ -11,7 +11,7 @@ import { LogoFull } from "../components/layout/Logo.tsx";
 const SAMPLE_BRIEF = "melodic R&B with flute and Rhodes electric piano";
 
 const TOOLS: {
-  route: "styles" | "lyrics" | "skills";
+  route: "styles" | "lyrics";
   title: string;
   body: string;
   cta: string;
@@ -23,7 +23,7 @@ const TOOLS: {
   {
     route: "styles",
     title: "Styles Compiler",
-    body: `Turns a one-line brief into one to six production prompts for Suno's Styles field. Each one names the tempo, genres, groove, bass, harmony, vocals, mix and instruments in ${MIN_CHARS}–${MAX_CHARS} characters.`,
+    body: `Creates one to six production prompts for Suno's Styles field, or repairs an existing prompt in Fix Existing Prompt mode. Each result names the tempo, genres, groove, bass, harmony, vocals, mix and instruments in ${MIN_CHARS}–${MAX_CHARS} characters.`,
     cta: "Open the compiler",
     icon: "wand",
     tile: "magenta",
@@ -177,8 +177,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Section eyebrow="Three tools" title="Everything between the idea and the take">
-        <div className="grid gap-4 md:grid-cols-3">
+      <Section eyebrow="Two tools" title="Everything between the idea and the take">
+        <div className="grid gap-4 md:grid-cols-2">
           {TOOLS.map((tool) => (
             <Card
               key={tool.route}
@@ -246,7 +246,7 @@ export default function HomePage() {
           </h2>
         </div>
         <p className="text-sm text-[var(--fg-muted)] leading-relaxed flex-1 max-w-xl">
-          The whole site, including all three tools, also comes as one HTML file. Save it, double-click it, and it runs
+          The whole site, including both tools, also comes as one HTML file. Save it, double-click it, and it runs
           with no internet connection and nothing to install.
         </p>
         <div className="flex flex-wrap gap-3">
