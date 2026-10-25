@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { familyKeys } from "../src/lib/suno/families.ts";
+import { briefAsksForGarage, familyKeys, isGarageGenre } from "../src/lib/suno/families.ts";
+import { allStyles } from "../src/lib/suno/ontology.ts";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import { parseUserInput } from "../src/lib/suno/parse.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
@@ -100,5 +101,44 @@ describe("vocal description in one-line briefs", () => {
       assert.doesNotMatch(raw, /trap/i, `${brief}: ${raw}`);
       for (const p of promptsFor(brief)) assert.doesNotMatch(p.styles, /features (Melodic|UKG) Trap/, p.styles);
     }
+  });
+});
+
+describe("UK garage only when the brief asks for it", () => {
+  it("never adds a garage genre to a brief that does not name garage or 2-step", () => {
+    const briefs = [
+      ...allStyles()
+        .map((g) => g.name)
+        .filter((name) => !isGarageGenre(name)),
+      "",
+      "dark",
+      "surprise me",
+      "female vocals, euphoric",
+    ];
+    const leaks: string[] = [];
+    for (const brief of briefs) {
+      for (const seed of [1, 2]) {
+        for (const profileEnabled of [true, false]) {
+          for (const p of generateStylesPrompts(brief, { count: 3, seed, profileEnabled }).prompts) {
+            for (const g of planGenres(p)) if (isGarageGenre(g)) leaks.push(`${brief || "(empty)"} -> ${g}`);
+          }
+        }
+      }
+    }
+    assert.deepEqual([...new Set(leaks)], []);
+  });
+
+  for (const brief of ["UK Garage", "garage, 130 bpm", "2-step, female vocals", "2 step", "two-step garage"]) {
+    it(`"${brief}" summons UK Garage`, () => {
+      const parsed = parseUserInput(brief);
+      assert.ok(parsed.genres.includes("UK Garage"), parsed.genres.join(", "));
+      assert.ok(briefAsksForGarage(brief, parsed.genres));
+    });
+  }
+
+  it("keeps Deep UKG a UKG genre", () => {
+    assert.deepEqual(parseUserInput("Deep UKG").genres, ["Deep UKG"]);
+    assert.deepEqual(familyKeys(["Deep UKG"]), ["ukg"]);
+    assert.equal(isGarageGenre("Deep UKG"), false);
   });
 });

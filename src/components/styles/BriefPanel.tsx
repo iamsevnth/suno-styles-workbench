@@ -14,7 +14,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
     <section aria-label="Brief and controls" className="surface rounded-[var(--r-xl)] p-5 flex flex-col gap-5">
       <div>
         <label htmlFor="brief" className="flex items-center gap-2 text-sm font-semibold mb-2 text-[var(--fg)]">
-          <Icon name="fileText" size={17} className="text-[var(--fg-subtle)] light:text-[var(--tile-violet-fg)]" />
+          <Icon name="fileText" size={17} className="text-[var(--tile-violet-fg)]" />
           Your Creative Brief
         </label>
         <textarea
@@ -37,13 +37,13 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <span className="flex items-center gap-2 text-sm font-semibold text-[var(--fg)]">
-            <Icon name="lightbulb" size={17} className="text-[var(--fg-subtle)] light:text-[var(--tile-amber-fg)]" />
+            <Icon name="lightbulb" size={17} className="text-[var(--tile-amber-fg)]" />
             Example Briefs
           </span>
           <button
             type="button"
             onClick={wb.refreshSuggestions}
-            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[var(--r-md)] text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] border border-[var(--border)] transition-colors light:text-[var(--link)]"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[var(--r-md)] text-xs font-medium hover:text-[var(--fg)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] border border-[var(--border)] transition-colors text-[var(--link)]"
           >
             <Icon name="refresh" size={13} />
             Refresh
@@ -61,7 +61,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
                 <Icon
                   name="sparkles"
                   size={16}
-                  className="text-[var(--fg-subtle)] light:text-[var(--tile-magenta-fg)]"
+                  className="text-[var(--tile-magenta-fg)]"
                 />
               )}
               <span className="flex-1 min-w-0">
@@ -81,7 +81,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="count" className="flex items-center gap-2 text-sm font-semibold mb-1.5 text-[var(--fg)]">
-            <Icon name="sliders" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-blue-fg)]" />
+            <Icon name="sliders" size={16} className="text-[var(--tile-blue-fg)]" />
             Variations
           </label>
           <div className="flex items-center gap-3">
@@ -103,7 +103,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
           title="Blends in the built-in hybrid bass library when the brief leaves genres or moods open"
         >
           <span className="flex items-center gap-2 text-[var(--fg)] font-medium">
-            <Icon name="audio" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-violet-fg)]" />
+            <Icon name="audio" size={16} className="text-[var(--tile-violet-fg)]" />
             Hybrid Bass Profile
           </span>
           <input
@@ -141,7 +141,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
 
       <div className="rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] light:bg-[var(--bg-subtle)] p-3 text-xs text-[var(--fg-muted)]">
         <div className="flex items-center gap-2 font-semibold text-sm text-[var(--fg)] mb-1.5">
-          <Icon name="listChecks" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-orange-fg)]" />
+          <Icon name="listChecks" size={16} className="text-[var(--tile-orange-fg)]" />
           Parsed Intent
         </div>
         {!showParsed ? (

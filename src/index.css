@@ -12,12 +12,9 @@
   --fg-subtle: #71717a;
   --border: #2a2a30;
   --border-strong: #3f3f48;
-  --accent: #d4d4d8;
-  --accent-fg: #0a0a0b;
   --ok: #6ee7b7;
   --warn: #fcd34d;
   --danger: #fca5a5;
-  --ring: #c8ccd4;
   --font: "Segoe UI", system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --r-sm: 8px;
@@ -28,39 +25,53 @@
   /* Brand spectrum from the logo (Creative Color Palette Brief). */
   --brand-gradient: linear-gradient(90deg, #00dafc 0%, #0059f8 20%, #6005e7 45%, #eb039c 65%, #fb6120 84%, #fc9e06 100%);
 
-  /* Roles that differ by theme. Dark mode keeps the original monochrome look. */
-  --cta-bg: var(--accent);
-  --cta-fg: var(--accent-fg);
-  --cta-shadow: none;
-  --link: var(--fg);
-  --eyebrow: var(--fg-muted);
-  --eyebrow-rule: none;
-  --eyebrow-rule-width: 0;
-  --nav-active-bg: var(--bg-subtle);
-  --nav-active-fg: var(--fg);
+  /* Roles that differ by theme. Dark mode: the brand spectrum, lightened for near-black surfaces
+     (tile text 7:1 or more on its tint, links and labels 8.5:1 or more on the page and cards). */
+  --accent: #6f9dff; /* dark text on it: 7.5:1 */
+  --accent-fg: #0a0a0b;
+  --ring: #8b6cff;
+  --cta-bg: linear-gradient(90deg, #0059f8 0%, #6005e7 38%, #c2037f 72%, #c2410c 100%);
+  --cta-fg: #ffffff;
+  --cta-shadow: 0 8px 24px rgba(96, 5, 231, 0.35);
+  --link: #7fb0ff;
+  --eyebrow: #86b4ff;
+  --eyebrow-rule: linear-gradient(90deg, #00dafc, #6005e7);
+  --eyebrow-rule-width: 1.75rem;
+  --nav-active-bg: rgba(96, 5, 231, 0.3);
+  --nav-active-fg: #d4c4ff;
   --card-shadow: none;
   --input-bg: var(--bg);
-  --tile-blue-bg: var(--bg-subtle);
-  --tile-blue-fg: var(--fg-muted);
-  --tile-violet-bg: var(--bg-subtle);
-  --tile-violet-fg: var(--fg-muted);
-  --tile-magenta-bg: var(--bg-subtle);
-  --tile-magenta-fg: var(--fg-muted);
-  --tile-coral-bg: var(--bg-subtle);
-  --tile-coral-fg: var(--fg-muted);
-  --tile-orange-bg: var(--bg-subtle);
-  --tile-orange-fg: var(--fg-muted);
-  --tile-cyan-bg: var(--bg-subtle);
-  --tile-cyan-fg: var(--fg-muted);
-  --tile-green-bg: var(--bg-subtle);
-  --tile-green-fg: var(--fg-muted);
-  --tile-amber-bg: var(--bg-subtle);
-  --tile-amber-fg: var(--fg-muted);
-  --card-accent-blue: transparent;
-  --card-accent-violet: transparent;
-  --card-accent-orange: transparent;
-  --tab-active-bar: var(--accent);
-  --page-decor: none;
+  --tile-blue-bg: rgba(0, 89, 248, 0.2);
+  --tile-blue-fg: #86b4ff;
+  --tile-violet-bg: rgba(96, 5, 231, 0.26);
+  --tile-violet-fg: #bfa2ff;
+  --tile-magenta-bg: rgba(235, 3, 156, 0.2);
+  --tile-magenta-fg: #ff86cf;
+  --tile-coral-bg: rgba(250, 28, 97, 0.2);
+  --tile-coral-fg: #ff8aa7;
+  --tile-orange-bg: rgba(251, 97, 32, 0.2);
+  --tile-orange-fg: #ffa070;
+  --tile-cyan-bg: rgba(0, 218, 252, 0.15);
+  --tile-cyan-fg: #6fe3fb;
+  --tile-green-bg: rgba(16, 185, 129, 0.18);
+  --tile-green-fg: #6fdcae;
+  --tile-amber-bg: rgba(252, 158, 6, 0.18);
+  --tile-amber-fg: #ffc65e;
+  --card-accent-blue: linear-gradient(90deg, #00dafc, #0059f8);
+  --card-accent-violet: linear-gradient(90deg, #6005e7, #eb039c);
+  --card-accent-orange: linear-gradient(90deg, #fa1c61, #fc9e06);
+  --brand-word-bg: linear-gradient(90deg, #4fd8ff 0%, #6f9dff 30%, #b07bff 55%, #ff5fbf 80%, #ff9152 100%);
+  --brand-word-color: transparent;
+  --tab-active-bar: var(--brand-gradient);
+  --selected-bg: rgba(96, 5, 231, 0.14);
+  --selected-border: #6d4bd1;
+  --selected-bar: #8b6cff;
+  /* Faint spectrum glows behind the page. */
+  --page-decor:
+    radial-gradient(ellipse 55% 40% at 0% 15%, rgba(0, 218, 252, 0.08), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 22% 6%, rgba(96, 5, 231, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgba(235, 3, 156, 0.08), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 96% 50%, rgba(252, 158, 6, 0.06), transparent 70%);
 }
 
 /* Light mode: the brief's pearl canvas, white cards, near-black text and blue/violet actions, with the
@@ -114,6 +125,9 @@
   --brand-word-bg: linear-gradient(90deg, #0059f8 0%, #6005e7 35%, #eb039c 70%, #fb6120 100%);
   --brand-word-color: transparent;
   --tab-active-bar: var(--brand-gradient);
+  --selected-bg: #f7f3ff;
+  --selected-border: #a98af5;
+  --selected-bar: #6005e7;
   --card-accent-blue: linear-gradient(90deg, #00dafc, #0059f8);
   --card-accent-violet: linear-gradient(90deg, #6005e7, #eb039c);
   --card-accent-orange: linear-gradient(90deg, #fa1c61, #fc9e06);

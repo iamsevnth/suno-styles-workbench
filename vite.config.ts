@@ -32,8 +32,9 @@ function contentSecurityPolicy(): Plugin {
 }
 
 export default defineConfig({
-  // Relative asset URLs work under the GitHub Pages project path and inside the offline file.
-  base: './',
+  // Absolute asset URLs, so pages at clean addresses (sunoworkbench.com/compiler) load them from the
+  // site root. The offline builder inlines every asset, so the single file does not depend on this.
+  base: '/',
   plugins: [react(), tailwindcss(), contentSecurityPolicy()],
   build: {
     target: 'es2022',

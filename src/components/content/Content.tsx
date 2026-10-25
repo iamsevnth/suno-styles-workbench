@@ -43,7 +43,7 @@ export function Section({
 
 export type TileColor = "blue" | "violet" | "magenta" | "coral" | "orange" | "cyan" | "green" | "amber";
 
-/** A rounded icon tile: brand-tinted in light mode, neutral in dark mode. */
+/** A rounded icon tile: tinted with one brand hue in both themes. */
 export function IconTile({ icon, color, size = 40 }: { icon: IconName; color: TileColor; size?: number }) {
   return (
     <span className={`icon-tile tile-${color}`} style={{ width: size, height: size }}>
