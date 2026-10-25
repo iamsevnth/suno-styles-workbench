@@ -40,16 +40,6 @@ const TOOLS: {
     accent: "blue",
     link: "text-[var(--link)]",
   },
-  {
-    route: "skills",
-    title: "Skills Studio",
-    body: "Eight playbooks for the work around a prompt: diagnose one that missed, plan covers and mashups, rewrite lyrics, step through the Song Editor and Studio, and check rights before you publish.",
-    cta: "Open Skills Studio",
-    icon: "cap",
-    tile: "orange",
-    accent: "orange",
-    link: "text-[var(--tile-orange-fg)]",
-  },
 ];
 
 const STEPS: { title: string; body: string; tile: TileColor }[] = [

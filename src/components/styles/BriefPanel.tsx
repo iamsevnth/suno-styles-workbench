@@ -2,7 +2,7 @@ import { StylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
 import Icon from "../icons/Icon.tsx";
 
 const TRUST_NOTES = [
-  "Only Generate Styles compiles prompts — the profile toggle, examples and slider never do",
+  "Only Generate Styles or Fix Prompt compiles prompts — examples, profile changes and the variation slider never run by themselves",
   "Every prompt lands between 925 and 975 characters, with an integer BPM and no artist names",
   "Export History downloads a uniquely dated JSON file to your computer",
 ];
@@ -43,7 +43,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
       <div>
         <label htmlFor="brief" className="flex items-center gap-2 text-sm font-semibold mb-2 text-[var(--fg)]">
           <Icon name="fileText" size={17} className="text-[var(--tile-violet-fg)]" />
-{fixing ? "Existing Suno Styles Prompt" : "Your Creative Brief"}
+          {fixing ? "Existing Suno Styles Prompt" : "Your Creative Brief"}
         </label>
         <textarea
           id="brief"
@@ -68,7 +68,8 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
         </p>
       </div>
 
-      {!fixing && <div>
+      {!fixing && (
+        <div>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <span className="flex items-center gap-2 text-sm font-semibold text-[var(--fg)]">
             <Icon name="lightbulb" size={17} className="text-[var(--tile-amber-fg)]" />
@@ -110,7 +111,8 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
             </button>
           ))}
         </div>
-      </div>}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

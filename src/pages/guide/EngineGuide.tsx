@@ -117,14 +117,16 @@ export default function EngineGuide() {
               );
             })}
           </div>
-          <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-[var(--fg-muted)]" aria-label="Chart legend">
-            {COLORS.map((color, index) => (
-              <span key={color} className="inline-flex items-center gap-1.5">
-                <span className={`inline-block w-3 h-3 rounded-full tint tile-${color}`} aria-hidden="true" />
-                Palette {index + 1}
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-[var(--fg-muted)]" aria-label="Chart legend">
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-flex gap-0.5" aria-hidden="true">
+                {COLORS.slice(0, 4).map((color) => (
+                  <span key={color} className={`inline-block w-2.5 h-2.5 rounded-full tint tile-${color}`} />
+                ))}
               </span>
-            ))}
-            <span>Bar length = number of genre memberships in that family.</span>
+              Color separates sound families visually; it does not represent rank or quality.
+            </span>
+            <span>Bar length and the number at right show genre memberships in each family.</span>
           </div>
         </div>
         <div className="grid gap-3 lg:grid-cols-2">
