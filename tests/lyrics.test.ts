@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { generateLyrics } from "../src/lib/lyrics/generator.ts";
-import { convertToPhonetics } from "../src/lib/lyrics/phonetics.ts";
+import { convertToPhonetics, wordToAmericanPhonetic } from "../src/lib/lyrics/phonetics.ts";
 import { DEFAULT_STRUCTURE } from "../src/lib/lyrics/types.ts";
 
 describe("lyrics generator", () => {
@@ -34,6 +34,10 @@ I probably feel the sub bass tension dropping tonight`;
     assert.equal(result.lines[0].phonetic, "[Chorus]");
   });
 
+  it("preserves words with an existing ay spelling", () => {
+    assert.equal(convertToPhonetics("day").fullPhonetic, "day");
+  });
+
   it("respells loanwords and casual speech", () => {
     assert.match(result.lines[3].phonetic, /bylee/i);
     assert.ok(result.lines[3].phonetic.includes("fahvelah"));
@@ -44,5 +48,9 @@ I probably feel the sub bass tension dropping tonight`;
 
   it("never emits hyphens", () => {
     assert.ok(!result.lines[4].phonetic.includes("-"));
+  });
+
+  it("preserves the existing double-o pronunciation", () => {
+    assert.equal(wordToAmericanPhonetic("moon"), "moon");
   });
 });
