@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import { MAX_CHARS, MIN_CHARS } from "../src/lib/suno/render.ts";
-import { runSkill } from "../src/lib/suno/skills/run.ts";
 import { pickSuggestions, SURPRISE_BRIEF } from "../src/lib/suno/suggestions.ts";
 import { historyFileStamp, toTitleCase } from "../src/lib/suno/title-case.ts";
 import { formatAllPromptsTxt } from "../src/lib/suno/v6.ts";
@@ -85,6 +84,20 @@ describe("styles compiler", () => {
     }
   });
 
+  it("repairs an existing prompt through rewrite mode while preserving detected intent", () => {
+    const messy = "140 BPM trap and future bass, no muddy bass, no weak drums, female vocals, cinematic pads, 140 BPM";
+    const { prompts, parsed } = generateStylesPrompts(messy, { count: 2, mode: "rewrite" });
+    assert.equal(parsed.mode, "rewrite");
+    for (const p of prompts) {
+      assertInWindow(p.characters);
+      assert.match(p.styles, /140 BPM/);
+      assert.match(p.styles, /Trap/i);
+      assert.match(p.styles, /Future Bass/i);
+      assert.match(p.styles, /female/i);
+      assert.doesNotMatch(p.styles, /\b(no|avoid|don't|without)\b/i);
+    }
+  });
+
   it("never repeats a recipe that the caller asks it to avoid", () => {
     const first = generateStylesPrompts("140 BPM trap future bass", { count: 3 });
     const avoid = first.prompts.map((p) => p.plan.recipeId);
@@ -125,13 +138,5 @@ describe("exports and formatting", () => {
     const title = toTitleCase("swung emotional bass and trap | 140 bpm | 950 total characters");
     assert.ok(title.includes("Swung Emotional Bass and Trap"), title);
     assert.ok(title.includes("140 BPM"), title);
-  });
-});
-
-describe("skills", () => {
-  it("adds an exclusion section when a commercial artist is named", () => {
-    const report = runSkill("rights", { request: "Make a song", named: "Drake", material: "named-style" });
-    assert.ok(report.exclusion.includes("Drake"));
-    assert.ok(report.exclusion.includes("Will not copy"));
   });
 });

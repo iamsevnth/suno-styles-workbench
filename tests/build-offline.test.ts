@@ -20,7 +20,7 @@ const checkScript = fileURLToPath(new URL("../scripts/check-csp.mjs", import.met
 /** Runs the CSP check after copying index.html to each page file, as build-routes.mjs does. */
 function runCheck(dist: string) {
   const index = readFileSync(path.join(dist, "index.html"), "utf8");
-  for (const file of ["compiler.html", "lyrics.html", "skills.html", "guide.html", "404.html"]) {
+  for (const file of ["compiler.html", "lyrics.html", "guide.html", "privacy-policy.html", "404.html"]) {
     writeFileSync(path.join(dist, file), index);
   }
   return spawnSync(process.execPath, [checkScript, dist], { encoding: "utf8" });
