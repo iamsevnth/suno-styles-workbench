@@ -3,6 +3,8 @@ build/
 dist/
 coverage/
 .DS_Store
+# Google AI Studio session files
+.aistudio/
 *.log
 .env*
 !.env.example

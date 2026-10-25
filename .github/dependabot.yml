@@ -7,6 +7,11 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # The site builds and tests on Node.js 22 (deploy.yml), so its type definitions stay on 22.
+      # Minor and patch updates within 22 still arrive. Raise this together with node-version.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       dev-tooling:
         dependency-type: development

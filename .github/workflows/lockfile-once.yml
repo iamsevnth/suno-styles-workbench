@@ -1,0 +1,29 @@
+name: Update lockfile (one-time)
+
+on:
+  push:
+    branches: [chore/types-node-22]
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Update package-lock.json for @types/node 22
+        run: |
+          if grep -q '"node_modules/@types/node": {' package-lock.json && node -e "process.exit(require('./package-lock.json').packages['node_modules/@types/node'].version.startsWith('22.') ? 0 : 1)"; then echo "Already on 22."; exit 0; fi
+          npm install --package-lock-only --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npm run lint && npm test && npm run build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: update package-lock.json for @types/node 22"
+          git push
