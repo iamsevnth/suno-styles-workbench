@@ -58,51 +58,51 @@ const SECTION_TYPE_META: Record<
 > = {
   intro: {
     label: "Intro",
-    badgeColor: "bg-zinc-800/80",
-    textColor: "text-zinc-300",
-    borderColor: "border-zinc-700",
+    badgeColor: "bg-zinc-800/80 light:bg-slate-100",
+    textColor: "text-zinc-300 light:text-slate-700",
+    borderColor: "border-zinc-700 light:border-slate-200",
   },
   verse: {
     label: "Verse",
-    badgeColor: "bg-blue-950/70",
-    textColor: "text-blue-300",
-    borderColor: "border-blue-800/60",
+    badgeColor: "bg-blue-950/70 light:bg-blue-50",
+    textColor: "text-blue-300 light:text-blue-700",
+    borderColor: "border-blue-800/60 light:border-blue-200",
   },
   chorus: {
     label: "Chorus",
-    badgeColor: "bg-amber-950/70",
-    textColor: "text-amber-300",
-    borderColor: "border-amber-800/60",
+    badgeColor: "bg-amber-950/70 light:bg-amber-50",
+    textColor: "text-amber-300 light:text-amber-700",
+    borderColor: "border-amber-800/60 light:border-amber-200",
   },
   buildup: {
     label: "Build Up",
-    badgeColor: "bg-orange-950/70",
-    textColor: "text-orange-300",
-    borderColor: "border-orange-800/60",
+    badgeColor: "bg-orange-950/70 light:bg-orange-50",
+    textColor: "text-orange-300 light:text-orange-700",
+    borderColor: "border-orange-800/60 light:border-orange-200",
   },
   drop: {
     label: "Drop",
-    badgeColor: "bg-red-950/80",
-    textColor: "text-red-300",
-    borderColor: "border-red-800/70",
+    badgeColor: "bg-red-950/80 light:bg-red-50",
+    textColor: "text-red-300 light:text-red-700",
+    borderColor: "border-red-800/70 light:border-red-200",
   },
   breakdown: {
     label: "Breakdown",
-    badgeColor: "bg-purple-950/70",
-    textColor: "text-purple-300",
-    borderColor: "border-purple-800/60",
+    badgeColor: "bg-purple-950/70 light:bg-purple-50",
+    textColor: "text-purple-300 light:text-purple-700",
+    borderColor: "border-purple-800/60 light:border-purple-200",
   },
   bridge: {
     label: "Bridge",
-    badgeColor: "bg-cyan-950/70",
-    textColor: "text-cyan-300",
-    borderColor: "border-cyan-800/60",
+    badgeColor: "bg-cyan-950/70 light:bg-cyan-50",
+    textColor: "text-cyan-300 light:text-cyan-700",
+    borderColor: "border-cyan-800/60 light:border-cyan-200",
   },
   outro: {
     label: "Outro",
-    badgeColor: "bg-zinc-800/70",
-    textColor: "text-zinc-400",
-    borderColor: "border-zinc-700/60",
+    badgeColor: "bg-zinc-800/70 light:bg-slate-100",
+    textColor: "text-zinc-400 light:text-slate-700",
+    borderColor: "border-zinc-700/60 light:border-slate-200",
   },
 };
 
@@ -457,13 +457,13 @@ export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsSt
                 <div className="flex items-center gap-2">
                   {draftLyrics && (
                     <>
-                      <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2 py-0.5 rounded">
+                      <span className="font-mono text-[10px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/50 px-2 py-0.5 rounded light:text-emerald-700 light:bg-emerald-50 light:border-emerald-200">
                         {draftLineCount} lines ({draftLyrics.length} chars)
                       </span>
                       <button
                         type="button"
                         onClick={() => setDraftLyrics("")}
-                        className="text-[11px] text-[var(--fg-muted)] hover:text-red-400 transition-colors"
+                        className="text-[11px] text-[var(--fg-muted)] hover:text-red-400 transition-colors light:hover:text-red-700"
                       >
                         Clear
                       </button>
@@ -580,7 +580,7 @@ The engine will:
                   <button
                     type="button"
                     onClick={() => applySequencePreset("club-multi-drop")}
-                    className="text-[10px] px-2.5 py-1 rounded border border-orange-800/60 bg-orange-950/40 hover:text-[var(--fg)] text-orange-300 font-medium"
+                    className="text-[10px] px-2.5 py-1 rounded border border-orange-800/60 bg-orange-950/40 hover:text-[var(--fg)] text-orange-300 font-medium light:border-orange-200 light:bg-orange-50 light:text-orange-700"
                     title="User Requested: Chorus -> Build Up -> Drop -> Build Up -> Drop -> Breakdown -> Drop"
                   >
                     Club Multi-Drop
@@ -588,7 +588,7 @@ The engine will:
                   <button
                     type="button"
                     onClick={() => applySequencePreset("triple-drop")}
-                    className="text-[10px] px-2.5 py-1 rounded border border-red-800/60 bg-red-950/40 hover:text-[var(--fg)] text-red-300 font-medium"
+                    className="text-[10px] px-2.5 py-1 rounded border border-red-800/60 bg-red-950/40 hover:text-[var(--fg)] text-red-300 font-medium light:border-red-200 light:bg-red-50 light:text-red-700"
                     title="3 Drops + 3 Buildups + 2 Choruses + 1 Breakdown"
                   >
                     3 Drops & 3 Buildups
@@ -704,7 +704,7 @@ The engine will:
                         <button
                           type="button"
                           onClick={() => removeSection(idx)}
-                          className="h-6 w-6 inline-flex items-center justify-center text-[11px] rounded border border-red-900/40 bg-[var(--bg)] text-red-400 hover:bg-red-500/20"
+                          className="h-6 w-6 inline-flex items-center justify-center text-[11px] rounded border border-red-900/40 bg-[var(--bg)] text-red-400 hover:bg-red-500/20 light:border-red-200 light:text-red-700 light:hover:bg-red-50"
                           title="Delete section from sequence"
                         >
                           ✕
@@ -737,7 +737,7 @@ The engine will:
                         {SECTION_TYPE_META[s.type]?.label || s.type}
                       </span>
                       {i < sectionSequence.length - 1 && (
-                        <span className="text-zinc-600 mx-1.5 font-bold">→</span>
+                        <span className="text-zinc-600 mx-1.5 font-bold light:text-slate-600">→</span>
                       )}
                     </span>
                   ))}
@@ -800,7 +800,7 @@ The engine will:
                     type="button"
                     onClick={handleGenerateLyrics}
                     disabled={isGenerating}
-                    className="h-10 px-6 rounded-lg bg-[var(--accent)] hover:opacity-90 active:scale-[0.98] text-[var(--accent-fg)] font-bold text-xs tracking-wide transition-all shadow-lg flex items-center gap-2"
+                    className="btn-primary h-10 px-6 rounded-lg active:scale-[0.98] font-bold text-xs tracking-wide transition-all flex items-center gap-2"
                   >
                     {isGenerating ? (
                       <>
@@ -860,7 +860,7 @@ The engine will:
                   <button
                     type="button"
                     onClick={() => handleSendToPhonetics()}
-                    className="h-8 px-3 rounded-lg border border-emerald-500/50 bg-emerald-950/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/60 transition-colors flex items-center gap-1.5"
+                    className="h-8 px-3 rounded-lg border border-emerald-500/50 bg-emerald-950/40 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/60 transition-colors flex items-center gap-1.5 light:border-emerald-300 light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-50"
                     title="Send these lyrics to the American Phonetics converter (no hyphens)"
                   >
                     <span>American Phonetics →</span>
@@ -890,7 +890,7 @@ The engine will:
                     <button
                       type="button"
                       onClick={() => handleSendToPhonetics()}
-                      className="h-8 px-3 rounded-lg border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-xs font-semibold hover:bg-emerald-900/60"
+                      className="h-8 px-3 rounded-lg border border-emerald-500/50 bg-emerald-950/40 text-emerald-300 text-xs font-semibold hover:bg-emerald-900/60 light:border-emerald-300 light:bg-emerald-50 light:text-emerald-700 light:hover:bg-emerald-50"
                     >
                       Convert to American Phonetics
                     </button>
@@ -958,7 +958,7 @@ The engine will:
                   <button
                     type="button"
                     onClick={() => setPhoneticInput("")}
-                    className="text-[11px] text-[var(--fg-muted)] hover:text-red-400"
+                    className="text-[11px] text-[var(--fg-muted)] hover:text-red-400 light:hover:text-red-700"
                   >
                     Clear Input
                   </button>
@@ -1030,7 +1030,7 @@ Without a shadow of fear in the neon light`}
                 <button
                   type="button"
                   onClick={handleConvertPhonetics}
-                  className="w-full h-9 rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-bold text-xs hover:opacity-90 shadow-sm transition-all"
+                  className="btn-primary w-full h-9 rounded-lg font-bold text-xs transition-all"
                 >
                   Convert to American Phonetics
                 </button>
@@ -1058,7 +1058,7 @@ Without a shadow of fear in the neon light`}
           <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-xl p-5 sm:p-6 flex flex-col gap-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
               <div>
-                <span className="label-caps text-emerald-400">
+                <span className="label-caps text-emerald-400 light:text-emerald-700">
                   Phonetic Output
                 </span>
                 <h2 className="text-base font-semibold text-[var(--fg)] mt-0.5">
@@ -1111,7 +1111,7 @@ Without a shadow of fear in the neon light`}
                     rows={18}
                     readOnly
                     value={phoneticResult.fullPhonetic}
-                    className="w-full min-h-[360px] rounded-xl border border-[var(--border)] bg-[var(--bg)] text-emerald-300 p-4 text-xs font-mono resize-y leading-relaxed focus:outline-none"
+                    className="w-full min-h-[360px] rounded-xl border border-[var(--border)] bg-[var(--bg)] text-emerald-300 p-4 text-xs font-mono resize-y leading-relaxed focus:outline-none light:text-emerald-700"
                   />
                 ) : (
                   <div className="flex flex-col gap-2 max-h-[460px] overflow-y-auto pr-1">
@@ -1128,9 +1128,9 @@ Without a shadow of fear in the neon light`}
                           <span>{l.original || "(blank)"}</span>
                           <span className="text-[10px] text-[var(--fg-subtle)]">orig</span>
                         </div>
-                        <div className="text-emerald-300 font-semibold flex items-center justify-between">
+                        <div className="text-emerald-300 font-semibold flex items-center justify-between light:text-emerald-700">
                           <span>{l.phonetic || "(blank)"}</span>
-                          <span className="text-[10px] text-emerald-500/70">american phonetics</span>
+                          <span className="text-[10px] text-emerald-500/70 light:text-emerald-600">american phonetics</span>
                         </div>
                       </div>
                     ))}
@@ -1157,11 +1157,11 @@ Without a shadow of fear in the neon light`}
                 </p>
                 <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-[11px] text-left text-[var(--fg-subtle)] max-w-sm">
                   <p className="text-[var(--fg)] font-semibold mb-1">Key Pronunciation Rules:</p>
-                  <p>• "the" → <span className="text-emerald-300 font-mono">tha</span></p>
-                  <p>• "probably" → <span className="text-emerald-300 font-mono">problee</span></p>
-                  <p>• "with" → <span className="text-emerald-300 font-mono">wit</span></p>
-                  <p>• "dropping" → <span className="text-emerald-300 font-mono">droppin</span></p>
-                  <p>• "going to" → <span className="text-emerald-300 font-mono">gonna</span></p>
+                  <p>• "the" → <span className="text-emerald-300 font-mono light:text-emerald-700">tha</span></p>
+                  <p>• "probably" → <span className="text-emerald-300 font-mono light:text-emerald-700">problee</span></p>
+                  <p>• "with" → <span className="text-emerald-300 font-mono light:text-emerald-700">wit</span></p>
+                  <p>• "dropping" → <span className="text-emerald-300 font-mono light:text-emerald-700">droppin</span></p>
+                  <p>• "going to" → <span className="text-emerald-300 font-mono light:text-emerald-700">gonna</span></p>
                 </div>
               </div>
             )}

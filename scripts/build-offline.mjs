@@ -31,7 +31,7 @@ function* assetTags(html) {
     if (name === 'script' && attrs.src) {
       const end = html.indexOf('</script>', close);
       if (end < 0 || html.slice(close + 1, end).trim()) throw new Error(`Unexpected script tag: ${tag}`);
-      yield { start: at, end: end + '</script>'.length, kind: 'script', url: attrs.src };
+      yield { start: at, end: end + '</script>'.length, kind: 'script', url: attrs.src, module: attrs.type === 'module' };
       at = end;
     } else if (name === 'link' && attrs.rel === 'stylesheet' && attrs.href) {
       yield { start: at, end: close + 1, kind: 'style', url: attrs.href };
@@ -115,10 +115,11 @@ const sha256 = (text) => `'sha256-${createHash('sha256').update(text, 'utf8').di
 function inlined(tag) {
   if (tag.kind === 'script') {
     scripts++;
-    // Inline module scripts run from file:// (external ones are blocked by CORS there).
+    // Inline scripts run from file:// (external module scripts are blocked by CORS there). A classic
+    // script such as theme-init.js stays classic, so it still runs before the page paints.
     const code = escapeForInlineScript(readAsset(tag.url));
     scriptHashes.push(sha256(code));
-    return `<script type="module">${code}</script>`;
+    return tag.module ? `<script type="module">${code}</script>` : `<script>${code}</script>`;
   }
   if (tag.kind === 'style') {
     styles++;

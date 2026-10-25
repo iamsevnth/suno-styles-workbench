@@ -31,7 +31,7 @@ export default function GuidePage() {
     <ContentPage>
       <header className="flex flex-col gap-4">
         <LogoFull width={220} className="sm:-ml-1" />
-        <p className="label-caps">Guide</p>
+        <p className="label-caps eyebrow">Guide</p>
         <h1 className="text-4xl font-bold tracking-tight text-[var(--fg)]">
           {headlineCase("How to get the most out of Suno Workbench")}
         </h1>

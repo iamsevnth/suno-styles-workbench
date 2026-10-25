@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* light:… utilities apply only in light mode, for the few colors written as Tailwind classes. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
 :root {
   --bg: #0a0a0b;
   --bg-elevated: #121214;
@@ -21,6 +24,106 @@
   --r-md: 12px;
   --r-xl: 24px;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  /* Brand spectrum from the logo (Creative Color Palette Brief). */
+  --brand-gradient: linear-gradient(90deg, #00dafc 0%, #0059f8 20%, #6005e7 45%, #eb039c 65%, #fb6120 84%, #fc9e06 100%);
+
+  /* Roles that differ by theme. Dark mode keeps the original monochrome look. */
+  --cta-bg: var(--accent);
+  --cta-fg: var(--accent-fg);
+  --cta-shadow: none;
+  --link: var(--fg);
+  --eyebrow: var(--fg-muted);
+  --eyebrow-rule: none;
+  --eyebrow-rule-width: 0;
+  --nav-active-bg: var(--bg-subtle);
+  --nav-active-fg: var(--fg);
+  --card-shadow: none;
+  --input-bg: var(--bg);
+  --tile-blue-bg: var(--bg-subtle);
+  --tile-blue-fg: var(--fg-muted);
+  --tile-violet-bg: var(--bg-subtle);
+  --tile-violet-fg: var(--fg-muted);
+  --tile-magenta-bg: var(--bg-subtle);
+  --tile-magenta-fg: var(--fg-muted);
+  --tile-coral-bg: var(--bg-subtle);
+  --tile-coral-fg: var(--fg-muted);
+  --tile-orange-bg: var(--bg-subtle);
+  --tile-orange-fg: var(--fg-muted);
+  --tile-cyan-bg: var(--bg-subtle);
+  --tile-cyan-fg: var(--fg-muted);
+  --tile-green-bg: var(--bg-subtle);
+  --tile-green-fg: var(--fg-muted);
+  --tile-amber-bg: var(--bg-subtle);
+  --tile-amber-fg: var(--fg-muted);
+  --card-accent-blue: transparent;
+  --card-accent-violet: transparent;
+  --card-accent-orange: transparent;
+  --tab-active-bar: var(--accent);
+  --page-decor: none;
+}
+
+/* Light mode: the brief's pearl canvas, white cards, near-black text and blue/violet actions, with the
+   full spectrum kept for the logo, primary actions and small highlights. Contrast is noted per pair. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f6fb;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #edf1f7;
+  --fg: #111827; /* 16.4:1 on the canvas */
+  --fg-muted: #4b5563; /* 7.0:1 on the canvas */
+  --fg-subtle: #5b6474; /* 5.6:1 on the canvas */
+  --border: #dde4ee;
+  --border-strong: #c3cddb;
+  --accent: #0059f8; /* 5.6:1 on white */
+  --accent-fg: #ffffff;
+  --ok: #047857;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --ring: #6005e7;
+  --shadow: 0 18px 40px rgba(22, 7, 108, 0.12);
+
+  /* Deeper magenta and orange stops than the logo, so white button text stays at 4.5:1 or more. */
+  --cta-bg: linear-gradient(90deg, #0059f8 0%, #6005e7 38%, #c2037f 72%, #c2410c 100%);
+  --cta-fg: #ffffff;
+  --cta-shadow: 0 8px 20px rgba(96, 5, 231, 0.22);
+  --link: #0059f8;
+  --eyebrow: #0059f8;
+  --eyebrow-rule: linear-gradient(90deg, #0059f8, #6005e7);
+  --eyebrow-rule-width: 1.75rem;
+  --nav-active-bg: #ece9fe;
+  --nav-active-fg: #4a0bc0; /* 8.3:1 on the pill */
+  --card-shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 10px 28px rgba(22, 7, 108, 0.06);
+  --input-bg: #ffffff;
+  --tile-blue-bg: #e7efff;
+  --tile-blue-fg: #0052e0;
+  --tile-violet-bg: #efe8fe;
+  --tile-violet-fg: #5a05d8;
+  --tile-magenta-bg: #fde6f3;
+  --tile-magenta-fg: #c0037f;
+  --tile-coral-bg: #ffe7ee;
+  --tile-coral-fg: #b8103d;
+  --tile-orange-bg: #ffeee4;
+  --tile-orange-fg: #b03d0a;
+  --tile-cyan-bg: #e0f7fd;
+  --tile-cyan-fg: #05698f;
+  --tile-green-bg: #e1f7ee;
+  --tile-green-fg: #0b7a55;
+  --tile-amber-bg: #fff3d9;
+  --tile-amber-fg: #8a5000;
+  --brand-word-bg: linear-gradient(90deg, #0059f8 0%, #6005e7 35%, #eb039c 70%, #fb6120 100%);
+  --brand-word-color: transparent;
+  --tab-active-bar: var(--brand-gradient);
+  --card-accent-blue: linear-gradient(90deg, #00dafc, #0059f8);
+  --card-accent-violet: linear-gradient(90deg, #6005e7, #eb039c);
+  --card-accent-orange: linear-gradient(90deg, #fa1c61, #fc9e06);
+  /* Soft spectrum washes behind the page, like the mockups' background waves. */
+  --page-decor:
+    radial-gradient(ellipse 55% 40% at 0% 18%, rgba(0, 218, 252, 0.16), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 22% 8%, rgba(96, 5, 231, 0.1), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 22%, rgba(235, 3, 156, 0.13), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 96% 48%, rgba(252, 158, 6, 0.14), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(0, 89, 248, 0.06), transparent 70%);
 }
 
 /* Atkinson Hyperlegible (Braille Institute, SIL Open Font License) for the uppercase labels:
@@ -44,6 +147,83 @@
     text-transform: uppercase;
     color: var(--fg-muted);
   }
+  /* Section labels above headings ("Three tools"): blue with a short rule in light mode. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    column-gap: calc(var(--eyebrow-rule-width) * 0.35);
+    color: var(--eyebrow);
+  }
+  .eyebrow::before {
+    content: "";
+    width: var(--eyebrow-rule-width);
+    height: 2px;
+    border-radius: 2px;
+    background: var(--eyebrow-rule);
+  }
+  /* Primary action: the brand gradient in light mode, the original solid button in dark mode. */
+  .btn-primary {
+    background: var(--cta-bg);
+    color: var(--cta-fg);
+    box-shadow: var(--cta-shadow);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06) saturate(1.05);
+  }
+  /* A word set in the logo's gradient (light mode); plain text in dark mode. */
+  .brand-word {
+    background: var(--brand-word-bg, none);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: var(--brand-word-color, inherit);
+  }
+  /* Elevated surfaces pick up a soft shadow in light mode. */
+  .surface {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    box-shadow: var(--card-shadow);
+  }
+  /* Rounded icon tiles; the color pair comes from a tile-* modifier. */
+  .icon-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    background: var(--tile-bg, var(--bg-subtle));
+    color: var(--tile-fg, var(--fg-muted));
+  }
+  .tab-active-bar {
+    background: var(--tab-active-bar);
+  }
+  /* Small tinted badge using a tile-* color pair. */
+  .tint {
+    background: var(--tile-bg, var(--bg-subtle));
+    color: var(--tile-fg, var(--fg-subtle));
+  }
+  .tile-blue { --tile-bg: var(--tile-blue-bg); --tile-fg: var(--tile-blue-fg); }
+  .tile-violet { --tile-bg: var(--tile-violet-bg); --tile-fg: var(--tile-violet-fg); }
+  .tile-magenta { --tile-bg: var(--tile-magenta-bg); --tile-fg: var(--tile-magenta-fg); }
+  .tile-coral { --tile-bg: var(--tile-coral-bg); --tile-fg: var(--tile-coral-fg); }
+  .tile-orange { --tile-bg: var(--tile-orange-bg); --tile-fg: var(--tile-orange-fg); }
+  .tile-cyan { --tile-bg: var(--tile-cyan-bg); --tile-fg: var(--tile-cyan-fg); }
+  .tile-green { --tile-bg: var(--tile-green-bg); --tile-fg: var(--tile-green-fg); }
+  .tile-amber { --tile-bg: var(--tile-amber-bg); --tile-fg: var(--tile-amber-fg); }
+  /* A thin colored rule across the top of a card (light mode only). */
+  .card-accent {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-accent::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--card-accent, transparent);
+  }
+  .accent-blue { --card-accent: var(--card-accent-blue); }
+  .accent-violet { --card-accent: var(--card-accent-violet); }
+  .accent-orange { --card-accent: var(--card-accent-orange); }
   /* The same label for tight spots: badges, table cells, plan details. */
   .label-caps-sm {
     font-family: "Atkinson Hyperlegible", var(--font);
@@ -65,14 +245,21 @@ html {
   color-scheme: dark;
 }
 
+
 html, body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--fg);
   font-family: var(--font);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* The light theme's soft spectrum washes, fixed behind the page; none in dark mode. */
+body {
+  background-image: var(--page-decor);
+  background-attachment: fixed;
 }
 
 button:not(:disabled), [role="button"]:not(:disabled) {

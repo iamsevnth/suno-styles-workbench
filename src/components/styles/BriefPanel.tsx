@@ -1,4 +1,5 @@
 import { StylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
+import Icon from "../icons/Icon.tsx";
 
 const TRUST_NOTES = [
   "Only Generate Styles compiles prompts — the profile toggle, examples and slider never do",
@@ -10,12 +11,10 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
   const showParsed = wb.prompts.length > 0 || wb.input.trim().length > 0;
 
   return (
-    <section
-      aria-label="Brief and controls"
-      className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] p-5 flex flex-col gap-5"
-    >
+    <section aria-label="Brief and controls" className="surface rounded-[var(--r-xl)] p-5 flex flex-col gap-5">
       <div>
-        <label htmlFor="brief" className="block text-sm font-medium mb-1.5 text-[var(--fg)]">
+        <label htmlFor="brief" className="flex items-center gap-2 text-sm font-semibold mb-2 text-[var(--fg)]">
+          <Icon name="fileText" size={17} className="text-[var(--fg-subtle)] light:text-[var(--tile-violet-fg)]" />
           Your Creative Brief
         </label>
         <textarea
@@ -28,7 +27,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) wb.generate();
           }}
           placeholder="e.g. Trap + Baile Funk + Deep Dubstep, kinetic, 140 BPM, female vocals"
-          className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] p-3 text-sm focus:border-[var(--ring)] transition-all resize-y"
+          className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] text-[var(--fg)] p-3 text-sm focus:border-[var(--ring)] transition-all resize-y"
         />
         <p className="text-[11px] text-[var(--fg-subtle)] mt-1.5">
           Name genres, a BPM, vocals, instruments and mood. Ctrl+Enter (Cmd+Enter on a Mac) generates.
@@ -37,12 +36,16 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
 
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <span className="text-sm font-medium text-[var(--fg)]">Example Briefs</span>
+          <span className="flex items-center gap-2 text-sm font-semibold text-[var(--fg)]">
+            <Icon name="lightbulb" size={17} className="text-[var(--fg-subtle)] light:text-[var(--tile-amber-fg)]" />
+            Example Briefs
+          </span>
           <button
             type="button"
             onClick={wb.refreshSuggestions}
-            className="h-8 px-2.5 rounded-[var(--r-md)] text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] bg-[var(--bg)] hover:bg-[var(--bg-subtle)] border border-[var(--border)] transition-colors"
+            className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-[var(--r-md)] text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] border border-[var(--border)] transition-colors light:text-[var(--link)]"
           >
+            <Icon name="refresh" size={13} />
             Refresh
           </button>
         </div>
@@ -52,14 +55,24 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
               key={example}
               type="button"
               onClick={() => wb.applySuggestion(example)}
-              className="w-full text-left whitespace-normal break-words rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3 text-xs leading-relaxed text-[var(--fg-muted)] hover:border-[var(--border-strong)] hover:text-[var(--fg)] transition-all"
+              className="group w-full text-left whitespace-normal break-words rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] p-3 text-xs leading-relaxed text-[var(--fg-muted)] hover:border-[var(--border-strong)] hover:text-[var(--fg)] transition-all flex items-center gap-3"
             >
               {i === 0 && (
-                <span className="label-caps-sm block mb-0.5">
-                  Always Available
-                </span>
+                <Icon
+                  name="sparkles"
+                  size={16}
+                  className="text-[var(--fg-subtle)] light:text-[var(--tile-magenta-fg)]"
+                />
               )}
-              {example}
+              <span className="flex-1 min-w-0">
+                {i === 0 && <span className="label-caps-sm block mb-0.5 light:text-[var(--fg)]">Always Available</span>}
+                {example}
+              </span>
+              <Icon
+                name="chevronRight"
+                size={15}
+                className="text-[var(--fg-subtle)] opacity-60 group-hover:opacity-100 transition-opacity"
+              />
             </button>
           ))}
         </div>
@@ -67,7 +80,8 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="count" className="block text-sm font-medium mb-1.5 text-[var(--fg)]">
+          <label htmlFor="count" className="flex items-center gap-2 text-sm font-semibold mb-1.5 text-[var(--fg)]">
+            <Icon name="sliders" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-blue-fg)]" />
             Variations
           </label>
           <div className="flex items-center gap-3">
@@ -85,10 +99,13 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
         </div>
 
         <label
-          className="flex h-11 items-center justify-between gap-3 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] px-3 text-sm cursor-pointer select-none self-end"
+          className="flex h-11 items-center justify-between gap-3 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm cursor-pointer select-none self-end"
           title="Blends in the built-in hybrid bass library when the brief leaves genres or moods open"
         >
-          <span className="text-[var(--fg)] font-medium">Hybrid Bass Profile</span>
+          <span className="flex items-center gap-2 text-[var(--fg)] font-medium">
+            <Icon name="audio" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-violet-fg)]" />
+            Hybrid Bass Profile
+          </span>
           <input
             type="checkbox"
             checked={wb.profileEnabled}
@@ -103,15 +120,17 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
           type="button"
           onClick={wb.generate}
           disabled={wb.isGenerating}
-          className="flex-1 inline-flex items-center justify-center h-11 rounded-[var(--r-md)] bg-[var(--accent)] hover:opacity-90 text-[var(--accent-fg)] font-semibold text-sm transition-all"
+          className="btn-primary flex-1 inline-flex items-center justify-center gap-2 h-11 rounded-[var(--r-md)] font-semibold text-sm transition-all"
         >
+          <Icon name="sparkles" size={16} />
           {wb.isGenerating ? "Generating..." : "Generate Styles"}
         </button>
         <button
           type="button"
           onClick={wb.reset}
-          className="inline-flex items-center justify-center h-11 px-4 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-red-400/40 hover:bg-red-500/10 text-[var(--fg)] text-sm font-medium transition-all"
+          className="inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg-elevated)] hover:border-red-400/40 hover:bg-red-500/10 text-[var(--fg)] text-sm font-medium transition-all light:hover:border-red-300 light:hover:bg-red-50"
         >
+          <Icon name="reset" size={14} />
           Reset
         </button>
       </div>
@@ -120,8 +139,11 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
         {wb.lastAction}
       </p>
 
-      <div className="rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3 text-xs text-[var(--fg-muted)]">
-        <div className="font-medium text-[var(--fg)] mb-1.5">Parsed Intent</div>
+      <div className="rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] light:bg-[var(--bg-subtle)] p-3 text-xs text-[var(--fg-muted)]">
+        <div className="flex items-center gap-2 font-semibold text-sm text-[var(--fg)] mb-1.5">
+          <Icon name="listChecks" size={16} className="text-[var(--fg-subtle)] light:text-[var(--tile-orange-fg)]" />
+          Parsed Intent
+        </div>
         {!showParsed ? (
           <p className="text-[var(--fg-subtle)]">Waiting for a brief — nothing loads by default.</p>
         ) : (

@@ -156,7 +156,16 @@ tests/                    node:test suites
 
 ## Privacy
 
-The current brief and results are kept in the tab's `sessionStorage`, and Styles history in the browser's `localStorage` until you clear it. History keeps the newest 200 runs; when it fills up, or the browser runs out of storage, the oldest runs are removed and the page says so. Stored data is checked when it is read back, so an old or damaged entry is skipped instead of breaking the page. Export History is the only way data leaves the page, as a file saved to your own computer. The site ships with a Content Security Policy that lets it load only its own files and blocks every network request. See [SECURITY.md](SECURITY.md) to report a vulnerability.
+The current brief and results are kept in the tab's `sessionStorage`, and Styles history in the browser's `localStorage` until you clear it. History keeps the newest 200 runs; when it fills up, or the browser runs out of storage, the oldest runs are removed and the page says so. Stored data is checked when it is read back, so an old or damaged entry is skipped instead of breaking the page. Your light or dark mode choice is also kept in `localStorage`, on this device only. Export History is the only way data leaves the page, as a file saved to your own computer. The site ships with a Content Security Policy that lets it load only its own files and blocks every network request. See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
+## Light and dark mode
+
+The sun and moon button in the header switches between light and dark mode. The site follows your device's setting until you pick one, then remembers your choice in this browser. Light mode uses the brand palette (pearl canvas `#F3F6FB`, white cards, near-black text, blue `#0059F8` and violet `#6005E7` actions, and the logo's spectrum for highlights); dark mode keeps the original monochrome look. Theme colors are CSS variables in `src/index.css`, and every text and color pair in light mode meets WCAG AA contrast (4.5:1).
+
+## Credits
+
+- Label font: [Atkinson Hyperlegible](https://www.brailleinstitute.org/freefont/) by the Braille Institute, SIL Open Font License (`src/assets/fonts/`).
+- Icons: [Lucide](https://lucide.dev) (ISC License) and the GitHub mark from [Octicons](https://primer.style/octicons) (MIT License); notices in `src/components/icons/LICENSES.md`.
 
 ## Contact
 
