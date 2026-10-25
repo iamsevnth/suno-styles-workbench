@@ -4,6 +4,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { fileInBuildDir, resolveBuildDir } from './build-dir.mjs';
+import { PAGES } from './site-pages.mjs';
 
 const { dir: dist } = resolveBuildDir(process.argv[2]);
 const CSP_META = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/i;
@@ -88,7 +89,8 @@ if ([...blocksOf(hosted.html)].some((b) => b.tag === 'script' && !/\bsrc=/i.test
 }
 
 // Every page file written by build-routes.mjs carries the same policy as index.html.
-for (const file of fs.readdirSync(dist).filter((f) => f.endsWith('.html') && f !== 'index.html' && f !== 'suno-workbench.html')) {
+const pageFiles = [...PAGES.filter((p) => p.path !== '/').map((p) => `${p.path.slice(1)}.html`), '404.html'];
+for (const file of pageFiles) {
   const page = policyOf(file);
   for (const name of ['default-src', 'script-src', 'style-src']) {
     if ((page.directives.get(name) ?? []).join(' ') !== (hosted.directives.get(name) ?? []).join(' ')) {
