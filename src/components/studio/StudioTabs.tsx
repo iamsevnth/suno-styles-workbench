@@ -29,14 +29,6 @@ export const STUDIO_TABS: StudioTab[] = [
     icon: "music",
     tile: "violet",
   },
-  {
-    route: "skills",
-    title: "Skills Studio",
-    subtitle: "8 production playbooks & sliders",
-    badge: "Playbooks",
-    icon: "chart",
-    tile: "orange",
-  },
 ];
 
 export default function StudioTabs({ active }: { active: StudioRouteId }) {
