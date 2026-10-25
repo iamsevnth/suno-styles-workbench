@@ -84,7 +84,7 @@ export const GENRES: GenreDef[] = [
   g("UK Garage", {
     family: "garage",
     bpm: 134,
-    aliases: ["uk garage", "garage", "2-step", "2step", "two-step garage"],
+    aliases: ["uk garage", "garage", "2-step", "2step", "2 step", "two-step", "two step", "two-step garage", "2-step garage"],
     tags: ["swing", "shuffle", "skippy"],
     tier: 1,
   }),

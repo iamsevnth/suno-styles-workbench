@@ -17,6 +17,15 @@ function createBuildDirectory(): { root: string; dist: string } {
 
 const checkScript = fileURLToPath(new URL("../scripts/check-csp.mjs", import.meta.url));
 
+/** Runs the CSP check after copying index.html to each page file, as build-routes.mjs does. */
+function runCheck(dist: string) {
+  const index = readFileSync(path.join(dist, "index.html"), "utf8");
+  for (const file of ["compiler.html", "lyrics.html", "skills.html", "guide.html", "404.html"]) {
+    writeFileSync(path.join(dist, file), index);
+  }
+  return spawnSync(process.execPath, [checkScript, dist], { encoding: "utf8" });
+}
+
 describe("offline build Content Security Policy", () => {
   it("replaces 'self' with hashes of the inlined script and stylesheet", () => {
     const { root, dist } = createBuildDirectory();
@@ -39,7 +48,7 @@ describe("offline build Content Security Policy", () => {
       assert.match(output, /img-src data:/);
       assert.doesNotMatch(output, /'self'/);
 
-      const checked = spawnSync(process.execPath, [checkScript, dist], { encoding: "utf8" });
+      const checked = runCheck(dist);
       assert.equal(checked.status, 0, checked.stderr);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -89,7 +98,7 @@ describe("offline build Content Security Policy", () => {
         readFileSync(offlinePath, "utf8").replace("console.log('app')", "console.log('changed')"),
       );
 
-      const checked = spawnSync(process.execPath, [checkScript, dist], { encoding: "utf8" });
+      const checked = runCheck(dist);
       assert.notEqual(checked.status, 0);
       assert.match(checked.stderr, /inline script is not allowed by script-src/);
     } finally {

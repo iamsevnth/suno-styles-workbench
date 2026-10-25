@@ -6,7 +6,7 @@ import LyricsStudio from "./components/LyricsStudio.tsx";
 import SkillsStudio from "./components/skills/SkillsStudio.tsx";
 import StudioDeck from "./components/studio/StudioDeck.tsx";
 import StylesWorkbench from "./components/styles/StylesWorkbench.tsx";
-import { useHashRoute } from "./hooks/useHashRoute.ts";
+import { useRoute } from "./hooks/useRoute.ts";
 import { copyToClipboard } from "./lib/browser/clipboard.ts";
 import GuidePage from "./pages/guide/GuidePage.tsx";
 import HomePage from "./pages/HomePage.tsx";
@@ -30,7 +30,7 @@ function Page({ route, showDialog }: { route: RouteId; showDialog: ShowDialog })
 }
 
 export default function App() {
-  const route = useHashRoute();
+  const route = useRoute();
   const [dialog, setDialog] = useState<DialogState>(CLOSED_DIALOG);
   const showDialog = useCallback<ShowDialog>((kind, title, body) => setDialog({ open: true, kind, title, body }), []);
   const closeDialog = useCallback(() => setDialog(CLOSED_DIALOG), []);
