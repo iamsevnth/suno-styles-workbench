@@ -12,7 +12,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
   const heading =
     wb.prompts.length === 0
       ? "No Variations Yet"
-      : `${wb.prompts.length} Prompt${wb.prompts.length === 1 ? "" : "s"}${wb.generation > 0 ? ` · run ${wb.generation}` : ""}`;
+      : `${wb.prompts.length} Prompt${wb.prompts.length === 1 ? "" : "s"}${wb.generation > 0 ? ` · Run ${wb.generation}` : ""}`;
 
   return (
     <>

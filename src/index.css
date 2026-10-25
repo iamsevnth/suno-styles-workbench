@@ -23,6 +23,39 @@
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
+/* Atkinson Hyperlegible (Braille Institute, SIL Open Font License) for the uppercase labels:
+   wide letterforms that stay readable at small sizes. Bundled, so the CSP's font-src 'self' allows it. */
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("./assets/fonts/AtkinsonHyperlegible-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer components {
+  /* Uppercase section labels ("How it works", "You type"). A Tailwind text color utility on the same element overrides the color. */
+  .label-caps {
+    font-family: "Atkinson Hyperlegible", var(--font);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  /* The same label for tight spots: badges, table cells, plan details. */
+  .label-caps-sm {
+    font-family: "Atkinson Hyperlegible", var(--font);
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   border-color: var(--border);

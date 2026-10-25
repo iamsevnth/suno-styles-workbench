@@ -1,4 +1,5 @@
 import React from "react";
+import { headlineCase } from "../../lib/text/headline-case.ts";
 
 /** Shared building blocks for the Home and Guide pages so both read with one rhythm. */
 
@@ -27,11 +28,9 @@ export function Section({
   return (
     <section id={id} aria-labelledby={headingId} className="scroll-mt-24 flex flex-col gap-5">
       <div className="max-w-3xl">
-        {eyebrow && (
-          <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--fg-subtle)] mb-2">{eyebrow}</p>
-        )}
+        {eyebrow && <p className="label-caps mb-2">{eyebrow}</p>}
         <h2 id={headingId} className="text-2xl sm:text-[1.75rem] font-bold tracking-tight text-[var(--fg)]">
-          {title}
+          {headlineCase(title)}
         </h2>
         {intro && <div className="mt-2 text-sm text-[var(--fg-muted)] leading-relaxed">{intro}</div>}
       </div>
@@ -51,7 +50,9 @@ export function Card({
 }) {
   return (
     <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] p-5 flex flex-col gap-2">
-      <h3 className="text-base font-semibold text-[var(--fg)]">{title}</h3>
+      <h3 className="text-base font-semibold text-[var(--fg)]">
+        {typeof title === "string" ? headlineCase(title) : title}
+      </h3>
       <div className="text-sm text-[var(--fg-muted)] leading-relaxed flex flex-col gap-2">{children}</div>
       {footer && <div className="pt-2 mt-auto">{footer}</div>}
     </div>
@@ -107,9 +108,7 @@ export function Table({ head, rows, caption }: { head: string[]; rows: React.Rea
             <dl>
               {row.slice(1).map((cell, i) => (
                 <div key={i} className="mt-2">
-                  <dt className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-                    {head[i + 1]}
-                  </dt>
+                  <dt className="label-caps-sm">{head[i + 1]}</dt>
                   <dd className="text-[var(--fg-muted)] leading-relaxed">{cell}</dd>
                 </div>
               ))}
@@ -170,9 +169,7 @@ const PROVENANCE: Record<ProvenanceKind, { label: string; className: string }> =
 export function Provenance({ kind }: { kind: ProvenanceKind }) {
   const { label, className } = PROVENANCE[kind];
   return (
-    <span
-      className={`inline-block whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${className}`}
-    >
+    <span className={`label-caps-sm inline-block whitespace-nowrap rounded-full border px-2 py-0.5 ${className}`}>
       {label}
     </span>
   );

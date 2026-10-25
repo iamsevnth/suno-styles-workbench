@@ -3,6 +3,7 @@ import { SKILLS, skillById } from "../../lib/suno/skills/catalog.ts";
 import { runSkill, SkillReport } from "../../lib/suno/skills/run.ts";
 import { ShowDialog } from "../Dialog.tsx";
 import SkillReportView from "./SkillReportView.tsx";
+import { headlineCase } from "../../lib/text/headline-case.ts";
 
 const DEFAULT_SKILL = "optimizer";
 
@@ -69,7 +70,7 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
             >
               <strong className="block text-sm font-semibold text-[var(--fg)]">{s.title}</strong>
               <span className="block text-xs text-[var(--fg-muted)] mt-1 leading-relaxed">{s.blurb}</span>
-              <span className="block font-mono text-[10px] tracking-wider uppercase text-[var(--fg-subtle)] mt-1.5">{s.pack}</span>
+              <span className="label-caps-sm block mt-1.5">{s.pack}</span>
             </button>
           );
         })}
@@ -81,7 +82,7 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
           className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] p-5 flex flex-col gap-5"
         >
           <div>
-            <h2 className="text-base font-semibold text-[var(--fg)]">{skill.title}</h2>
+            <h2 className="text-base font-semibold text-[var(--fg)]">{headlineCase(skill.title)}</h2>
             <p className="text-xs text-[var(--fg-muted)] mt-1">{skill.blurb}</p>
           </div>
 

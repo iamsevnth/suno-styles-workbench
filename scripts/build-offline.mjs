@@ -13,7 +13,7 @@ const outPath = fileInBuildDir(distRealPath, 'suno-workbench.html');
 // One pass over the original HTML: the inlined bundle itself contains tag-like strings
 // (React's warnings mention <link rel="stylesheet" href="%s">), so it must never be rescanned.
 const ASSET_TAG =
-  /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical)"[^>]*>/g;
+  /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical|apple-touch-icon)"[^>]*>/g;
 
 function readAsset(url) {
   const file = path.resolve(distRealPath, url.replace(/^\.?\//, ''));
@@ -51,7 +51,7 @@ const html = fs.readFileSync(indexPath, 'utf8').replace(ASSET_TAG, (_tag, script
     styleHashes.push(sha256(css));
     return `<style>${css}</style>`;
   }
-  return ''; // modulepreload hints and the canonical URL mean nothing in a local file.
+  return ''; // Preload hints, the canonical URL and the home-screen icon mean nothing in a local file.
 });
 
 if (scripts === 0 || styles === 0) {

@@ -3,6 +3,8 @@ import { useResizableDeck } from "../../hooks/useResizableDeck.ts";
 import { StudioRouteId } from "../../routes.ts";
 import ResizeHandles from "./ResizeHandles.tsx";
 import StudioTabs from "./StudioTabs.tsx";
+import { headlineCase } from "../../lib/text/headline-case.ts";
+import { LogoMark } from "../layout/Logo.tsx";
 
 const HEADINGS: Record<StudioRouteId, { title: string; intro: string; chip: string }> = {
   styles: {
@@ -47,7 +49,12 @@ export default function StudioDeck({ route, children }: { route: StudioRouteId; 
 
         <div className="px-5 sm:px-6 py-4 bg-[var(--bg-elevated)] border-b border-[var(--border)] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--fg)]">{heading.title}</h1>
+            <div className="flex items-center gap-3">
+              <LogoMark height={36} />
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--fg)]">
+                {headlineCase(heading.title)}
+              </h1>
+            </div>
             <p className="text-xs text-[var(--fg-muted)] mt-1 max-w-2xl leading-relaxed">{heading.intro}</p>
           </div>
 

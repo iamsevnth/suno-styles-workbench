@@ -3,6 +3,8 @@ import OfflineDownloadLink from "../components/layout/OfflineDownloadLink.tsx";
 import { LIBRARY_STATS } from "../lib/suno/families.ts";
 import { MAX_CHARS, MIN_CHARS } from "../lib/suno/render.ts";
 import { hrefFor } from "../routes.ts";
+import { headlineCase } from "../lib/text/headline-case.ts";
+import { LogoFull } from "../components/layout/Logo.tsx";
 
 const SAMPLE_BRIEF = "melodic R&B with flute and Rhodes electric piano";
 
@@ -55,11 +57,12 @@ export default function HomePage() {
   return (
     <ContentPage>
       <section aria-labelledby="hero-title" className="flex flex-col gap-6 pt-2">
-        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--fg-subtle)]">
+        <LogoFull width={340} className="sm:-ml-2" />
+        <p className="label-caps">
           For Suno v6 · Free · Runs in your browser
         </p>
         <h1 id="hero-title" className="text-4xl sm:text-5xl font-bold tracking-tight text-[var(--fg)] max-w-3xl leading-[1.08]">
-          Write the brief. Get a Styles prompt Suno can follow.
+          {headlineCase("Write the brief. Get a Styles prompt Suno can follow.")}
         </h1>
         <p className="text-base text-[var(--fg-muted)] max-w-2xl leading-relaxed">
           Suno Workbench compiles a short creative brief into detailed production prompts that fit the Styles field, then
@@ -74,11 +77,11 @@ export default function HomePage() {
 
         <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-stretch">
           <div className="rounded-[var(--r-xl)] border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)] mb-2">You type</p>
+            <p className="label-caps mb-2">You type</p>
             <p className="font-mono text-sm text-[var(--fg)]">{SAMPLE_BRIEF}</p>
           </div>
           <div className="rounded-[var(--r-xl)] border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)] mb-2">
+            <p className="label-caps mb-2">
               The compiler plans
             </p>
             <ul className="text-sm text-[var(--fg-muted)] leading-relaxed list-disc pl-5 marker:text-[var(--fg-subtle)]">
@@ -114,7 +117,7 @@ export default function HomePage() {
           {STEPS.map((step, i) => (
             <li key={step.title} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] p-5">
               <span className="font-mono text-xs text-[var(--fg-subtle)]">Step {i + 1}</span>
-              <h3 className="text-base font-semibold text-[var(--fg)] mt-1">{step.title}</h3>
+              <h3 className="text-base font-semibold text-[var(--fg)] mt-1">{headlineCase(step.title)}</h3>
               <p className="text-sm text-[var(--fg-muted)] leading-relaxed mt-2">{step.body}</p>
             </li>
           ))}

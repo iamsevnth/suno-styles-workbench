@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="Suno Workbench Styles Pro" width="420">
+</p>
+
 # Suno Workbench
 
 [![Test and deploy](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml)
@@ -153,6 +157,10 @@ tests/                    node:test suites
 ## Privacy
 
 The current brief and results are kept in the tab's `sessionStorage`, and Styles history in the browser's `localStorage` until you clear it. History keeps the newest 200 runs; when it fills up, or the browser runs out of storage, the oldest runs are removed and the page says so. Stored data is checked when it is read back, so an old or damaged entry is skipped instead of breaking the page. Export History is the only way data leaves the page, as a file saved to your own computer. The site ships with a Content Security Policy that lets it load only its own files and blocks every network request. See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
+## Contact
+
+Questions, ideas or a broken feature: [mateus@sevnthlabs.com](mailto:mateus@sevnthlabs.com). The site footer has the same link. To report a security vulnerability, use the private process in [SECURITY.md](SECURITY.md).
 
 ## Not affiliated with Suno
 
