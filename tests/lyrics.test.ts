@@ -34,6 +34,10 @@ I probably feel the sub bass tension dropping tonight`;
     assert.equal(result.lines[0].phonetic, "[Chorus]");
   });
 
+  it("preserves words with an existing ay spelling", () => {
+    assert.equal(convertToPhonetics("day").fullPhonetic, "day");
+  });
+
   it("respells loanwords and casual speech", () => {
     assert.match(result.lines[3].phonetic, /bylee/i);
     assert.ok(result.lines[3].phonetic.includes("fahvelah"));
