@@ -1,7 +1,9 @@
 // Inlines the Vite build's script and stylesheet into dist/suno-workbench.html,
 // so the whole site runs from one file opened straight from disk.
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileInBuildDir, resolveBuildDir } from './build-dir.mjs';
 
@@ -15,7 +17,7 @@ const outPath = fileInBuildDir(distRealPath, 'suno-workbench.html');
 const ASSET_TAG =
   /<script\b[^>]*\bsrc="([^"]+)"[^>]*><\/script>|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"[^>]*>|<link\b[^>]*\brel="(?:modulepreload|canonical|apple-touch-icon)"[^>]*>/g;
 
-function readAsset(url) {
+function readAsset(url, encoding = 'utf8') {
   const file = path.resolve(distRealPath, url.replace(/^\.?\//, ''));
   const relativePath = path.relative(distRealPath, file);
   if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
@@ -27,7 +29,40 @@ function readAsset(url) {
   if (realRelativePath === '..' || realRelativePath.startsWith(`..${path.sep}`) || path.isAbsolute(realRelativePath)) {
     throw new Error(`Asset path is outside the build directory: ${url}`);
   }
-  return fs.readFileSync(realPath, 'utf8');
+  return fs.readFileSync(realPath, encoding);
+}
+
+let fontsInlined = 0;
+
+/** Embeds the stylesheet's web fonts as data: URLs; the offline file has no folder to load them from. */
+function inlineFonts(css, cssUrl) {
+  const cssDir = path.posix.dirname(cssUrl.replace(/^\.?\//, ''));
+  return css.replace(/url\((['"]?)([^'")]+\.woff2)\1\)/g, (_m, _q, fontUrl) => {
+    fontsInlined++;
+    const data = readAsset(path.posix.join(cssDir, fontUrl), null).toString('base64');
+    return `url("data:font/woff2;base64,${data}")`;
+  });
+}
+
+/**
+ * Inside an HTML <script> element, "</script" ends it early and "<!--" followed by "<script" can
+ * stop "</script>" from ending it at all. Each "<" that starts one of those sequences becomes \x3C,
+ * the same character in JavaScript strings, templates and regular expressions, which is the only
+ * place a bundle contains them (React writes "<script></script>" into innerHTML). The result is
+ * then parsed, so an occurrence anywhere else fails the build instead of shipping broken code.
+ */
+function escapeForInlineScript(code) {
+  const escaped = code.replace(/<(?=\/?script|!--)/gi, '\\x3C');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'offline-check-'));
+  try {
+    const file = path.join(tmp, 'bundle.mjs');
+    fs.writeFileSync(file, escaped);
+    const check = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+    if (check.status !== 0) throw new Error(`The inlined script no longer parses after escaping:\n${check.stderr}`);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  return escaped;
 }
 
 let scripts = 0;
@@ -41,13 +76,13 @@ const html = fs.readFileSync(indexPath, 'utf8').replace(ASSET_TAG, (_tag, script
   if (scriptSrc) {
     scripts++;
     // Inline module scripts run from file:// (external ones are blocked by CORS there).
-    const code = readAsset(scriptSrc).replace(/<\/script/gi, '<\\/script');
+    const code = escapeForInlineScript(readAsset(scriptSrc));
     scriptHashes.push(sha256(code));
     return `<script type="module">${code}</script>`;
   }
   if (styleHref) {
     styles++;
-    const css = readAsset(styleHref).replace(/<\/style/gi, '<\\/style');
+    const css = inlineFonts(readAsset(styleHref), styleHref).replace(/<(?=\/style)/gi, '\\3C');
     styleHashes.push(sha256(css));
     return `<style>${css}</style>`;
   }
@@ -71,6 +106,7 @@ const withCsp = html.replace(CSP_META, (_m, open, policy, close) => {
       const name = d.split(/\s+/)[0];
       if (name === 'script-src') return `script-src ${scriptHashes.join(' ')}`;
       if (name === 'style-src') return `style-src ${styleHashes.join(' ')}`;
+      if (name === 'font-src') return fontsInlined ? 'font-src data:' : "font-src 'none'";
       // 'self' means nothing for a file:// page; the inline code is all it needs.
       return d.replace(/\s'self'/g, '').replace(/^(\S+)$/, "$1 'none'");
     });
