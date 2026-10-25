@@ -1,147 +1,65 @@
-import { Card, Code, ExternalLink, Prose, Provenance, Section, Table } from "../../components/content/Content.tsx";
+import { Section } from "../../components/content/Content.tsx";
 import { LIBRARY_STATS } from "../../lib/suno/families.ts";
 import { MAX_CHARS, MIN_CHARS } from "../../lib/suno/render.ts";
-import { SKILLS } from "../../lib/suno/skills/catalog.ts";
-import { SOURCES, SOURCES_CHECKED } from "./sources.ts";
-
-const GLOSSARY: [string, string][] = [
-  ["BPM", "Beats per minute: the tempo. The compiler always writes one whole number."],
-  [
-    "Half-time",
-    "Drums that feel half as fast as the tempo, with the snare on beat three. Common in trap and dubstep at 140 BPM.",
-  ],
-  ["Four-on-the-floor", "A kick drum on every beat, the backbone of house and techno."],
-  ["2-step", "UK garage's swung, skipping kick pattern that leaves out some downbeats."],
-  [
-    "UKG (UKG dubstep)",
-    "140 BPM half-time trap drums under heavy sub and 808 pressure, with a skippy, syncopated hi-hat and shaker layer on top. A different style from UK garage.",
-  ],
-  ["UK garage", "Swung 2-step club music around 130–135 BPM with soulful vocals, warm chords and skipping kicks."],
-  ["Broken beat", "Syncopated drums that avoid a steady kick pattern, as in breakbeat and drum and bass."],
-  ["808", "A tuned, sliding sub-bass drum sound from trap, drill and hip-hop."],
-  ["Wub / wobble", "A bass whose tone is swept rhythmically by a filter, central to dubstep."],
-  ["Reese", "A thick, detuned, slowly phasing bass used in drum and bass and UK bass."],
-  ["Log drum", "Amapiano's pitched, percussive bass sound."],
-  ["Dembow", "The kick-and-snare rhythm under reggaeton and dembow music."],
-  ["One-drop", "A reggae and dancehall rhythm with the main accent on beat three."],
-  ["Sidechain", "Ducking one sound (often bass or pads) each time the kick hits, which creates a pumping feel."],
-  ["Topline", "The lead vocal melody and lyrics that sit on top of the track."],
-];
 
 const FAQ: [string, string][] = [
   [
     `Why ${MIN_CHARS}–${MAX_CHARS} characters?`,
-    "Suno's Styles field holds 1,000 characters. The window leaves a margin under the limit while giving Suno enough detail about the drums, bass, vocal and mix to follow.",
+    "Suno's Styles field supports up to 1,000 characters. Workbench keeps a safety margin while still reserving enough space for tempo, groove, drums, bass, harmony, vocals, instruments and mix detail.",
   ],
   [
-    "Does it use AI?",
-    "No. The compiler is a set of rules and a phrase library of about 2,900 entries that runs in your browser. Nothing is sent to an AI service, so results are instant and work offline.",
+    "Does Suno Workbench use AI?",
+    "No. The compiler is a deterministic rules engine and phrase library that runs in your browser. No prompt is sent to an AI service, and the downloadable offline file runs without internet access.",
   ],
   [
-    "Why are there no artist names?",
-    "Naming an artist invites imitation and rights problems, and Suno's moderation can refuse such prompts. The compiler describes the production instead, and the Rights and Safety playbook helps when a request names someone.",
+    "What does Fix Existing Prompt actually preserve?",
+    "It reparses the existing Styles text and rebuilds from the intent it can identify. Recognized genre order, BPM, named instruments, groove/bass cues and vocal traits are treated as anchors; conflicting or negative wording is not copied blindly into the rebuilt prompt.",
   ],
   [
-    "Can I get the same prompts again?",
-    "Each run uses a new random seed, and the compiler avoids repeating recipes from your history for the same brief. Your history keeps your newest 200 runs to copy again.",
+    "Why are artist names not part of generated Styles?",
+    "Workbench organizes prompts around production attributes rather than identity imitation. Genre, era, instrumentation, groove, vocal characteristics, arrangement and mix are more controllable inputs and easier to reuse.",
+  ],
+  [
+    "Can I get the same prompt again?",
+    "Each normal run uses a new seed and avoids recent recipe fingerprints from matching history, so it is designed to explore alternatives. Your browser history keeps the newest 200 runs so you can copy an earlier result directly.",
   ],
   [
     "Which genres does it know?",
-    `All ${LIBRARY_STATS.genres} genres in the Genre coverage table above, grouped into ${LIBRARY_STATS.families} sound families. For a genre outside the library, name the closest library genre and describe what makes yours different: its instruments, groove and mood.`,
+    `The library currently recognizes ${LIBRARY_STATS.genres} genres across ${LIBRARY_STATS.families} sound families. The Genre Coverage chart summarizes family membership; hybrid genres may contribute to more than one family.`,
   ],
   [
-    "Does it work for other music generators?",
-    "The prompts are plain descriptive prose, so they read sensibly anywhere. The character window and settings advice are tuned for Suno v6.",
+    "Why set Suno Variety to 0 / Off?",
+    "Suno documents Variety as a control that adjusts or updates style prompts. At 0 you retain full control of your style tags, which makes it easier to test a Workbench prompt without Suno changing the Styles text first.",
+  ],
+  [
+    "Does the Guide stay current automatically?",
+    "No. The app is deliberately offline-capable and does not scrape Suno. Product details in the Guide are source-backed snapshots; exact UI labels, plan gates and credit costs should be checked against Suno's current Help Center or Release Notes.",
+  ],
+  [
+    "Where is the privacy information?",
+    "Privacy is now a dedicated Privacy Policy page linked in the footer. It explains local browser storage, GitHub Pages hosting and the fact that SEVNTHLABS does not receive your creative content.",
   ],
 ];
 
 export default function ReferenceGuide() {
   return (
-    <>
-      <Section id="lyrics" title="Lyrics Studio">
-        <Prose>
-          <p>
-            Start with the structure: add, remove and reorder sections (intro, verse, buildup, drop, chorus, breakdown,
-            bridge and outro) and set how many lines each one gets. Then give it a theme, a genre and a delivery to
-            generate a draft, or paste your own lyrics and let it finish them. Section tags such as{" "}
-            <Code>[Verse 1]</Code> and <Code>[Chorus]</Code> are written for Suno's Lyrics field, where they mark the
-            song's sections.
-          </p>
-          <p>
-            The phonetics converter respells words the way they are spoken in American English, with the reductions
-            common in rap and Southern delivery: <Code>probably</Code> → <Code>problee</Code>, <Code>tension</Code> →{" "}
-            <Code>tenshun</Code>, <Code>riding</Code> → <Code>rahdin</Code>. Section tags stay untouched and the output
-            never uses hyphens. Use it when Suno mispronounces a word or sings it too formally.
-          </p>
-        </Prose>
-      </Section>
-
-      <Section
-        id="skills"
-        title="Skills Studio"
-        intro="Each playbook asks a few questions and returns a checklist you can copy."
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SKILLS.map((s) => (
-            <Card key={s.id} title={s.title}>
-              <p>{s.blurb}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
-      <Section id="privacy" title="Privacy and offline use">
-        <Prose>
-          <p>
-            Suno Workbench has no server, no account, no analytics, no cookies and no API key. Your current brief and
-            results are kept in this tab's session storage, and your Styles history in this browser's local storage
-            until you press Clear History. History keeps your newest 200 runs; when it is full, or the browser runs out
-            of storage, the oldest runs are removed and the page tells you, so export it first if you want to keep
-            everything. Export History is the only way to move it, and it saves a file to your own computer. Your light
-            or dark mode choice is remembered in this browser too. The site can load only its own files and cannot send
-            anything over the network.
-          </p>
-          <p>
-            The offline file is the same site in one HTML file. Open it from your desktop and every tool works with no
-            internet connection.
-          </p>
-        </Prose>
-      </Section>
-
-      <Section id="faq" title="FAQ">
-        <div className="grid gap-3 md:grid-cols-2">
-          {FAQ.map(([q, a]) => (
-            <Card key={q} title={q}>
-              <p>{a}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
-      <Section id="glossary" title="Glossary">
-        <Table head={["Term", "Meaning"]} rows={GLOSSARY} caption="Glossary of production terms" />
-      </Section>
-
-      <Section
-        id="sources"
-        title="Sources and how this guide is checked"
-        intro={`Claims about Suno are checked against the sources below, last on ${SOURCES_CHECKED}. Suno changes its product often; if something here no longer matches, Suno's own pages win.`}
-      >
-        <ul className="flex flex-col gap-2 text-sm text-[var(--fg-muted)]">
-          {Object.values(SOURCES).map((source) => (
-            <li key={source.href} className="flex flex-wrap items-center gap-2">
-              <Provenance kind={source.kind} />
-              <ExternalLink href={source.href}>{source.label}</ExternalLink>
-            </li>
-          ))}
-        </ul>
-        <Prose>
-          <p>
-            Everything about how the compiler behaves is checked by its automated tests, and the genre coverage table
-            and worked example on this page are generated from the engine itself, so they cannot fall out of date.
-          </p>
-        </Prose>
-      </Section>
-    </>
+    <Section id="faq" title="FAQ" intro="Select a question to expand its answer.">
+      <div className="flex flex-col gap-3 w-full">
+        {FAQ.map(([q, a]) => (
+          <details
+            key={q}
+            className="group surface rounded-[var(--r-xl)] border border-[var(--border)] overflow-hidden"
+          >
+            <summary className="list-none cursor-pointer px-5 py-4 flex items-center justify-between gap-4 text-sm font-semibold text-[var(--fg)]">
+              <span>{q}</span>
+              <span className="text-[var(--fg-subtle)] group-open:rotate-45 transition-transform text-lg" aria-hidden="true">+</span>
+            </summary>
+            <div className="px-5 pb-5 text-sm text-[var(--fg-muted)] leading-relaxed border-t border-[var(--border)] pt-4">
+              {a}
+            </div>
+          </details>
+        ))}
+      </div>
+    </Section>
   );
 }

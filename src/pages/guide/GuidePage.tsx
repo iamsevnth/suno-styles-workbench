@@ -7,39 +7,34 @@ import { headlineCase } from "../../lib/text/headline-case.ts";
 import { LogoFull } from "../../components/layout/Logo.tsx";
 
 const TOC: [string, string][] = [
-  ["quick-start", "Quick start"],
-  ["briefs", "Writing a brief"],
-  ["vocals", "How vocals are written"],
-  ["better-briefs", "Strong briefs"],
-  ["example", "Worked example"],
-  ["how-it-works", "How it works"],
-  ["coverage", "Genre coverage"],
-  ["quality", "Quality gates"],
-  ["profile", "Hybrid Bass Profile"],
-  ["suno-settings", "Suno v6 settings"],
-  ["troubleshooting", "Troubleshooting"],
-  ["lyrics", "Lyrics Studio"],
-  ["skills", "Skills Studio"],
-  ["privacy", "Privacy"],
+  ["quick-start", "Quick Start"],
+  ["briefs", "Writing a Brief"],
+  ["vocals", "Vocal Logic"],
+  ["better-briefs", "Strong Briefs"],
+  ["how-it-works", "How the Compiler Works"],
+  ["coverage", "Genre Coverage"],
+  ["quality", "Quality Gates"],
+  ["create-mode", "Create Mode Explained"],
+  ["editor-workflows", "Song Editor"],
+  ["studio-workflows", "Studio Workflows"],
+  ["rights", "Rights & Publishing"],
   ["faq", "FAQ"],
-  ["glossary", "Glossary"],
-  ["sources", "Sources"],
 ];
 
 export default function GuidePage() {
   return (
     <ContentPage>
-      <header className="flex flex-col gap-4">
+      <header className="flex flex-col gap-4 w-full">
         <LogoFull width={220} className="sm:-ml-1" />
         <p className="label-caps eyebrow">Guide</p>
         <h1 className="text-4xl font-bold tracking-tight text-[var(--fg)]">
           {headlineCase("How to get the most out of Suno Workbench")}
         </h1>
-        <p className="text-base text-[var(--fg-muted)] max-w-2xl leading-relaxed">
-          How to write a brief, how the compiler turns it into a Styles prompt, the Suno v6 settings that keep that
-          prompt intact, and what to do when a take goes wrong.
+        <p className="text-base text-[var(--fg-muted)] w-full leading-relaxed">
+          Practical guidance for writing better briefs, understanding what the compiler changes, choosing Suno Create
+          controls, editing a take, organizing Studio work and keeping uploads rights-aware.
         </p>
-        <nav aria-label="On this page" className="flex flex-wrap gap-2 pt-1">
+        <nav aria-label="On this page" className="flex flex-wrap gap-2 pt-1 w-full">
           {TOC.map(([id, label]) => (
             <button
               key={id}
@@ -47,7 +42,7 @@ export default function GuidePage() {
               onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
               className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[var(--border-strong)]"
             >
-              {headlineCase(label)}
+              {label}
             </button>
           ))}
         </nav>

@@ -29,7 +29,7 @@ export function Section({
   const headingId = id ? `${id}-title` : undefined;
   return (
     <section id={id} aria-labelledby={headingId} className="scroll-mt-24 flex flex-col gap-5">
-      <div className="max-w-3xl">
+      <div className="w-full">
         {eyebrow && <p className="label-caps eyebrow mb-2">{eyebrow}</p>}
         <h2 id={headingId} className="text-2xl sm:text-[1.75rem] font-bold tracking-tight text-[var(--fg)]">
           {headlineCase(title)}
@@ -85,7 +85,7 @@ export function Card({
 }
 
 export function Prose({ children }: { children: React.ReactNode }) {
-  return <div className="max-w-3xl text-sm text-[var(--fg-muted)] leading-relaxed flex flex-col gap-3">{children}</div>;
+  return <div className="w-full text-sm text-[var(--fg-muted)] leading-relaxed flex flex-col gap-3">{children}</div>;
 }
 
 export function Code({ children }: { children: React.ReactNode }) {
@@ -148,12 +148,12 @@ export function Table({ head, rows, caption }: { head: string[]; rows: React.Rea
 function TableGrid({ head, rows, caption }: { head: string[]; rows: React.ReactNode[][]; caption?: string }) {
   return (
     <div className="hidden md:block overflow-x-auto rounded-[var(--r-xl)] border border-[var(--border)]">
-      <table className="w-full text-sm text-left">
+      <table className="w-full table-auto text-sm text-left">
         {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="bg-[var(--bg-elevated)] text-[var(--fg)]">
           <tr>
             {head.map((h) => (
-              <th key={h} scope="col" className="px-4 py-3 font-semibold whitespace-nowrap">
+              <th key={h} scope="col" className="px-4 py-3 font-semibold align-top">
                 {h}
               </th>
             ))}
@@ -164,7 +164,7 @@ function TableGrid({ head, rows, caption }: { head: string[]; rows: React.ReactN
             <tr key={r} className="border-t border-[var(--border)] align-top">
               {row.map((cell, i) =>
                 i === 0 ? (
-                  <th key={i} scope="row" className="px-4 py-3 font-medium text-[var(--fg)] whitespace-nowrap">
+                  <th key={i} scope="row" className="px-4 py-3 font-medium text-[var(--fg)] align-top">
                     {cell}
                   </th>
                 ) : (
