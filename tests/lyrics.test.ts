@@ -45,4 +45,8 @@ I probably feel the sub bass tension dropping tonight`;
   it("never emits hyphens", () => {
     assert.ok(!result.lines[4].phonetic.includes("-"));
   });
+
+  it("preserves the aw vowel spelling", () => {
+    assert.equal(convertToPhonetics("saw").lines[0].phonetic, "saw");
+  });
 });
