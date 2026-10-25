@@ -101,11 +101,9 @@ function WorkedExample() {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-[var(--r-xl)] border border-[var(--border)] bg-[var(--bg-elevated)] p-5 flex flex-col gap-3">
-        <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">Brief</p>
+        <p className="label-caps">Brief</p>
         <p className="font-mono text-sm text-[var(--fg)]">{EXAMPLE_BRIEF}</p>
-        <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--fg-subtle)] pt-2">
-          Compiled Styles prompt · {prompt.characters} characters
-        </p>
+        <p className="label-caps pt-2">Compiled Styles prompt · {prompt.characters} characters</p>
         <p className="text-sm text-[var(--fg-muted)] leading-relaxed">{prompt.styles}</p>
       </div>
       <div className="flex flex-col gap-3">

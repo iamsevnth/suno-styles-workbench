@@ -3,6 +3,8 @@ import BriefGuide from "./BriefGuide.tsx";
 import EngineGuide from "./EngineGuide.tsx";
 import ReferenceGuide from "./ReferenceGuide.tsx";
 import SunoGuide from "./SunoGuide.tsx";
+import { headlineCase } from "../../lib/text/headline-case.ts";
+import { LogoFull } from "../../components/layout/Logo.tsx";
 
 const TOC: [string, string][] = [
   ["quick-start", "Quick start"],
@@ -28,9 +30,10 @@ export default function GuidePage() {
   return (
     <ContentPage>
       <header className="flex flex-col gap-4">
-        <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--fg-subtle)]">Guide</p>
+        <LogoFull width={220} className="sm:-ml-1" />
+        <p className="label-caps">Guide</p>
         <h1 className="text-4xl font-bold tracking-tight text-[var(--fg)]">
-          How to get the most out of Suno Workbench
+          {headlineCase("How to get the most out of Suno Workbench")}
         </h1>
         <p className="text-base text-[var(--fg-muted)] max-w-2xl leading-relaxed">
           How to write a brief, how the compiler turns it into a Styles prompt, the Suno v6 settings that keep that
@@ -44,7 +47,7 @@ export default function GuidePage() {
               onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
               className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[var(--border-strong)]"
             >
-              {label}
+              {headlineCase(label)}
             </button>
           ))}
         </nav>

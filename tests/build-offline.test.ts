@@ -26,7 +26,7 @@ describe("offline build Content Security Policy", () => {
         "default-src &#39;none&#39;; script-src &#39;self&#39;; style-src &#39;self&#39;; img-src &#39;self&#39; data:; object-src &#39;none&#39;; base-uri &#39;none&#39;";
       writeFileSync(
         path.join(dist, "index.html"),
-        `<head><meta http-equiv="Content-Security-Policy" content="${policy}"><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>`
+        `<head><meta http-equiv="Content-Security-Policy" content="${policy}"><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>`,
       );
       writeFileSync(path.join(dist, "assets", "app.js"), "console.log('<style>not a style</style>')");
       writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");
@@ -46,19 +46,48 @@ describe("offline build Content Security Policy", () => {
     }
   });
 
+  it("embeds web fonts and allows only data: fonts in the offline file", () => {
+    const { root, dist } = createBuildDirectory();
+    try {
+      const policy =
+        "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'";
+      writeFileSync(
+        path.join(dist, "index.html"),
+        `<head><meta http-equiv="Content-Security-Policy" content="${policy}"><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>`,
+      );
+      writeFileSync(path.join(dist, "assets", "app.js"), "console.log('app')");
+      writeFileSync(path.join(dist, "assets", "font.woff2"), Buffer.from([0x77, 0x4f, 0x46, 0x32]));
+      writeFileSync(
+        path.join(dist, "assets", "app.css"),
+        '@font-face { font-family: X; src: url("./font.woff2") format("woff2"); }',
+      );
+
+      const built = spawnSync(process.execPath, [buildScript, dist], { encoding: "utf8" });
+      assert.equal(built.status, 0, built.stderr);
+      const output = readFileSync(path.join(dist, "suno-workbench.html"), "utf8");
+      assert.match(output, /url\("data:font\/woff2;base64,d09GMg=="\)/);
+      assert.match(output, /font-src data:/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails the check when inline code does not match the policy", () => {
     const { root, dist } = createBuildDirectory();
     try {
       const policy = "default-src 'none'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'";
       writeFileSync(
         path.join(dist, "index.html"),
-        `<head><meta http-equiv="Content-Security-Policy" content="${policy}"><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>`
+        `<head><meta http-equiv="Content-Security-Policy" content="${policy}"><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>`,
       );
       writeFileSync(path.join(dist, "assets", "app.js"), "console.log('app')");
       writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");
       assert.equal(spawnSync(process.execPath, [buildScript, dist], { encoding: "utf8" }).status, 0);
       const offlinePath = path.join(dist, "suno-workbench.html");
-      writeFileSync(offlinePath, readFileSync(offlinePath, "utf8").replace("console.log('app')", "console.log('changed')"));
+      writeFileSync(
+        offlinePath,
+        readFileSync(offlinePath, "utf8").replace("console.log('app')", "console.log('changed')"),
+      );
 
       const checked = spawnSync(process.execPath, [checkScript, dist], { encoding: "utf8" });
       assert.notEqual(checked.status, 0);
@@ -66,6 +95,39 @@ describe("offline build Content Security Policy", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("offline build script escaping", () => {
+  function build(js: string) {
+    const { root, dist } = createBuildDirectory();
+    writeFileSync(
+      path.join(dist, "index.html"),
+      '<script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css">',
+    );
+    writeFileSync(path.join(dist, "assets", "app.js"), js);
+    writeFileSync(path.join(dist, "assets", "app.css"), "a::after { content: '</style>'; }");
+    const result = spawnSync(process.execPath, [buildScript, dist], { encoding: "utf8" });
+    const output = result.status === 0 ? readFileSync(path.join(dist, "suno-workbench.html"), "utf8") : "";
+    rmSync(root, { recursive: true, force: true });
+    return { result, output };
+  }
+
+  it("leaves no sequence that could end or confuse the inline script or style", () => {
+    const { result, output } = build(
+      "const t = 'İİ'; const d = document.createElement('div'); d.innerHTML = \"<script></script>\"; const c = `<!-- <SCRIPT>`; console.log(/<\\/script>/i.test(c), d, c);",
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const inside = output.slice(output.indexOf('<script type="module">') + 22, output.lastIndexOf("</script>"));
+    assert.doesNotMatch(inside, /<\/?script|<!--/i);
+    assert.match(inside, /\\x3Cscript>\\x3C\/script>/);
+    assert.doesNotMatch(output.slice(output.indexOf("<style>") + 7, output.lastIndexOf("</style>")), /<\/style/i);
+  });
+
+  it("fails the build when escaping would change code outside a string", () => {
+    const { result } = build("const script = 2; const a = 1; console.log(a<script);");
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /no longer parses after escaping/);
   });
 });
 
@@ -85,7 +147,7 @@ describe("offline build asset paths", () => {
     try {
       writeFileSync(
         path.join(dist, "index.html"),
-        '<script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css">'
+        '<script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css">',
       );
       writeFileSync(path.join(dist, "assets", "app.js"), "console.log('app')");
       writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");
@@ -103,7 +165,10 @@ describe("offline build asset paths", () => {
   it("rejects assets that resolve outside the build directory", () => {
     const { root, dist } = createBuildDirectory();
     try {
-      writeFileSync(path.join(dist, "index.html"), '<script src="../outside.js"></script><link rel="stylesheet" href="./assets/app.css">');
+      writeFileSync(
+        path.join(dist, "index.html"),
+        '<script src="../outside.js"></script><link rel="stylesheet" href="./assets/app.css">',
+      );
       writeFileSync(path.join(root, "outside.js"), "console.log('outside')");
       writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");
 
@@ -120,7 +185,7 @@ describe("offline build asset paths", () => {
     try {
       writeFileSync(
         path.join(dist, "index.html"),
-        '<script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css">'
+        '<script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css">',
       );
       writeFileSync(path.join(root, "outside.js"), "console.log('outside')");
       writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");

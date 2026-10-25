@@ -412,7 +412,7 @@ export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsSt
           <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-xl p-5 sm:p-6 flex flex-col gap-6">
             {/* Header info */}
             <div className="border-b border-[var(--border)] pb-3">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent)]">
+              <span className="label-caps text-[var(--accent)]">
                 Stage 1 • Inputs & Configuration
               </span>
               <h2 className="text-base font-semibold text-[var(--fg)] mt-0.5">
@@ -422,7 +422,7 @@ export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsSt
 
             {/* Song Theme */}
             <div>
-              <label htmlFor="lyric-theme" className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+              <label htmlFor="lyric-theme" className="label-caps block mb-1.5 text-[var(--fg)]">
                 Song Theme & Core Narrative
               </label>
               <input
@@ -451,7 +451,7 @@ export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsSt
             {/* DRAFT LYRICS WORKSPACE */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between mb-1 gap-2">
-                <label htmlFor="draft-lyrics" className="text-xs font-semibold uppercase tracking-wider text-[var(--fg)] shrink-0">
+                <label htmlFor="draft-lyrics" className="label-caps text-[var(--fg)] shrink-0">
                   Draft Lyrics Workspace
                 </label>
                 <div className="flex items-center gap-2">
@@ -491,7 +491,7 @@ The engine will:
 
             {/* Genre Vibe - Individual full width line */}
             <div className="w-full">
-              <label htmlFor="genre-select" className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+              <label htmlFor="genre-select" className="label-caps block mb-1.5 text-[var(--fg)]">
                 Genre Vibe
               </label>
               <select
@@ -510,7 +510,7 @@ The engine will:
 
             {/* Vocal Delivery & Cadence - Individual full width line */}
             <div className="w-full">
-              <label htmlFor="delivery-select" className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+              <label htmlFor="delivery-select" className="label-caps block mb-1.5 text-[var(--fg)]">
                 Vocal Delivery & Cadence
               </label>
               <select
@@ -529,7 +529,7 @@ The engine will:
 
             {/* Rhyme Scheme - Individual full width line */}
             <div className="w-full">
-              <label htmlFor="rhyme-scheme" className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+              <label htmlFor="rhyme-scheme" className="label-caps block mb-1.5 text-[var(--fg)]">
                 Rhyme Scheme
               </label>
               <select
@@ -566,7 +566,7 @@ The engine will:
             <div className="border border-[var(--border)] rounded-xl p-4 sm:p-5 bg-[var(--bg)] flex flex-col gap-4">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--fg)] block">
+                  <span className="label-caps text-[var(--fg)] block">
                     Modular Song Structure Order (Custom Sequence)
                   </span>
                   <span className="text-[11px] text-[var(--fg-subtle)]">
@@ -612,7 +612,7 @@ The engine will:
 
               {/* Add section buttons for all 8 section types */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] text-[var(--fg-subtle)] font-semibold uppercase tracking-wider mr-1">
+                <span className="label-caps mr-1">
                   + Add Section:
                 </span>
                 {sectionTypesList.map((type) => {
@@ -718,7 +718,7 @@ The engine will:
               {/* Visual sequence flow order strip */}
               <div className="pt-2 border-t border-[var(--border)] flex flex-col gap-1.5">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-semibold uppercase tracking-wider text-[var(--fg-subtle)]">
+                  <span className="label-caps">
                     Active Layout Sequence ({sectionSequence.length} sections · {totalPlannedLines} lines):
                   </span>
                   <div className="flex items-center gap-1.5 text-[10px] font-mono text-[var(--fg-muted)]">
@@ -747,7 +747,7 @@ The engine will:
 
             {/* Special Instructions */}
             <div>
-              <label htmlFor="instructions" className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+              <label htmlFor="instructions" className="label-caps block mb-1.5 text-[var(--fg)]">
                 Special Instructions (Metaphors, Story Turns, Imagery)
               </label>
               <input
@@ -769,7 +769,7 @@ The engine will:
             <div className="bg-[var(--bg-elevated)] border-2 border-[var(--accent)]/40 rounded-2xl shadow-2xl p-5 flex flex-col gap-3.5 bg-gradient-to-b from-[var(--bg-elevated)] to-[var(--bg-subtle)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-col">
-                  <span className="text-xs uppercase tracking-wider font-mono font-bold text-[var(--accent)] flex items-center gap-2">
+                  <span className="label-caps text-[var(--accent)] flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                     <span>Stage 2 • Execute Engine</span>
                   </span>
@@ -918,7 +918,7 @@ The engine will:
                 </div>
 
                 <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4 text-xs text-[var(--fg-subtle)] flex flex-col gap-2">
-                  <p className="font-semibold text-[var(--fg)] uppercase tracking-wider font-mono">
+                  <p className="label-caps text-[var(--fg)]">
                     How it Works:
                   </p>
                   <p>• <strong>Inputs on the Left</strong>: Enter theme, paste your draft verses/notes in the tall workspace, and arrange your modular sequence.</p>
@@ -938,7 +938,7 @@ The engine will:
           {/* Input column */}
           <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-xl p-5 sm:p-6 flex flex-col gap-5">
             <div className="border-b border-[var(--border)] pb-3">
-              <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[var(--accent)]">
+              <span className="label-caps text-[var(--accent)]">
                 Input Lyrics
               </span>
               <h2 className="text-base font-semibold text-[var(--fg)] mt-0.5">
@@ -951,7 +951,7 @@ The engine will:
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label htmlFor="phonetic-in" className="text-xs font-semibold uppercase tracking-wider text-[var(--fg)]">
+                <label htmlFor="phonetic-in" className="label-caps text-[var(--fg)]">
                   Original Lyric Lines
                 </label>
                 {phoneticInput && (
@@ -984,7 +984,7 @@ Without a shadow of fear in the neon light`}
             {/* Pronunciation Cadence Mode */}
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+                <label className="label-caps block mb-1.5 text-[var(--fg)]">
                   Vocal Cadence Style
                 </label>
                 <div className="flex gap-2">
@@ -1024,7 +1024,7 @@ Without a shadow of fear in the neon light`}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider mb-1.5 text-[var(--fg)]">
+                <label className="label-caps block mb-1.5 text-[var(--fg)]">
                   Convert Action
                 </label>
                 <button
@@ -1058,7 +1058,7 @@ Without a shadow of fear in the neon light`}
           <section className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-xl p-5 sm:p-6 flex flex-col gap-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
               <div>
-                <span className="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-400">
+                <span className="label-caps text-emerald-400">
                   Phonetic Output
                 </span>
                 <h2 className="text-base font-semibold text-[var(--fg)] mt-0.5">

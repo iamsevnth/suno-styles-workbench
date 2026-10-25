@@ -5,7 +5,7 @@ import { PromptCandidate } from "../../lib/suno/types.ts";
 function PlanCell({ label, value }: { label: string; value: string | number | undefined }) {
   return (
     <div className="rounded-[var(--r-sm)] border border-[var(--border)] bg-[var(--bg)] p-2.5 text-xs text-[var(--fg-muted)]">
-      <div className="text-[10px] uppercase tracking-wider text-[var(--fg-subtle)]">{label}</div>
+      <div className="label-caps-sm">{label}</div>
       <div className="text-[var(--fg)] mt-0.5">{value || "—"}</div>
     </div>
   );

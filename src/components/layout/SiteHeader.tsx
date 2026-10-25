@@ -1,5 +1,6 @@
 import { hrefFor, NAV_ITEMS, REPO_URL, RouteId } from "../../routes.ts";
 import OfflineDownloadLink from "./OfflineDownloadLink.tsx";
+import { LogoMark } from "./Logo.tsx";
 
 export default function SiteHeader({ route }: { route: RouteId }) {
   return (
@@ -12,12 +13,7 @@ export default function SiteHeader({ route }: { route: RouteId }) {
       </a>
       <div className="max-w-[76rem] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <a href={hrefFor("home")} className="flex items-center gap-2.5" aria-label="Suno Workbench home">
-          <span
-            className="flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--accent)] text-[var(--accent-fg)] font-black text-xs shadow-md"
-            aria-hidden="true"
-          >
-            ⚡
-          </span>
+          <LogoMark height={30} />
           <span className="font-bold tracking-tight text-sm text-[var(--fg)]">SUNO WORKBENCH</span>
         </a>
 

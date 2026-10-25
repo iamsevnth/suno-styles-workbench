@@ -51,7 +51,7 @@ export default function SkillReportView({ report, showDialog }: SkillReportViewP
       {report.sections.map((s) => (
         <article key={s.heading} className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] tracking-wider uppercase font-semibold text-[var(--fg-subtle)]">{s.heading}</h4>
+            <h4 className="label-caps-sm">{s.heading}</h4>
             <button
               type="button"
               onClick={() => copy(s.body, "Section copied.")}

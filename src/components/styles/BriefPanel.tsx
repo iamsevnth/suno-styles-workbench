@@ -55,7 +55,7 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
               className="w-full text-left whitespace-normal break-words rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3 text-xs leading-relaxed text-[var(--fg-muted)] hover:border-[var(--border-strong)] hover:text-[var(--fg)] transition-all"
             >
               {i === 0 && (
-                <span className="block text-[10px] tracking-wider uppercase text-[var(--fg-subtle)] mb-0.5">
+                <span className="label-caps-sm block mb-0.5">
                   Always Available
                 </span>
               )}
