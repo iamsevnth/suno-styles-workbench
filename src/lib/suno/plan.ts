@@ -866,7 +866,9 @@ function buildVocals(
   ];
   const isRapFamily = families.some((f) => f === "rap" || f === "trap" || f === "drill" || f === "phonk");
   const asksForSinging =
-    /\b(vocals?|singer|singing|sung|croon|belt|falsetto|choir)\b/i.test(parsed.raw) &&
+    /\b(vocals?|singer|singing|sung|croon|belt|falsetto|choir|soprano|mezzo|alto|contralto|tenor|baritone)\b/i.test(
+      parsed.raw
+    ) &&
     !/\b(rap|rapper|rapping|bars|flow)\b/i.test(parsed.raw);
 
   let style = explicit?.style;
@@ -922,6 +924,10 @@ function buildVocals(
         : pick(rng, [...VOCAL_TIMBRE.male])),
     delivery: explicit?.delivery ?? pairPhrase,
     deliveryDetail: explicit?.delivery ? undefined : pairDetail,
+    briefVoice:
+      explicit?.timbre || explicit?.register
+        ? [explicit.timbre, explicit.presentation ?? presentation, explicit.register].filter(Boolean).join(" ")
+        : undefined,
     style,
     language: explicit?.language,
     processing: explicit?.processing ?? pickNProc(rng, style, families),

@@ -50,6 +50,8 @@ export interface VocalPreferences {
   textureVariations?: string[];
   /** An optional extra trait for the generated vocal phrase, used only when the vocal sentence has room. */
   deliveryDetail?: string;
+  /** The tone, gender and register the brief named, in that order ("breathy female alto"). */
+  briefVoice?: string;
   /** True when the brief itself named the vocal processing (autotune, slapback); false when it was planned. */
   processingFromBrief?: boolean;
   /**

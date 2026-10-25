@@ -83,27 +83,61 @@ function vocalSentence(
 ): string {
   const budget = VOCAL_BUDGET[v.detail ?? "compact"];
   const procs = v.processing ?? [];
-  let body = identity + (v.language ? ` in ${v.language}` : "");
-  const sentence = (b: string) => `${intro} ${b}.`;
-  const tryAdd = (addition: string | undefined) => {
-    if (addition && sentence(body + addition).length <= budget) body += addition;
+  const head = identity + (v.language ? ` in ${v.language}` : "");
+  const parts: VocalParts = { head, procs: v.processingFromBrief ? procs.slice(0, 2) : [] };
+  // Planned phrases may say "with" once in the whole sentence, a second "with ... with" reads as
+  // a pile-up, and they never repeat a word the sentence already has. The brief's own words are
+  // never held to either rule.
+  const withLimit = Math.max(1, withCount(renderVocal(parts)));
+  const consider = (candidate: VocalParts, addition: string) => {
+    const before = renderVocal(parts);
+    const after = renderVocal(candidate);
+    if (`${intro} ${after}.`.length > budget) return;
+    if (withCount(after) > withLimit || repeatsWord(before, addition)) return;
+    Object.assign(parts, candidate);
   };
-  let treated = false;
-  const addProcessing = (list: string[]) => {
-    const text = list.join(" and ");
-    if (!text) return;
-    const before = body;
-    tryAdd(`${treated ? " and " : ", treated with "}${text}`);
-    if (body !== before) treated = true;
-  };
-  if (v.processingFromBrief) addProcessing(procs.slice(0, 2));
+  // Who sings and the brief's effects are fixed; planned details join in order of usefulness.
+  if (v.deliveryDetail) consider({ ...parts, detail: v.deliveryDetail }, v.deliveryDetail);
+  consider({ ...parts, style: stylePhrase }, stylePhrase);
+  consider({ ...parts, arc }, arc);
+  if (!v.processingFromBrief) {
+    const planned = procs.slice(0, v.detail === "detailed" ? 2 : 1);
+    for (const proc of planned) consider({ ...parts, procs: [...parts.procs, proc] }, proc);
+  }
+  return `${intro} ${renderVocal(parts)}.`;
+}
+
+interface VocalParts {
+  head: string;
+  detail?: string;
+  style?: string;
+  arc?: string;
+  procs: string[];
+}
+
+/** Writes the chosen parts in reading order: voice, trait, delivery, arc, then effects. */
+function renderVocal(p: VocalParts): string {
+  let out = p.head;
   // Most traits read as "with ..."; bare ones ("subtle melisma on emotional peaks") need a comma.
-  tryAdd(v.deliveryDetail ? (/^with\s/.test(v.deliveryDetail) ? " " : ", ") + v.deliveryDetail : undefined);
-  const styleJoin = body.includes(",") ? " and" : /\swith\s/.test(body) ? "," : " with";
-  tryAdd(`${styleJoin} ${stylePhrase}`);
-  tryAdd(`, ${arc}`);
-  if (!v.processingFromBrief) addProcessing(procs.slice(0, v.detail === "detailed" ? 2 : 1));
-  return sentence(body);
+  if (p.detail) out += (/^with\s/.test(p.detail) ? " " : ", ") + p.detail;
+  if (p.style) out += (withCount(out) === 0 && withCount(p.style) === 0 && !out.includes(",") ? " with " : ", ") + p.style;
+  if (p.arc) out += `, ${p.arc}`;
+  if (p.procs.length) out += (withCount(out) === 0 ? ", treated with " : ", processed through ") + p.procs.join(" and ");
+  return out;
+}
+
+/** Words a vocal phrase may share with the rest of its sentence without reading as a repeat. */
+const SHARED_WORDS = new Set(["vocal", "vocals", "with", "into", "that", "then", "from", "over", "each", "every"]);
+
+/** True when a planned phrase repeats a word the sentence already has ("female belt, powerful belt"). */
+function repeatsWord(body: string, addition: string): boolean {
+  const words = (t: string) => (t.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => !SHARED_WORDS.has(w));
+  const seen = new Set(words(body));
+  return words(addition).some((w) => seen.has(w));
+}
+
+function withCount(text: string): number {
+  return (text.match(/\bwith\b/gi) ?? []).length;
 }
 
 /** A user's own vocal words are worth quoting once they say more than "female vocals". */
@@ -243,12 +277,18 @@ function compose(plan: SonicPlan): string {
       // Direct, authentic enhancement of user's exact vocal description into Suno audio terms
       const rawText = v.rawDescription!.replace(/\.$/, "");
       const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
+      // The brief's words may already say "with"; then the room is joined without another one.
+      const room = withCount(rawText) > 0 ? texture.split(/\s+with\s+/)[0] : texture;
+      const joins =
+        withCount(rawText) > 0 || withCount(room) > 0
+          ? ["engineered for", "captured in", "finished in", "set in"]
+          : ["engineered with", "captured with", "finished with", "balanced with"];
 
       const intros = [
-        `Vocal performance features ${rawText}, engineered with ${texture}.`,
-        `Lead vocals deliver ${rawText}, captured with ${texture}.`,
-        `Vocal delivery showcases ${rawText}, finished with ${texture}.`,
-        `Topline features ${rawText}, balanced with ${texture}.`,
+        `Vocal performance features ${rawText}, ${joins[0]} ${room}.`,
+        `Lead vocals deliver ${rawText}, ${joins[1]} ${room}.`,
+        `Vocal delivery showcases ${rawText}, ${joins[2]} ${room}.`,
+        `Topline features ${rawText}, ${joins[3]} ${room}.`,
       ];
       sVocal = intros[template % intros.length];
     } else {
@@ -257,8 +297,17 @@ function compose(plan: SonicPlan): string {
       const stylePhrase = pick2(rng, fitting(VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap));
       const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
       const arc = pick2(rng, fitting(arcBank ?? VOCAL_ARC.rap));
-      const identity =
-        v.delivery && v.delivery.length > 15
+      // A tone or register the brief named ("breathy female alto") is the voice; otherwise the
+      // planned phrase for the genre is.
+      const identity = v.briefVoice
+        ? `${v.briefVoice} ${
+            /^(melodic-rap|sung-rap|sing-rap)$/.test(v.style ?? "")
+              ? "melodic rap vocal"
+              : hasRapVocal(plan)
+                ? "rap flow"
+                : "vocal"
+          }`
+        : v.delivery && v.delivery.length > 15
           ? v.delivery
           : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
       const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][template % 3];
