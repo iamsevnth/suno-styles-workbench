@@ -1,3 +1,5 @@
+> **Historical record.** Implementation plan written by Google AI Studio on 10/22/2026, before the site moved to GitHub. The work it describes is complete, and the engine has changed since; see the README and the Guide for how it works today.
+
 # Implementation Plan: Suno Prompt Engine Enhancement
 
 Resolve vocal prompt duplication and conflicting archetypes, audit and streamline prompt structure for Suno compatibility, implement melodic instrument diversification, and faithfully preserve user-specified instruments across variations.
