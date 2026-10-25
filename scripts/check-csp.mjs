@@ -87,6 +87,16 @@ if ([...blocksOf(hosted.html)].some((b) => b.tag === 'script' && !/\bsrc=/i.test
   failures.push('index.html: has an inline script');
 }
 
+// Every page file written by build-routes.mjs carries the same policy as index.html.
+for (const file of fs.readdirSync(dist).filter((f) => f.endsWith('.html') && f !== 'index.html' && f !== 'suno-workbench.html')) {
+  const page = policyOf(file);
+  for (const name of ['default-src', 'script-src', 'style-src']) {
+    if ((page.directives.get(name) ?? []).join(' ') !== (hosted.directives.get(name) ?? []).join(' ')) {
+      failures.push(`${file}: ${name} differs from index.html`);
+    }
+  }
+}
+
 const offline = policyOf('suno-workbench.html');
 const sha256 = (text) => `'sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}'`;
 for (const [tag, directive] of [

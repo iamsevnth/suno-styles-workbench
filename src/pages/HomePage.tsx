@@ -48,7 +48,7 @@ const TOOLS: {
     icon: "cap",
     tile: "orange",
     accent: "orange",
-    link: "text-[var(--fg)] light:text-[var(--tile-orange-fg)]",
+    link: "text-[var(--tile-orange-fg)]",
   },
 ];
 
@@ -156,7 +156,7 @@ export default function HomePage() {
           <div className="surface rounded-[var(--r-xl)] p-5 flex gap-4">
             <IconTile icon="pencil" color="blue" />
             <div className="flex-1 min-w-0">
-              <p className="label-caps light:text-[var(--tile-blue-fg)] mb-2">You type</p>
+              <p className="label-caps text-[var(--tile-blue-fg)] mb-2">You type</p>
               <p className="font-mono text-sm text-[var(--fg)] rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2.5 break-words">
                 {SAMPLE_BRIEF}
               </p>
@@ -165,8 +165,8 @@ export default function HomePage() {
           <div className="surface rounded-[var(--r-xl)] p-5 flex gap-4">
             <IconTile icon="sparkles" color="violet" />
             <div className="flex-1 min-w-0">
-              <p className="label-caps light:text-[var(--tile-magenta-fg)] mb-2">The compiler plans</p>
-              <ul className="text-sm text-[var(--fg-muted)] leading-relaxed list-disc pl-5 marker:text-[var(--fg-subtle)] light:marker:text-[#eb039c]">
+              <p className="label-caps text-[var(--tile-magenta-fg)] mb-2">The compiler plans</p>
+              <ul className="text-sm text-[var(--fg-muted)] leading-relaxed list-disc pl-5 marker:text-[var(--tile-magenta-fg)]">
                 <li>An R&amp;B tempo, groove and drum kit</li>
                 <li>R&amp;B bass and harmony, with no dubstep wobble or growl bass</li>
                 <li>A sung lead with its delivery, room and vocal effects described</li>

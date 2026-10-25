@@ -171,3 +171,16 @@ export const LIBRARY_STATS = {
   genres: allStyles().length,
   families: new Set(allStyles().flatMap((g) => familyKeys([g.name]))).size,
 };
+
+/**
+ * UK garage genres: UK Garage itself and the named garage styles (Speed Garage, 4x4 Garage, Future
+ * Garage, Garage Dubstep). UKG names are UKG dubstep and never count.
+ */
+export function isGarageGenre(name: string): boolean {
+  return /garage|\b(?:2|two)[\s-]?step\b/i.test(name) && !/\bukg\b/i.test(name);
+}
+
+/** True only when the brief itself asks for UK garage: a garage genre, "garage", or "2-step". */
+export function briefAsksForGarage(raw: string, genres: string[]): boolean {
+  return genres.some(isGarageGenre) || /\bgarage\b|\b(?:2|two)[\s-]?step\b/i.test(raw);
+}

@@ -8,10 +8,10 @@
     "type": "git",
     "url": "https://github.com/iamsevnth/suno-styles-workbench.git"
   },
-  "homepage": "https://iamsevnth.github.io/suno-styles-workbench/",
+  "homepage": "https://sunoworkbench.com/",
   "scripts": {
     "dev": "vite --port=3000",
-    "build": "vite build && node scripts/build-offline.mjs && node scripts/check-csp.mjs",
+    "build": "vite build && node scripts/build-routes.mjs && node scripts/build-offline.mjs && node scripts/check-csp.mjs",
     "preview": "vite preview",
     "test": "tsx --test tests/*.test.ts",
     "lint": "tsc --noEmit"

@@ -39,7 +39,15 @@ import {
   DNA_MIX,
   DNA_PALETTE,
 } from "./lexicon-dna.ts";
-import { allowedBassFamilies, familyKeys, fitsFamilies, hasDrops, needsSubLayer } from "./families.ts";
+import {
+  allowedBassFamilies,
+  briefAsksForGarage,
+  familyKeys,
+  fitsFamilies,
+  hasDrops,
+  isGarageGenre,
+  needsSubLayer,
+} from "./families.ts";
 import { pickVocalParts } from "./lexicon-vocals.ts";
 import { VARIANT_PRESETS, VariantPreset } from "./presets.ts";
 import { expandMood, GENRES, matchGenre } from "./ontology.ts";
@@ -96,9 +104,10 @@ export function buildOnePlan(
     genres = [formula.primary, formula.secondary];
     if (formula.accent) genres.push(formula.accent);
   } else if (genres.length === 0) {
-    const p = pickByBand(rng, parsed.blendBand ?? "tame", GENRES, [], []);
-    const s = pickByBand(rng, parsed.blendBand ?? "tame", GENRES, [p.name], [p.name]);
-    const a = pickByBand(rng, parsed.blendBand ?? "tame", GENRES, [p.name, s.name], [p.name, s.name]);
+    const pool = briefAsksForGarage(parsed.raw, parsed.genres) ? GENRES : GENRES.filter((g) => !isGarageGenre(g.name));
+    const p = pickByBand(rng, parsed.blendBand ?? "tame", pool, [], []);
+    const s = pickByBand(rng, parsed.blendBand ?? "tame", pool, [p.name], [p.name]);
+    const a = pickByBand(rng, parsed.blendBand ?? "tame", pool, [p.name, s.name], [p.name, s.name]);
     genres = [p.name, s.name, a.name];
   }
 
@@ -356,6 +365,10 @@ function diversifyGenres(
   const wantsVariety = parsed.mandatory?.includes("__variety__") === true;
   const band = parsed.blendBand ?? (wantsVariety ? "weird" : parsed.profileEnabled ? "tame" : "tame");
   const locked = [...parsed.genres];
+  // UK garage only appears when the brief asks for it ("UK garage", "garage", "2-step").
+  const garageOk = briefAsksForGarage(parsed.raw, parsed.genres);
+  const allowed = (g: { name: string }) => garageOk || !isGarageGenre(g.name);
+  const pool = GENRES.filter(allowed);
 
   if (locked.length > 0 && !wantsVariety) {
     let genres = [...locked];
@@ -364,7 +377,7 @@ function diversifyGenres(
       genres = [...genres.slice(rot), ...genres.slice(0, rot)];
     }
     if (band === "unhinged" && genres.length < 3) {
-      const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "unhinged", parsed.bpm);
+      const extra = pickFaithfulAccent(rng, pool, locked, genres, "unhinged", parsed.bpm, allowed);
       if (extra) genres.push(extra.name);
     } else if (genres.length === 1) {
       // The accent must share the brief's drop-or-song character: an ambient brief gets no bass-music accent.
@@ -373,6 +386,7 @@ function diversifyGenres(
       // UKG and UK garage never stand in for each other, and a UKG brief keeps its trap drums and
       // sub pressure: its accent may add trap but not wobble, riddim or other bass-music families.
       const sameCharacter = (g: { name: string }) => {
+        if (!allowed(g)) return false;
         const families = familyKeys([g.name]);
         if (hasDrops(families) !== lockedHasDrops) return false;
         if (lockedFamilies.includes("ukg")) {
@@ -380,7 +394,7 @@ function diversifyGenres(
         }
         return !(lockedFamilies.includes("garage") && families.includes("ukg"));
       };
-      const extra = pickFaithfulAccent(rng, GENRES, locked, genres, "tame", parsed.bpm, sameCharacter);
+      const extra = pickFaithfulAccent(rng, pool, locked, genres, "tame", parsed.bpm, sameCharacter);
       if (extra) genres.push(extra.name);
     }
     return genres.slice(0, 3);
@@ -393,20 +407,20 @@ function diversifyGenres(
       ];
     const out = [formula.primary, formula.secondary, formula.accent]
       .filter((n): n is string => Boolean(n))
-      .filter((n) => !namedBpmConflict(n, parsed.bpm));
+      .filter((n) => !namedBpmConflict(n, parsed.bpm) && allowed({ name: n }));
     if (out.length >= 2 && rng() > 0.55) {
-      const cousin = pickFaithfulAccent(rng, GENRES, out.slice(0, 2), out, band, parsed.bpm);
+      const cousin = pickFaithfulAccent(rng, pool, out.slice(0, 2), out, band, parsed.bpm, allowed);
       if (cousin) out[2] = cousin.name;
     }
     if (out.length) return out.slice(0, 3);
   }
 
-  const primary = pickByBand(rng, band, GENRES, [], []);
-  const secondary = pickByBand(rng, band, GENRES, [primary.name], [primary.name]);
+  const primary = pickByBand(rng, band, pool, [], []);
+  const secondary = pickByBand(rng, band, pool, [primary.name], [primary.name]);
   const accent = pickByBand(
     rng,
     band,
-    GENRES,
+    pool,
     [primary.name, secondary.name],
     [primary.name, secondary.name]
   );
