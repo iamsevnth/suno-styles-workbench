@@ -10,8 +10,8 @@
   },
   "homepage": "https://iamsevnth.github.io/suno-styles-workbench/",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build && node scripts/build-offline.mjs",
+    "dev": "vite --port=3000",
+    "build": "vite build && node scripts/build-offline.mjs && node scripts/check-csp.mjs",
     "preview": "vite preview",
     "test": "tsx --test tests/*.test.ts",
     "lint": "tsc --noEmit"

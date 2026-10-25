@@ -43,7 +43,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "Can I get the same prompts again?",
-    "Each run uses a new random seed, and the compiler avoids repeating recipes from your history for the same brief. Your history keeps every past result to copy again.",
+    "Each run uses a new random seed, and the compiler avoids repeating recipes from your history for the same brief. Your history keeps your newest 200 runs to copy again.",
   ],
   [
     "Which genres does it know?",
@@ -95,8 +95,10 @@ export default function ReferenceGuide() {
           <p>
             Suno Workbench has no server, no account, no analytics, no cookies and no API key. Your current brief and
             results are kept in this tab's session storage, and your Styles history in this browser's local storage
-            until you press Clear History. Export History is the only way to move it, and it saves a file to your own
-            computer.
+            until you press Clear History. History keeps your newest 200 runs; when it is full, or the browser runs out
+            of storage, the oldest runs are removed and the page tells you, so export it first if you want to keep
+            everything. Export History is the only way to move it, and it saves a file to your own computer. The site
+            can load only its own files and cannot send anything over the network.
           </p>
           <p>
             The offline file is the same site in one HTML file. Open it from your desktop and every tool works with no

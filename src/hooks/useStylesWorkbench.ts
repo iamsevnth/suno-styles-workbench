@@ -2,6 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { ShowDialog } from "../components/Dialog.tsx";
 import { copyToClipboard } from "../lib/browser/clipboard.ts";
 import { downloadFile } from "../lib/browser/download.ts";
+import {
+  HISTORY_KEY,
+  isRestorableResult,
+  LEGACY_HISTORY_KEY,
+  loadHistory,
+  readRaw,
+  removeKey,
+  saveHistory,
+  writeRaw,
+} from "../lib/browser/storage.ts";
 import { generateStylesPrompts } from "../lib/suno/generate.ts";
 import { pickSuggestions, SURPRISE_BRIEF } from "../lib/suno/suggestions.ts";
 import { historyFileStamp } from "../lib/suno/title-case.ts";
@@ -9,7 +19,6 @@ import { GenerateResult, HistoryEntry, PromptCandidate } from "../lib/suno/types
 import { formatAllPromptsTxt } from "../lib/suno/v6.ts";
 
 const STORAGE_KEY = "suno-styles-generator:v1";
-const HISTORY_KEY = "suno-styles-history:v1";
 const SUGGEST_KEY = "suno-styles-suggestions:v1";
 export const DEFAULT_COUNT = 3;
 
@@ -29,25 +38,37 @@ interface SessionSnapshot {
 type StorageArea = "session" | "local";
 
 // Touching window.sessionStorage itself can throw in sandboxed frames, so resolve it inside try.
-function storageFor(area: StorageArea): Storage {
-  return area === "session" ? window.sessionStorage : window.localStorage;
-}
-
-function readJson<T>(area: StorageArea, key: string): T | null {
+function storageFor(area: StorageArea): Storage | null {
   try {
-    const raw = storageFor(area).getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
+    return area === "session" ? window.sessionStorage : window.localStorage;
   } catch {
     return null;
   }
 }
 
+/** Session data: a failed write only means the draft is not restored on reload. */
 function writeJson(area: StorageArea, key: string, value: unknown): void {
-  try {
-    storageFor(area).setItem(key, JSON.stringify(value));
-  } catch {
-    // Storage full or blocked: the page keeps working without persistence.
-  }
+  writeRaw(storageFor(area), key, value);
+}
+
+/** The stored session, keeping only fields of the expected type. */
+function readSession(): StoredSession {
+  const raw = readRaw(storageFor("session"), STORAGE_KEY);
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {};
+  const r = raw as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+  const count = num(r.count);
+  return {
+    input: str(r.input),
+    count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
+    profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
+    generation: num(r.generation),
+    seedUsed: num(r.seedUsed),
+    lastAction: str(r.lastAction),
+    hasResults: r.hasResults === true && isRestorableResult(r.result),
+    result: isRestorableResult(r.result) ? (r.result as StoredSession["result"]) : undefined,
+  };
 }
 
 interface StoredSession {
@@ -76,8 +97,9 @@ function saveSession(s: SessionSnapshot): void {
 }
 
 function initialSuggestions(): string[] {
-  const chips = readJson<string[]>("session", SUGGEST_KEY);
-  if (Array.isArray(chips) && chips.length) {
+  const raw = readRaw(storageFor("session"), SUGGEST_KEY);
+  const chips = Array.isArray(raw) ? raw.filter((c): c is string => typeof c === "string" && c.length > 0) : [];
+  if (chips.length) {
     return chips[0] === SURPRISE_BRIEF ? chips : [SURPRISE_BRIEF, ...chips];
   }
   const fresh = pickSuggestions(Date.now() >>> 0);
@@ -108,7 +130,7 @@ function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, pr
 
 /** State and actions for the Styles Compiler, persisted per session; history persists across visits. */
 export function useStylesWorkbench(showDialog: ShowDialog) {
-  const [stored] = useState(() => readJson<StoredSession>("session", STORAGE_KEY) ?? {});
+  const [stored] = useState(readSession);
   const restored = stored.hasResults ? stored.result : undefined;
 
   const [input, setInput] = useState(stored.input ?? "");
@@ -120,10 +142,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [parsed, setParsed] = useState<Parsed | null>(restored?.parsed ?? null);
   const [lastAction, setLastAction] = useState(stored.lastAction ?? "");
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
-  const [history, setHistory] = useState<HistoryEntry[]>(() => {
-    const saved = readJson<HistoryEntry[]>("local", HISTORY_KEY);
-    return Array.isArray(saved) ? saved : [];
-  });
+  const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storageFor("local")));
   const [isGenerating, setIsGenerating] = useState(false);
   const briefRef = useRef<HTMLTextAreaElement>(null);
 
@@ -154,13 +173,25 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       setParsed(out.parsed);
       setGeneration(nextGeneration);
 
-      const updatedHistory = [...history, toHistoryEntry(brief, seed, profileEnabled, out.prompts)];
-      setHistory(updatedHistory);
-      writeJson("local", HISTORY_KEY, updatedHistory);
+      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, out.prompts)]);
+      setHistory(saved.kept);
 
       const head = out.prompts[0]?.styles.slice(0, 48).replace(/\s+/g, " ") ?? "";
       const bpmNote = out.parsed.bpm != null ? `${out.parsed.bpm} BPM` : "BPM inferred";
       setLastAction(`seed ${seed} · ${bpmNote} · ${out.prompts.length} styles · "${head}..."`);
+      if (saved.reason === "quota") {
+        showDialog(
+          "error",
+          "History Not Saved",
+          "This browser's storage is full, so this run was not added to your saved history. Export History to keep a copy, then Clear History to free space."
+        );
+      } else if (saved.trimmed > 0) {
+        setLastAction(
+          `seed ${seed} · ${out.prompts.length} styles · history full, so the ${saved.trimmed} oldest ${
+            saved.trimmed === 1 ? "entry was" : "entries were"
+          } removed. Export History to keep everything.`
+        );
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "unknown error";
       setLastAction(`Generate failed: ${message}. Try again.`);
@@ -245,11 +276,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const clearHistory = () => {
     setHistory([]);
-    try {
-      storageFor("local").removeItem(HISTORY_KEY);
-    } catch {
-      // Storage blocked: nothing was saved, so nothing to remove.
-    }
+    removeKey(storageFor("local"), HISTORY_KEY);
+    removeKey(storageFor("local"), LEGACY_HISTORY_KEY);
     setLastAction("History cleared.");
   };
 

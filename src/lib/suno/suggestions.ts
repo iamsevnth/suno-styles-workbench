@@ -77,7 +77,7 @@ export function suggestionPool(): string[] {
   push("100 BPM Detroit Hip Hop, offbeat talk-rap cadence, punchline pauses, clean sub-bass");
   push("140 BPM NY Drill, menacing female drill rap flow, sliding 808s, triplet bursts");
   push("146 BPM Southern Trap, rapid chopper rap cadence, triplet hats, heavy brass stabs");
-  push("134 BPM Emo Trap, Juice WRLD inspired autotuned sung-rap, acoustic guitar loop, sliding sub");
+  push("134 BPM Emo Trap, melancholic autotuned sung-rap, acoustic guitar loop, sliding sub");
   push("140 BPM Memphis Phonk, gritty distorted rap delivery, phonk cowbells, sub-bass bounce");
 
   return out;

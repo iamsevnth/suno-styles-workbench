@@ -6,6 +6,7 @@ import { runSkill } from "../src/lib/suno/skills/run.ts";
 import { pickSuggestions, SURPRISE_BRIEF } from "../src/lib/suno/suggestions.ts";
 import { historyFileStamp, toTitleCase } from "../src/lib/suno/title-case.ts";
 import { formatAllPromptsTxt } from "../src/lib/suno/v6.ts";
+import { ARTIST_LEAK_RE, NEGATIVE_RE } from "../src/lib/suno/validate.ts";
 
 function assertInWindow(characters: number) {
   assert.ok(
@@ -19,6 +20,15 @@ describe("suggestions", () => {
     const chips = pickSuggestions(1);
     assert.equal(chips[0], SURPRISE_BRIEF);
     for (const chip of chips) assert.ok(chip.length <= 250, chip);
+  });
+
+  it("models good briefs: no artist names and no negative wording in any example", () => {
+    const all = new Set<string>();
+    for (let seed = 0; seed < 2000; seed++) for (const chip of pickSuggestions(seed * 7919)) all.add(chip);
+    const flagged = [...all].filter(
+      (c) => ARTIST_LEAK_RE.test(c) || NEGATIVE_RE.test(c) || /\binspired\b|in the style of/i.test(c)
+    );
+    assert.deepEqual(flagged, []);
   });
 });
 
