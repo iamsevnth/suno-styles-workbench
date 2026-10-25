@@ -50,7 +50,7 @@ I probably feel the sub bass tension dropping tonight`;
     assert.ok(!result.lines[4].phonetic.includes("-"));
   });
 
-  it("preserves the existing double-o pronunciation", () => {
-    assert.equal(wordToAmericanPhonetic("moon"), "moon");
+  it("preserves the aw vowel spelling", () => {
+    assert.equal(convertToPhonetics("saw").lines[0].phonetic, "saw");
   });
 });
