@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
 
-import { Theme, THEME_KEY } from "../lib/browser/theme.ts";
+import { LIGHT_QUERY, pickTheme, Theme, THEME_KEY } from "../lib/browser/theme.ts";
 
 const PAGE_COLOR: Record<Theme, string> = { light: "#f3f6fb", dark: "#0a0a0b" };
 
-function savedTheme(): Theme | null {
+function savedValue(): string | null {
   try {
-    const value = window.localStorage.getItem(THEME_KEY);
-    return value === "light" || value === "dark" ? value : null;
+    return window.localStorage.getItem(THEME_KEY);
   } catch {
     return null;
   }
 }
 
-function systemTheme(): Theme {
-  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
-}
+const deviceIsLight = () => Boolean(window.matchMedia?.(LIGHT_QUERY).matches);
 
 function apply(theme: Theme): void {
   document.documentElement.setAttribute("data-theme", theme);
@@ -29,18 +26,16 @@ function apply(theme: Theme): void {
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
     const current = document.documentElement.getAttribute("data-theme");
-    return current === "light" || current === "dark" ? current : (savedTheme() ?? systemTheme());
+    return current === "light" || current === "dark" ? current : pickTheme(savedValue(), deviceIsLight());
   });
 
   useEffect(() => apply(theme), [theme]);
 
   // Follow the device setting live, but only while the visitor has not chosen a theme.
   useEffect(() => {
-    const query = window.matchMedia?.("(prefers-color-scheme: light)");
+    const query = window.matchMedia?.(LIGHT_QUERY);
     if (!query) return;
-    const onChange = () => {
-      if (!savedTheme()) setTheme(query.matches ? "light" : "dark");
-    };
+    const onChange = () => setTheme(pickTheme(savedValue(), query.matches));
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
   }, []);
