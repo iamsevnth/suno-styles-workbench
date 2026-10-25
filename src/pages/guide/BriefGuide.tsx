@@ -56,6 +56,30 @@ const BEFORE_AFTER: [string, string, string][] = [
   ],
 ];
 
+const VOCAL_RULES: [string, string, string][] = [
+  [
+    "Nothing about the voice",
+    `A vocal the genre suits, in one sentence of up to ${VOCAL_BUDGET.compact} characters.`,
+    "dark trap",
+  ],
+  [
+    "The basics: gender and rap or singing",
+    `One sentence of up to ${VOCAL_BUDGET.compact} characters, built around the voice you named.`,
+    "male rap, female vocals",
+  ],
+  [
+    "Four or more vocal traits",
+    `Up to ${VOCAL_BUDGET.detailed} characters, so your tone, register, delivery and effects all fit.`,
+    "breathy female alto, close-mic, light autotune, slapback delay",
+  ],
+  [
+    "A full vocal description",
+    "Your own words, quoted as written, plus a short note on the vocal's space in the mix.",
+    "smooth male vocal tone, laid back cadence, prominent autotune gloss",
+  ],
+  ["Instrumental", "No vocal sentence; the whole prompt describes the production.", "instrumental"],
+];
+
 const EXAMPLE_BRIEF = "melodic R&B with flute and Rhodes electric piano";
 const EXAMPLE_SEED = 42;
 
@@ -141,15 +165,41 @@ export default function BriefGuide() {
             vocal line.
           </p>
           <p>
-            The production comes first. When the brief only names the basics, such as <Code>male rap</Code> or{" "}
-            <Code>female vocals</Code>, the vocal gets one sentence of at most {VOCAL_BUDGET.compact} characters and the
-            rest of the prompt describes drums, bass, harmony, texture and mix. Describe the voice in detail (four or
-            more traits such as tone, register, delivery and effects) and the vocal line grows to hold your words.
-          </p>
-          <p>
             You can also paste an existing Styles prompt as the brief. The compiler picks out its genres, tempo, vocals
             and instruments and builds new {MIN_CHARS}–{MAX_CHARS} character prompts around them.
           </p>
+        </Prose>
+      </Section>
+
+      <Section
+        id="vocals"
+        title="How vocals are written"
+        intro="The production carries a Styles prompt, so the vocal gets one sentence and the rest of the characters describe the sonic plan. How long that sentence is depends on how much your brief says about the voice."
+      >
+        <Table head={["Your brief says", "The vocal sentence", "Example"]} rows={VOCAL_RULES} caption="Vocal rules" />
+        <Prose>
+          <ul className="list-disc pl-5 flex flex-col gap-2">
+            <li>
+              The sentence is built from the voice outward: who sings comes first, then any effects you named, then
+              planned details (a delivery trait, a performance arc, one effect) only while they fit.
+            </li>
+            <li>
+              Planned wording uses “with” at most once and never repeats a word already in the sentence, so it reads as
+              one clear line instead of a pile of clauses.
+            </li>
+            <li>
+              When your brief describes the voice in its own words, the prompt quotes that description instead of
+              replacing it with planned wording.
+            </li>
+            <li>
+              Naming the voice once is enough. When the vocal sentence already names the voice you asked for, no second
+              “keeps the vocals front and center” sentence is added to repeat it.
+            </li>
+            <li>
+              Write <Code>instrumental</Code> to leave the vocal out entirely and give every character to the
+              production.
+            </li>
+          </ul>
         </Prose>
       </Section>
 

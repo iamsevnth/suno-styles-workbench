@@ -23,9 +23,9 @@ Brief:
 melodic R&B with flute and Rhodes electric piano
 ```
 
-One compiled prompt for that brief (seed 42, 955 characters, as of this release):
+One compiled prompt for that brief (seed 42, 957 characters, as of this release):
 
-> 92 BPM Emotional R&B and Pop R&B hybrid built for warm and polished nights — intimate R&B-forward production. Drums lead with tight pop kick and snare, gentle shaker, tight live kit with warm room inside a natural live-band groove, locking laid-back behind-the-beat pocket and gentle shuffle groove so each section has somewhere to land. The bass conversation is warm electric bass guitar, warm detuned saw bass, moving through gospel-style bass runs into the chorus and punchy fingerstyle bass with slap and pop and bright attack. Lead vocals deliver laid-back male Afro-fusion vocal with anthemic chorus lead with stacked peaks, treated with light autotune polish on held notes. The production keeps Rhodes electric piano front and center. Translation stays clear on every playback system. Acoustic palette includes ambient chorus-modulated Rhodes, reverb-washed bamboo flute, warm electric bass guitar, soft drum kit, organic shaker, cinematic impacts.
+> 92 BPM Emotional R&B and Pop R&B hybrid built for warm and polished nights — intimate R&B-forward production. Drums lead with tight pop kick and snare, gentle shaker, tight live kit with warm room inside a natural live-band groove, locking laid-back behind-the-beat pocket and gentle shuffle groove so each section has somewhere to land. The bass conversation is warm electric bass guitar, warm detuned saw bass, moving through gospel-style bass runs into the chorus and punchy fingerstyle bass with slap and pop and bright attack. Lead vocals deliver laid-back male Afro-fusion vocal, anthemic chorus lead with stacked peaks, stacking doubles only on the hook so verses stay close. The production keeps Rhodes electric piano front and center. Translation stays clear on every playback system. Acoustic palette includes ambient chorus-modulated Rhodes, reverb-washed bamboo flute, warm electric bass guitar, soft drum kit, organic shaker, cinematic impacts.
 
 The brief names no sub-genre, tempo, bass or drum kit; the compiler chose R&B ones from the R&B family's vocabulary and kept the flute and Rhodes. The Guide compiles this example live, so it always shows the current engine's exact output.
 
@@ -41,6 +41,20 @@ The brief names no sub-genre, tempo, bass or drum kit; the compiler chose R&B on
 | No artist names | No named artists and no “in the style of” phrasing |
 | Production first | The vocal gets one short line (up to 150 characters) unless your brief describes the voice in detail, so most of the prompt describes the production |
 | Styles only | No lyric lines or section tags in the Styles text |
+
+### How vocals are written
+
+The production carries a Styles prompt, so the vocal gets one sentence and the rest of the characters describe the drums, bass, harmony, texture and mix. How long that sentence is depends on how much the brief says about the voice:
+
+| Your brief says | The vocal sentence |
+| --- | --- |
+| Nothing about the voice (`dark trap`) | A vocal the genre suits, up to 150 characters |
+| The basics (`male rap`, `female vocals`) | Built around the voice you named, up to 150 characters |
+| Four or more vocal traits (`breathy female alto, close-mic, light autotune, slapback delay`) | Up to 300 characters, so all of them fit |
+| A full vocal description | Your own words, quoted as written, plus a short note on the vocal's space in the mix |
+| `instrumental` | No vocal sentence; the whole prompt describes the production |
+
+Who sings comes first, then any effects you named, then planned details only while they fit. Planned wording uses "with" at most once and never repeats a word already in the sentence. When the brief describes the voice in its own words, the prompt quotes that description instead of replacing it, and once the vocal sentence names the voice you asked for, no second "front and center" sentence repeats it.
 
 ### UKG is not UK garage
 

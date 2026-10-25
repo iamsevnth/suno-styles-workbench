@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
+import { allStyles } from "../src/lib/suno/ontology.ts";
 import { MAX_CHARS, MIN_CHARS, VOCAL_BUDGET } from "../src/lib/suno/render.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
 
@@ -54,5 +55,31 @@ describe("vocal share of the Styles prompt", () => {
       assert.match(vocalOf(p), /breathy female alto/i, p.styles);
       assert.ok(vocalOf(p).length <= VOCAL_BUDGET.detailed + 120, vocalOf(p));
     }
+  });
+
+  it("keeps the tone and register the brief names as the voice", () => {
+    for (const p of promptsFor("trap, breathy female alto, close-mic, light autotune, slapback delay")) {
+      assert.match(vocalOf(p), /breathy female alto/, vocalOf(p));
+      assert.match(vocalOf(p), /slapback delay/, vocalOf(p));
+    }
+  });
+});
+
+describe("vocal wording", () => {
+  // Planned vocal phrases, not the brief's own words: every genre in the library, three seeds.
+  const planned = allStyles().flatMap((g) =>
+    [1, 2, 3].flatMap((seed) => generateStylesPrompts(g.name, { count: 3, seed }).prompts.map(vocalOf)),
+  );
+
+  it("says “with” at most once in a planned vocal sentence", () => {
+    const doubled = planned.filter((v) => (v.match(/\bwith\b/g) ?? []).length > 1);
+    assert.deepEqual(doubled, []);
+  });
+
+  it("never joins two clauses with “and ... and”", () => {
+    assert.deepEqual(
+      planned.filter((v) => /\band\b[^,.]*,?[^,.]*\band\b[^,.]*\band\b/.test(v)),
+      [],
+    );
   });
 });

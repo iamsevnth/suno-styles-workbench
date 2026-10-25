@@ -7,6 +7,7 @@ import SunoGuide from "./SunoGuide.tsx";
 const TOC: [string, string][] = [
   ["quick-start", "Quick start"],
   ["briefs", "Writing a brief"],
+  ["vocals", "How vocals are written"],
   ["better-briefs", "Strong briefs"],
   ["example", "Worked example"],
   ["how-it-works", "How it works"],
