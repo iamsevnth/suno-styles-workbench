@@ -1,6 +1,8 @@
 import { hrefFor, NAV_ITEMS, REPO_URL, RouteId } from "../../routes.ts";
 import OfflineDownloadLink from "./OfflineDownloadLink.tsx";
 import { LogoMark } from "./Logo.tsx";
+import Icon from "../icons/Icon.tsx";
+import ThemeToggle from "./ThemeToggle.tsx";
 
 export default function SiteHeader({ route }: { route: RouteId }) {
   return (
@@ -23,10 +25,12 @@ export default function SiteHeader({ route }: { route: RouteId }) {
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-xs font-medium h-8 px-3 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-xs font-medium h-8 px-3 transition-colors"
           >
+            <Icon name="github" size={14} />
             GitHub
           </a>
+          <ThemeToggle />
         </div>
 
         <nav aria-label="Main" className="w-full sm:w-auto overflow-x-auto -mx-1">
@@ -40,7 +44,7 @@ export default function SiteHeader({ route }: { route: RouteId }) {
                     aria-current={isActive ? "page" : undefined}
                     className={`block whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                       isActive
-                        ? "bg-[var(--bg-subtle)] text-[var(--fg)]"
+                        ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-fg)] font-semibold"
                         : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]/60"
                     }`}
                   >

@@ -1,5 +1,7 @@
 import React from "react";
 import { headlineCase } from "../../lib/text/headline-case.ts";
+import Icon from "../icons/Icon.tsx";
+import type { IconName } from "../icons/icon-data.ts";
 
 /** Shared building blocks for the Home and Guide pages so both read with one rhythm. */
 
@@ -28,7 +30,7 @@ export function Section({
   return (
     <section id={id} aria-labelledby={headingId} className="scroll-mt-24 flex flex-col gap-5">
       <div className="max-w-3xl">
-        {eyebrow && <p className="label-caps mb-2">{eyebrow}</p>}
+        {eyebrow && <p className="label-caps eyebrow mb-2">{eyebrow}</p>}
         <h2 id={headingId} className="text-2xl sm:text-[1.75rem] font-bold tracking-tight text-[var(--fg)]">
           {headlineCase(title)}
         </h2>
@@ -39,20 +41,43 @@ export function Section({
   );
 }
 
+export type TileColor = "blue" | "violet" | "magenta" | "coral" | "orange" | "cyan" | "green" | "amber";
+
+/** A rounded icon tile: brand-tinted in light mode, neutral in dark mode. */
+export function IconTile({ icon, color, size = 40 }: { icon: IconName; color: TileColor; size?: number }) {
+  return (
+    <span className={`icon-tile tile-${color}`} style={{ width: size, height: size }}>
+      <Icon name={icon} size={Math.round(size * 0.5)} />
+    </span>
+  );
+}
+
 export function Card({
   title,
   children,
   footer,
+  icon,
+  tile = "blue",
+  accent,
 }: {
   title: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  icon?: IconName;
+  tile?: TileColor;
+  /** A thin colored rule across the top of the card in light mode. */
+  accent?: "blue" | "violet" | "orange";
 }) {
   return (
-    <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] p-5 flex flex-col gap-2">
-      <h3 className="text-base font-semibold text-[var(--fg)]">
-        {typeof title === "string" ? headlineCase(title) : title}
-      </h3>
+    <div
+      className={`surface rounded-[var(--r-xl)] p-5 flex flex-col gap-2 ${accent ? `card-accent accent-${accent}` : ""}`}
+    >
+      <div className="flex items-center gap-3">
+        {icon && <IconTile icon={icon} color={tile} />}
+        <h3 className="text-base font-semibold text-[var(--fg)]">
+          {typeof title === "string" ? headlineCase(title) : title}
+        </h3>
+      </div>
       <div className="text-sm text-[var(--fg-muted)] leading-relaxed flex flex-col gap-2">{children}</div>
       {footer && <div className="pt-2 mt-auto">{footer}</div>}
     </div>
@@ -83,13 +108,12 @@ export function ButtonLink({
   return (
     <a
       href={href}
-      className={`inline-flex items-center justify-center h-11 px-5 rounded-[var(--r-md)] text-sm font-semibold transition-all ${
-        primary
-          ? "bg-[var(--accent)] text-[var(--accent-fg)] hover:opacity-90"
-          : "border border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
+      className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[var(--r-md)] text-sm font-semibold transition-all ${
+        primary ? "btn-primary" : "surface text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
       }`}
     >
       {children}
+      {primary && <Icon name="arrowRight" size={16} />}
     </a>
   );
 }
@@ -160,9 +184,20 @@ function TableGrid({ head, rows, caption }: { head: string[]; rows: React.ReactN
 export type ProvenanceKind = "suno" | "community" | "workbench";
 
 const PROVENANCE: Record<ProvenanceKind, { label: string; className: string }> = {
-  suno: { label: "Suno official", className: "border-emerald-500/40 text-emerald-300 bg-emerald-500/10" },
-  community: { label: "Community-tested", className: "border-sky-500/40 text-sky-300 bg-sky-500/10" },
-  workbench: { label: "Workbench recommendation", className: "border-amber-500/40 text-amber-200 bg-amber-500/10" },
+  suno: {
+    label: "Suno official",
+    className:
+      "border-emerald-500/40 text-emerald-300 bg-emerald-500/10 light:border-emerald-300 light:text-emerald-700 light:bg-emerald-50",
+  },
+  community: {
+    label: "Community-tested",
+    className: "border-sky-500/40 text-sky-300 bg-sky-500/10 light:border-sky-300 light:text-sky-700 light:bg-sky-50",
+  },
+  workbench: {
+    label: "Workbench recommendation",
+    className:
+      "border-amber-500/40 text-amber-200 bg-amber-500/10 light:border-amber-300 light:text-amber-700 light:bg-amber-50",
+  },
 };
 
 /** Labels where a claim comes from, so readers can weigh it. */

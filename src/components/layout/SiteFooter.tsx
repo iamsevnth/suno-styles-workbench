@@ -1,7 +1,7 @@
 import { hrefFor, REPO_URL } from "../../routes.ts";
 
 const CONTACT_EMAIL = "mateus@sevnthlabs.com";
-const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Suno Workbench: contact or broken feature")}`;
+const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Suno Workbench: Site Support")}`;
 
 export default function SiteFooter() {
   return (

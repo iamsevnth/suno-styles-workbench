@@ -4,6 +4,9 @@ import { runSkill, SkillReport } from "../../lib/suno/skills/run.ts";
 import { ShowDialog } from "../Dialog.tsx";
 import SkillReportView from "./SkillReportView.tsx";
 import { headlineCase } from "../../lib/text/headline-case.ts";
+import Icon from "../icons/Icon.tsx";
+import { IconTile, TileColor } from "../content/Content.tsx";
+import type { IconName } from "../icons/icon-data.ts";
 
 const DEFAULT_SKILL = "optimizer";
 
@@ -15,7 +18,20 @@ function initialFields(id: string): Record<string, string> {
   return fields;
 }
 
-const FIELD_CLASS = "w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] text-[var(--fg)] text-xs";
+const FIELD_CLASS =
+  "w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] text-[var(--fg)] text-xs";
+
+/** Icon and tile color per playbook, matching the mockups. */
+const SKILL_LOOK: Record<string, [IconName, TileColor]> = {
+  optimizer: ["target", "violet"],
+  covers: ["music", "magenta"],
+  mashups: ["layers", "orange"],
+  lyrics: ["pen", "blue"],
+  editor: ["sliders", "cyan"],
+  studio: ["play", "violet"],
+  rights: ["shieldPlain", "amber"],
+  current: ["file", "blue"],
+};
 
 export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog }) {
   const [skillId, setSkillId] = useState(DEFAULT_SKILL);
@@ -62,27 +78,35 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
               type="button"
               onClick={() => selectSkill(s.id)}
               aria-pressed={selected}
-              className={`text-left rounded-[var(--r-md)] border p-3 transition-all ${
+              className={`group text-left rounded-[var(--r-md)] border p-3 transition-all flex items-center gap-3 ${
                 selected
-                  ? "border-[var(--border-strong)] bg-[var(--bg-elevated)]"
-                  : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--border-strong)]"
+                  ? "border-[var(--border-strong)] light:border-[#a98af5] bg-[var(--bg-elevated)] light:bg-[#f7f3ff] light:shadow-[inset_3px_0_0_#6005e7]"
+                  : "border-[var(--border)] bg-[var(--bg)] light:bg-[var(--bg-elevated)] hover:border-[var(--border-strong)]"
               }`}
             >
-              <strong className="block text-sm font-semibold text-[var(--fg)]">{s.title}</strong>
-              <span className="block text-xs text-[var(--fg-muted)] mt-1 leading-relaxed">{s.blurb}</span>
-              <span className="label-caps-sm block mt-1.5">{s.pack}</span>
+              <IconTile icon={SKILL_LOOK[s.id]?.[0] ?? "file"} color={SKILL_LOOK[s.id]?.[1] ?? "blue"} size={44} />
+              <span className="flex-1 min-w-0">
+                <strong className="block text-sm font-semibold text-[var(--fg)]">{s.title}</strong>
+                <span className="block text-xs text-[var(--fg-muted)] mt-1 leading-relaxed">{s.blurb}</span>
+                <span className="label-caps-sm block mt-1.5 light:text-[var(--tile-violet-fg)]">{s.pack}</span>
+              </span>
+              <Icon name="chevronRight" size={16} className="text-[var(--fg-subtle)] shrink-0" />
             </button>
           );
         })}
       </section>
 
       {skill && (
-        <section
-          aria-label={skill.title}
-          className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] p-5 flex flex-col gap-5"
-        >
+        <section aria-label={skill.title} className="surface rounded-[var(--r-xl)] p-5 flex flex-col gap-5">
           <div>
-            <h2 className="text-base font-semibold text-[var(--fg)]">{headlineCase(skill.title)}</h2>
+            <h2 className="flex items-center gap-3 text-lg font-bold text-[var(--fg)]">
+              <IconTile
+                icon={SKILL_LOOK[skill.id]?.[0] ?? "file"}
+                color={SKILL_LOOK[skill.id]?.[1] ?? "blue"}
+                size={36}
+              />
+              {headlineCase(skill.title)}
+            </h2>
             <p className="text-xs text-[var(--fg-muted)] mt-1">{skill.blurb}</p>
           </div>
 
@@ -96,7 +120,12 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
                     {f.label}
                   </label>
                   {f.kind === "select" ? (
-                    <select id={id} value={value} onChange={(e) => setField(f.key, e.target.value)} className={`${FIELD_CLASS} h-10 px-3`}>
+                    <select
+                      id={id}
+                      value={value}
+                      onChange={(e) => setField(f.key, e.target.value)}
+                      className={`${FIELD_CLASS} h-10 px-3`}
+                    >
                       {(f.options || []).map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
@@ -134,8 +163,9 @@ export default function SkillsStudio({ showDialog }: { showDialog: ShowDialog })
 
             <button
               type="submit"
-              className="inline-flex items-center justify-center h-10 rounded-[var(--r-md)] bg-[var(--accent)] hover:opacity-90 text-[var(--accent-fg)] font-semibold text-xs transition-colors self-start px-5"
+              className="btn-primary inline-flex items-center justify-center gap-2 h-11 rounded-[var(--r-md)] font-semibold text-sm transition-all self-start px-6"
             >
+              <Icon name="sparkles" size={16} />
               {skill.runLabel}
             </button>
           </form>

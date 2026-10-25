@@ -124,6 +124,28 @@ describe("offline build script escaping", () => {
     assert.doesNotMatch(output.slice(output.indexOf("<style>") + 7, output.lastIndexOf("</style>")), /<\/style/i);
   });
 
+  it("keeps a classic script classic so it still runs before the page paints", () => {
+    const { root, dist } = createBuildDirectory();
+    try {
+      writeFileSync(
+        path.join(dist, "index.html"),
+        '<head><script src="./theme-init.js"></script><script type="module" src="./assets/app.js"></script><link rel="stylesheet" href="./assets/app.css"></head>',
+      );
+      writeFileSync(path.join(dist, "theme-init.js"), "document.documentElement.dataset.theme = 'dark';");
+      writeFileSync(path.join(dist, "assets", "app.js"), "console.log('app')");
+      writeFileSync(path.join(dist, "assets", "app.css"), "body { color: red; }");
+      const result = spawnSync(process.execPath, [buildScript, dist], { encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+      const output = readFileSync(path.join(dist, "suno-workbench.html"), "utf8");
+      assert.match(
+        output,
+        /<script>document\.documentElement\.dataset\.theme = 'dark';<\/script><script type="module">/,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("fails the build when escaping would change code outside a string", () => {
     const { result } = build("const script = 2; const a = 1; console.log(a<script);");
     assert.notEqual(result.status, 0);
