@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { ContentPage } from "../../components/content/Content.tsx";
 import { LogoFull } from "../../components/layout/Logo.tsx";
 import LiveGenreCoverage from "./LiveGenreCoverage.tsx";
@@ -24,7 +24,7 @@ function MarkedText({ value, highlight }: { value: string; highlight: string }) 
   const word = highlight.trim().split(/\s+/)[0]?.toLocaleLowerCase() ?? "";
   if (!word) return <>{value}</>;
   const lower = value.toLocaleLowerCase();
-  const parts: React.ReactNode[] = [];
+  const parts: ReactNode[] = [];
   let cursor = 0;
   while (cursor < value.length) {
     const next = lower.indexOf(word, cursor);
@@ -115,9 +115,7 @@ function ChapterNav({ activeId, onChoose }: { activeId: string; onChoose: (id: s
 export default function GuidePage() {
   const [activeId, setActiveId] = useState(initialChapter);
   const [search, setSearch] = useState("");
-  const [highlight, setHighlight] = useState(() =>
-    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("find") ?? ""
-  );
+  const [highlight, setHighlight] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const activeIndex = GUIDE_CONTENT.findIndex((chapter) => chapter.id === activeId);
   const active = GUIDE_CONTENT[activeIndex] ?? GUIDE_CONTENT[0];
@@ -128,7 +126,7 @@ export default function GuidePage() {
   useEffect(() => {
     const refresh = () => {
       setActiveId(initialChapter());
-      setHighlight(new URLSearchParams(window.location.search).get("find") ?? "");
+      setHighlight("");
     };
     window.addEventListener("popstate", refresh);
     return () => window.removeEventListener("popstate", refresh);
@@ -146,8 +144,8 @@ export default function GuidePage() {
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("chapter", id);
-      if (match) url.searchParams.set("find", match);
-      else url.searchParams.delete("find");
+      // A creative search phrase must never enter the URL, which a host might log.
+      url.searchParams.delete("find");
       if (window.location.protocol !== "file:") url.hash = "";
       try { window.history.pushState({ chapter: id }, "", url.href); } catch { /* local file history is optional */ }
       if (!match) document.getElementById("guide-reader")?.scrollIntoView({ behavior: "smooth", block: "start" });
