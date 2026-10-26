@@ -444,6 +444,7 @@ function extractExplicitInstruments(text: string): string[] {
     [/\borgans?\b/i, "organ"],
     [/\bhand drums?|percussion|congas?|bongos?|djembe|cajon\b/i, "hand percussion"],
     [/\bvocal chops?\b/i, "vocal chops"],
+    [/\b(?:mpc[- ]style|chopped|pitched[- ]?up)\s+(?:soul|gospel|r&b)?\s*sample(?:s|d)?\b/i, "chopped sample"],
   ];
 
   for (const [re, name] of map) {
