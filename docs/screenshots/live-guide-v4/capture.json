@@ -1,0 +1,63 @@
+{
+  "capturedAt": "2026-10-26T09:23:32.682Z",
+  "target": "http://127.0.0.1:4173/guide.html",
+  "publicSite": "https://sunoworkbench.com/guide",
+  "pagesRunId": 40297339376,
+  "mergeCommit": "6545634f72f1078d62dcdb1c1eb19b0d3e1a4f8e",
+  "captured": [
+    {
+      "name": "guide-v4-desktop-light.png",
+      "mode": "light",
+      "fullPage": true,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "guide-v4-desktop-dark.png",
+      "mode": "dark",
+      "fullPage": true,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "guide-v4-search.png",
+      "mode": "light",
+      "fullPage": false,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "guide-v4-genre-coverage.png",
+      "mode": "light",
+      "fullPage": false,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    {
+      "name": "guide-v4-mobile-light.png",
+      "mode": "light",
+      "fullPage": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "guide-v4-mobile-dark.png",
+      "mode": "dark",
+      "fullPage": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ]
+}
