@@ -820,7 +820,10 @@ function buildArrangement(energy: string, families: string[], parsed: ParsedInpu
       a.push(pick(rng, DNA_HOOK.filter((x) => fitsFamilies(x, families))));
     }
   }
-  return unique(a).slice(0, 4);
+  const familySafe = hasDrops(families)
+    ? a
+    : a.filter((x) => !/(?<!one-)\bdrops?\b|\bdrop-|(?<!one)-drop\b/i.test(x));
+  return unique(familySafe).slice(0, 4);
 }
 
 function buildMix(families: string[], parsed: ParsedInput, rng: () => number): string[] {

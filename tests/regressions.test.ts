@@ -87,7 +87,7 @@ describe("catalog-derived input mapping", () => {
     ).prompts;
     for (const p of prompts) {
       assert.match(p.styles, /sample|MPC/i, p.styles);
-      assert.match(p.styles, /pre-drop choke/i, p.styles);
+      assert.ok(p.plan.arrangement.includes("pre-drop choke stop"), p.plan.arrangement.join(" | "));
     }
   });
 });

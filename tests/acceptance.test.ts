@@ -123,10 +123,10 @@ describe("styles compiler", () => {
 });
 
 describe("exports and formatting", () => {
-  it("formats the all-prompts text export with IDs and delimiters", () => {
+  it("formats the all-prompts text export with seed headers and delimiters", () => {
     const { prompts } = generateStylesPrompts("140 BPM trap future bass", { count: 2 });
     const txt = formatAllPromptsTxt(prompts);
-    assert.match(txt, /Seed #: \\d{10} \\| BPM: 140 \\| Key: -- \\| Total Characters: \\d{3}/);
+    assert.match(txt, /Seed #: \d{10} \| BPM: 140 \| Key: -- \| Total Characters: \d{3}/);
     assert.doesNotMatch(txt, /ID#/);
     assert.ok(txt.includes("===="));
   });
@@ -138,10 +138,10 @@ describe("exports and formatting", () => {
   it("formats prompt identity from the actual 32-bit plan seed, BPM, key and character count", () => {
     const keyed = generateStylesPrompts("140 BPM EDM Trap, F minor, female vocals", { count: 1, seed: 42 }).prompts[0];
     assert.equal(keyed.seed, keyed.plan.seed);
-    assert.match(keyed.title, /^Seed #: \\d{10} \\| BPM: 140 \\| Key: F minor \\| Total Characters: \\d{3}$/);
+    assert.match(keyed.title, /^Seed #: \d{10} \| BPM: 140 \| Key: F minor \| Total Characters: \d{3}$/);
 
     const unkeyed = generateStylesPrompts("140 BPM EDM Trap, female vocals", { count: 1, seed: 42 }).prompts[0];
-    assert.match(unkeyed.title, /\\| Key: -- \\|/);
+    assert.match(unkeyed.title, /\| Key: -- \|/);
   });
 
   it("still title-cases ordinary display text and keeps BPM uppercase", () => {
