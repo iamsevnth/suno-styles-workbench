@@ -23,8 +23,8 @@ const TOC: [string, string][] = [
 
 export default function GuidePage() {
   return (
-    <ContentPage>
-      <header className="flex flex-col gap-4 w-full">
+    <ContentPage className="guide-page">
+      <header className="guide-hero flex flex-col gap-4 w-full">
         <LogoFull width={220} className="sm:-ml-1" />
         <p className="label-caps eyebrow">Guide</p>
         <h1 className="text-4xl font-bold tracking-tight text-[var(--fg)]">
@@ -40,7 +40,7 @@ export default function GuidePage() {
               key={id}
               type="button"
               onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })}
-              className="rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[var(--border-strong)]"
+              className="guide-toc-link rounded-full border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-xs font-medium text-[var(--fg-muted)] hover:text-[var(--fg)] hover:border-[var(--border-strong)]"
             >
               {label}
             </button>
