@@ -91,7 +91,8 @@ export function buildOnePlan(
     attempt?: number;
   } = {}
 ): SonicPlan {
-  const rng = mulberry32(seed >>> 0);
+  const rngSeed = seed >>> 0;
+  const rng = mulberry32(rngSeed);
   const rank = options.diversityRank ?? variantIndex;
   const attempt = options.attempt ?? 0;
 
@@ -261,6 +262,7 @@ export function buildOnePlan(
 
   return {
     bpm,
+    key: parsed.key,
     primaryGenre,
     secondaryGenre,
     accentGenre,
@@ -285,7 +287,7 @@ export function buildOnePlan(
     anchors,
     recipeId,
     variantAxes: [...preset.axes, `seed:${seed % 1000}`, `recipe:${recipeId.slice(0, 48)}`],
-    seed,
+    seed: rngSeed,
   };
 }
 

@@ -121,6 +121,8 @@ function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, pr
     profileEnabled,
     prompts: prompts.map((p) => ({
       title: p.title,
+      seed: p.seed,
+      key: p.key,
       styles: p.styles,
       characters: p.characters,
       bpm: p.bpm,

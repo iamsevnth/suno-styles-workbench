@@ -64,6 +64,12 @@ describe("melodic sung-rap briefs", () => {
   });
 });
 
+describe("key parsing", () => {
+  it("preserves flat-key spelling instead of turning Bb into BB", () => {
+    assert.equal(parseUserInput("140 BPM, Bb minor, future bass").key, "Bb minor");
+  });
+});
+
 describe("prompt prose", () => {
   const briefs = [
     "140 BPM trap future bass, female vocals, high energy",

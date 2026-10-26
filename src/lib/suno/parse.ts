@@ -270,7 +270,8 @@ export function parseUserInput(
   let key: string | undefined;
   const keyMatch = text.match(/\b([A-G](?:#|b)?)\s*(minor|major|min|maj)\b/i);
   if (keyMatch) {
-    const tonic = keyMatch[1].toUpperCase();
+    const rawTonic = keyMatch[1];
+    const tonic = rawTonic.charAt(0).toUpperCase() + rawTonic.slice(1);
     const qual = keyMatch[2].toLowerCase();
     key = qual.startsWith("min") ? `${tonic} minor` : `${tonic} major`;
   }
