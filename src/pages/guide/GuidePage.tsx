@@ -3,6 +3,7 @@ import { ContentPage } from "../../components/content/Content.tsx";
 import { LogoFull } from "../../components/layout/Logo.tsx";
 import LiveGenreCoverage from "./LiveGenreCoverage.tsx";
 import LiveVocalBudget from "./LiveVocalBudget.tsx";
+import CreateModeMatrix from "./CreateModeMatrix.tsx";
 import { GUIDE_CONTENT, type GuideChapter } from "../../lib/guide/content.ts";
 import { GUIDE_ANCHOR_REDIRECTS, GUIDE_GROUPS } from "../../lib/guide/manifest.ts";
 import { parseGuideBlocks } from "../../lib/guide/blocks.ts";
@@ -254,6 +255,7 @@ export default function GuidePage() {
 
             {active.id === "ch04" && <LiveGenreCoverage />}
             {active.id === "ch07" && <LiveVocalBudget />}
+            {active.id === "create-mode" && <CreateModeMatrix />}
             <ManualBody chapter={active} highlight={highlight} />
 
             <footer className="guide-doc-pager">

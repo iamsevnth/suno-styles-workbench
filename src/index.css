@@ -649,3 +649,18 @@ input:focus, textarea:focus, select:focus {
 .guide-doc-match-notice { font-size:0.76rem; color:var(--fg-muted); display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
 .guide-doc-match-notice strong { color:var(--fg); }
 .guide-doc-match-notice button { color:var(--link); font-weight:700; text-decoration:underline; }
+
+.guide-create-matrix {
+  padding:clamp(0.95rem,2vw,1.4rem); margin-top:1.2rem;
+  border:1px solid var(--border); border-radius:1rem;
+  background:var(--bg-subtle); display:flex; flex-direction:column; gap:0.9rem;
+}
+.guide-create-matrix figcaption { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0.5rem; }
+.guide-create-matrix figcaption strong { font-size:1rem; color:var(--fg); }
+.guide-create-matrix figcaption span { color:var(--fg-subtle); font-size:0.76rem; }
+.guide-create-matrix-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.65rem; }
+.guide-create-matrix-cell { padding:0.85rem; border:1px solid var(--border); border-radius:0.85rem; display:flex; flex-direction:column; gap:0.35rem; }
+.guide-create-matrix-cell > span { font-size:0.68rem; text-transform:uppercase; font-weight:800; letter-spacing:0.035em; }
+.guide-create-matrix-cell > strong { font-size:0.9rem; }
+.guide-create-matrix-cell > p { font-size:0.76rem; line-height:1.55; }
+@media(max-width:560px) { .guide-create-matrix-grid { grid-template-columns:1fr; } }

@@ -39,3 +39,7 @@ When the app or Suno evolves, reconcile the current-summary chapters first. Keep
 - Suno v6 FAQ: https://help.suno.com/en/articles/13924481
 - Creative Sliders: https://help.suno.com/en/articles/6141377
 - Release Notes: https://suno.com/release-notes
+
+## Diagrams in the manuscript
+
+The source DOCX contains visual summaries of vocal character budgeting, genre-family coverage and slider interactions. The web reader supplies **code-backed live visualizations** for the first two and an updated **illustrative** slider interaction map. The original dated images are not used as authoritative current data; the surrounding explanations and underlying reference material remain in the migrated chapters.
