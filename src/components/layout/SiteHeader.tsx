@@ -1,7 +1,6 @@
-import { hrefFor, NAV_ITEMS, REPO_URL, RouteId } from "../../routes.ts";
+import { hrefFor, NAV_ITEMS, RouteId } from "../../routes.ts";
 import OfflineDownloadLink from "./OfflineDownloadLink.tsx";
 import { LogoMark } from "./Logo.tsx";
-import Icon from "../icons/Icon.tsx";
 import ThemeToggle from "./ThemeToggle.tsx";
 
 export default function SiteHeader({ route }: { route: RouteId }) {
@@ -21,15 +20,6 @@ export default function SiteHeader({ route }: { route: RouteId }) {
 
         <div className="flex items-center gap-2 sm:order-last">
           <OfflineDownloadLink className="hidden sm:inline-flex" />
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] hover:bg-[var(--bg-subtle)] text-[var(--fg-muted)] hover:text-[var(--fg)] text-xs font-medium h-8 px-3 transition-colors"
-          >
-            <Icon name="github" size={14} />
-            GitHub
-          </a>
           <ThemeToggle />
         </div>
 

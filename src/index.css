@@ -78,21 +78,21 @@
    full spectrum kept for the logo, primary actions and small highlights. Contrast is noted per pair. */
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f3f6fb;
+  --bg: #f6f9ff;
   --bg-elevated: #ffffff;
-  --bg-subtle: #edf1f7;
+  --bg-subtle: #eef3fb;
   --fg: #111827; /* 16.4:1 on the canvas */
   --fg-muted: #4b5563; /* 7.0:1 on the canvas */
   --fg-subtle: #5b6474; /* 5.6:1 on the canvas */
-  --border: #dde4ee;
-  --border-strong: #c3cddb;
+  --border: #d7e2f0;
+  --border-strong: #b8c8de;
   --accent: #0059f8; /* 5.6:1 on white */
   --accent-fg: #ffffff;
   --ok: #047857;
   --warn: #b45309;
   --danger: #b91c1c;
   --ring: #6005e7;
-  --shadow: 0 18px 40px rgba(22, 7, 108, 0.12);
+  --shadow: 0 18px 48px rgba(49, 46, 129, 0.14);
 
   /* Deeper magenta and orange stops than the logo, so white button text stays at 4.5:1 or more. */
   --cta-bg: linear-gradient(90deg, #0059f8 0%, #6005e7 38%, #c2037f 72%, #c2410c 100%);
@@ -104,7 +104,7 @@
   --eyebrow-rule-width: 1.75rem;
   --nav-active-bg: #ece9fe;
   --nav-active-fg: #4a0bc0; /* 8.3:1 on the pill */
-  --card-shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 10px 28px rgba(22, 7, 108, 0.06);
+  --card-shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 14px 34px rgba(49, 46, 129, 0.08);
   --input-bg: #ffffff;
   --tile-blue-bg: #e7efff;
   --tile-blue-fg: #0052e0;
@@ -133,11 +133,11 @@
   --card-accent-orange: linear-gradient(90deg, #fa1c61, #fc9e06);
   /* Soft spectrum washes behind the page, like the mockups' background waves. */
   --page-decor:
-    radial-gradient(ellipse 55% 40% at 0% 18%, rgba(0, 218, 252, 0.16), transparent 70%),
-    radial-gradient(ellipse 45% 35% at 22% 8%, rgba(96, 5, 231, 0.1), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 100% 22%, rgba(235, 3, 156, 0.13), transparent 70%),
-    radial-gradient(ellipse 45% 35% at 96% 48%, rgba(252, 158, 6, 0.14), transparent 70%),
-    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(0, 89, 248, 0.06), transparent 70%);
+    radial-gradient(ellipse 60% 44% at -4% 16%, rgba(0, 218, 252, 0.24), transparent 66%),
+    radial-gradient(ellipse 48% 34% at 22% 5%, rgba(96, 5, 231, 0.15), transparent 68%),
+    radial-gradient(ellipse 54% 42% at 103% 20%, rgba(235, 3, 156, 0.2), transparent 66%),
+    radial-gradient(ellipse 46% 36% at 98% 52%, rgba(252, 158, 6, 0.2), transparent 68%),
+    radial-gradient(ellipse 72% 42% at 48% 102%, rgba(0, 89, 248, 0.1), transparent 68%);
 }
 
 /* Atkinson Hyperlegible (Braille Institute, SIL Open Font License) for the uppercase labels:
@@ -292,4 +292,151 @@ button:disabled {
 input:focus, textarea:focus, select:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--ring);
+}
+
+
+/* Light-mode visual polish inspired by the original Suno Workbench concept:
+   brighter brand atmosphere, more dimensional surfaces, and a more editorial Guide. */
+:root[data-theme="light"] body {
+  background-color: #f6f9ff;
+}
+
+:root[data-theme="light"] header.sticky {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.9)),
+    linear-gradient(90deg, rgba(0,218,252,0.06), rgba(96,5,231,0.05), rgba(235,3,156,0.05));
+  box-shadow: 0 8px 28px rgba(49, 46, 129, 0.07);
+}
+
+:root[data-theme="light"] .surface {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,252,255,0.96));
+}
+
+:root[data-theme="light"] .guide-page {
+  position: relative;
+}
+
+:root[data-theme="light"] .guide-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.4rem, 3vw, 2.5rem);
+  border: 1px solid rgba(164, 184, 218, 0.7);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 82% 10%, rgba(235,3,156,0.12), transparent 30%),
+    radial-gradient(circle at 12% 0%, rgba(0,218,252,0.18), transparent 34%),
+    linear-gradient(135deg, rgba(255,255,255,0.98), rgba(244,247,255,0.98));
+  box-shadow: 0 24px 60px rgba(49, 46, 129, 0.1);
+}
+
+:root[data-theme="light"] .guide-hero::after {
+  content: "";
+  position: absolute;
+  width: 18rem;
+  height: 18rem;
+  right: -5rem;
+  bottom: -11rem;
+  border-radius: 999px;
+  background: conic-gradient(from 180deg, rgba(0,218,252,0.18), rgba(96,5,231,0.12), rgba(235,3,156,0.16), rgba(252,158,6,0.12), rgba(0,218,252,0.18));
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+:root[data-theme="light"] .guide-toc-link {
+  border-color: rgba(161, 179, 211, 0.72);
+  background: rgba(255,255,255,0.82);
+  box-shadow: 0 5px 16px rgba(49, 46, 129, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+:root[data-theme="light"] .guide-toc-link:hover {
+  border-color: #8b6cff;
+  background: #ffffff;
+  color: #4a0bc0;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="light"] .guide-page > section {
+  position: relative;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+  border: 1px solid rgba(164, 184, 218, 0.64);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.92), rgba(249,251,255,0.9));
+  box-shadow: 0 16px 40px rgba(49, 46, 129, 0.07);
+}
+
+:root[data-theme="light"] .guide-page > section::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: 26px 26px 0 0;
+  background: linear-gradient(90deg, #00dafc, #0059f8, #6005e7, #eb039c, #fc9e06);
+  opacity: 0.9;
+}
+
+:root[data-theme="light"] .guide-page > section:nth-of-type(3n + 1) {
+  background:
+    radial-gradient(circle at 96% 0%, rgba(0,218,252,0.09), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,252,255,0.94));
+}
+
+:root[data-theme="light"] .guide-page > section:nth-of-type(3n + 2) {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(96,5,231,0.08), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,247,255,0.94));
+}
+
+:root[data-theme="light"] .guide-page > section:nth-of-type(3n) {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(235,3,156,0.08), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,248,252,0.94));
+}
+
+:root[data-theme="light"] .guide-page h2 {
+  color: #11152e;
+}
+
+:root[data-theme="light"] .guide-page .surface {
+  border-color: #d6e1f1;
+  box-shadow: 0 10px 26px rgba(49, 46, 129, 0.07);
+}
+
+:root[data-theme="light"] .guide-page table thead {
+  background:
+    linear-gradient(90deg, rgba(0,218,252,0.10), rgba(96,5,231,0.08), rgba(235,3,156,0.08));
+}
+
+:root[data-theme="light"] .guide-page table tbody tr:nth-child(even) {
+  background: rgba(243, 247, 255, 0.72);
+}
+
+:root[data-theme="light"] .guide-page table tbody tr:hover {
+  background: rgba(236, 233, 254, 0.48);
+}
+
+:root[data-theme="light"] .guide-page details {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+:root[data-theme="light"] .guide-page details:hover {
+  transform: translateY(-1px);
+  border-color: #c8b9f5;
+  box-shadow: 0 14px 30px rgba(96, 5, 231, 0.09);
+}
+
+:root[data-theme="light"] .guide-page details[open] {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(96,5,231,0.08), transparent 28%),
+    #ffffff;
+  border-color: #bca9f3;
+}
+
+@media (max-width: 640px) {
+  :root[data-theme="light"] .guide-hero,
+  :root[data-theme="light"] .guide-page > section {
+    border-radius: 20px;
+  }
 }

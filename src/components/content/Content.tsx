@@ -5,9 +5,18 @@ import type { IconName } from "../icons/icon-data.ts";
 
 /** Shared building blocks for the Home and Guide pages so both read with one rhythm. */
 
-export function ContentPage({ children }: { children: React.ReactNode }) {
+export function ContentPage({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <main id="main" className="w-full max-w-[76rem] mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 flex flex-col gap-14">
+    <main
+      id="main"
+      className={`w-full max-w-[76rem] mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1 flex flex-col gap-14 ${className}`}
+    >
       {children}
     </main>
   );
