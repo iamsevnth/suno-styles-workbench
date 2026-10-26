@@ -19,8 +19,25 @@ function initialChapter(): string {
   return GUIDE_CONTENT.some((chapter) => chapter.id === candidate) ? candidate : "current-workbench";
 }
 
+/** Highlight plain text safely, with no HTML injection or browser search APIs. */
+function MarkedText({ value, highlight }: { value: string; highlight: string }) {
+  const word = highlight.trim().split(/\s+/)[0]?.toLocaleLowerCase() ?? "";
+  if (!word) return <>{value}</>;
+  const lower = value.toLocaleLowerCase();
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  while (cursor < value.length) {
+    const next = lower.indexOf(word, cursor);
+    if (next < 0) { parts.push(value.slice(cursor)); break; }
+    if (next > cursor) parts.push(value.slice(cursor, next));
+    parts.push(<mark key={next} className="guide-doc-match">{value.slice(next, next + word.length)}</mark>);
+    cursor = next + word.length;
+  }
+  return <>{parts}</>;
+}
+
 /** Render text as React elements, never as untrusted HTML. */
-function InlineText({ text }: { text: string }) {
+function InlineText({ text, highlight = "" }: { text: string; highlight?: string }) {
   const segments = text.split(/(https?:\/\/[^\s<>]+|\*\*[^*]+\*\*|`[^`]+`)/g);
   return (
     <>
@@ -35,13 +52,13 @@ function InlineText({ text }: { text: string }) {
         }
         if (part.startsWith("**") && part.endsWith("**")) return <strong key={i} className="text-[var(--fg)]">{part.slice(2, -2)}</strong>;
         if (part.startsWith("`") && part.endsWith("`")) return <code key={i} className="guide-doc-code">{part.slice(1, -1)}</code>;
-        return <span key={i}>{part}</span>;
+        return <span key={i}><MarkedText value={part} highlight={highlight} /></span>;
       })}
     </>
   );
 }
 
-function ManualBody({ chapter }: { chapter: GuideChapter }) {
+function ManualBody({ chapter, highlight }: { chapter: GuideChapter; highlight: string }) {
   const blocks = useMemo(() => parseGuideBlocks(chapter.body), [chapter.body]);
   return (
     <div className="guide-doc-prose">
@@ -50,18 +67,18 @@ function ManualBody({ chapter }: { chapter: GuideChapter }) {
           if (block.level === 1 && i === 0) return null; // Article already has one h1.
           const headingId = `${chapter.id}-part-${i}`;
           return block.level === 3 ? (
-            <h3 id={headingId} key={i} className="guide-doc-h3"><InlineText text={block.text} /></h3>
+            <h3 id={headingId} key={i} className="guide-doc-h3"><InlineText text={block.text} highlight={highlight} /></h3>
           ) : (
-            <h2 id={headingId} key={i} className="guide-doc-h2"><InlineText text={block.text} /></h2>
+            <h2 id={headingId} key={i} className="guide-doc-h2"><InlineText text={block.text} highlight={highlight} /></h2>
           );
         }
         if (block.type === "list") return (
           <ul key={i} className="guide-doc-list">
-            {block.items.map((item, j) => <li key={j}><InlineText text={item} /></li>)}
+            {block.items.map((item, j) => <li key={j}><InlineText text={item} highlight={highlight} /></li>)}
           </ul>
         );
         if (block.type === "pre") return <pre key={i} className="guide-doc-pre">{block.text}</pre>;
-        return <p key={i} className="guide-doc-paragraph"><InlineText text={block.text} /></p>;
+        return <p key={i} className="guide-doc-paragraph"><InlineText text={block.text} highlight={highlight} /></p>;
       })}
     </div>
   );
@@ -98,6 +115,9 @@ function ChapterNav({ activeId, onChoose }: { activeId: string; onChoose: (id: s
 export default function GuidePage() {
   const [activeId, setActiveId] = useState(initialChapter);
   const [search, setSearch] = useState("");
+  const [highlight, setHighlight] = useState(() =>
+    typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("find") ?? ""
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
   const activeIndex = GUIDE_CONTENT.findIndex((chapter) => chapter.id === activeId);
   const active = GUIDE_CONTENT[activeIndex] ?? GUIDE_CONTENT[0];
@@ -106,21 +126,31 @@ export default function GuidePage() {
   const next = activeIndex + 1 < GUIDE_CONTENT.length ? GUIDE_CONTENT[activeIndex + 1] : null;
 
   useEffect(() => {
-    const refresh = () => setActiveId(initialChapter());
+    const refresh = () => {
+      setActiveId(initialChapter());
+      setHighlight(new URLSearchParams(window.location.search).get("find") ?? "");
+    };
     window.addEventListener("popstate", refresh);
     return () => window.removeEventListener("popstate", refresh);
   }, []);
 
-  function chooseChapter(id: string) {
+  useEffect(() => {
+    if (highlight) document.querySelector(".guide-doc-article mark")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [activeId, highlight]);
+
+  function chooseChapter(id: string, match = "") {
     if (!GUIDE_CONTENT.some((chapter) => chapter.id === id)) return;
     setActiveId(id);
+    setHighlight(match);
     setMobileOpen(false);
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
       url.searchParams.set("chapter", id);
+      if (match) url.searchParams.set("find", match);
+      else url.searchParams.delete("find");
       if (window.location.protocol !== "file:") url.hash = "";
       try { window.history.pushState({ chapter: id }, "", url.href); } catch { /* local file history is optional */ }
-      document.getElementById("guide-reader")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!match) document.getElementById("guide-reader")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
@@ -188,7 +218,7 @@ export default function GuidePage() {
               {hits.length ? (
                 <div className="guide-search-hit-grid">
                   {hits.map(({ chapter, excerpt }) => (
-                    <button type="button" key={chapter.id} className="guide-search-hit" onClick={() => { chooseChapter(chapter.id); setSearch(""); }}>
+                    <button type="button" key={chapter.id} className="guide-search-hit" onClick={() => { chooseChapter(chapter.id, search); setSearch(""); }}>
                       <strong>{chapter.title}</strong>
                       <span>{excerpt}</span>
                     </button>
@@ -205,6 +235,12 @@ export default function GuidePage() {
               <StatusPill status={active.status} />
               <p className="guide-doc-position">Chapter {activeIndex + 1} of {GUIDE_CONTENT.length}</p>
               <h1 id="guide-active-title">{active.title}</h1>
+              {highlight && (
+                <p className="guide-doc-match-notice">
+                  Highlighting search: <strong>{highlight}</strong>
+                  <button type="button" onClick={() => chooseChapter(active.id)}>Clear match</button>
+                </p>
+              )}
               {active.status === "manuscript" && (
                 <p className="guide-doc-warning">
                   Historical manuscript reference: this section preserves the author's detailed source material.
@@ -220,7 +256,7 @@ export default function GuidePage() {
 
             {active.id === "ch04" && <LiveGenreCoverage />}
             {active.id === "ch07" && <LiveVocalBudget />}
-            <ManualBody chapter={active} />
+            <ManualBody chapter={active} highlight={highlight} />
 
             <footer className="guide-doc-pager">
               {previous ? <button type="button" onClick={() => chooseChapter(previous.id)}>← {previous.title}</button> : <span />}

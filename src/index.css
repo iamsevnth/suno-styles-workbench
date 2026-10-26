@@ -644,3 +644,8 @@ input:focus, textarea:focus, select:focus {
 @media(max-width:500px) {
  .guide-vocal-budget-row { grid-template-columns:minmax(6rem,1fr) minmax(0,1fr) 4rem; font-size:0.69rem; }
 }
+
+.guide-doc-match { background:var(--tile-amber-bg); color:var(--tile-amber-fg); border-radius:0.18rem; padding:0.05rem 0.08rem; font-weight:750; }
+.guide-doc-match-notice { font-size:0.76rem; color:var(--fg-muted); display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center; }
+.guide-doc-match-notice strong { color:var(--fg); }
+.guide-doc-match-notice button { color:var(--link); font-weight:700; text-decoration:underline; }
