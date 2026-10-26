@@ -12,6 +12,7 @@ export interface ParsedInput {
   grooveHints: string[];
   bassHints: string[];
   drumHints: string[];
+  harmonyHints: string[];
   arrangementHints: string[];
   mixHints: string[];
   soundDesignHints: string[];

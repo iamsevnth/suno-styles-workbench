@@ -304,6 +304,12 @@ export const DRUMS: Record<string, string[]> = withGenreVocabulary({
     "rolling hi-hat speed changes",
     "hard snare with long pre-delay air",
     "tight kick with short click",
+    "rim ticks between snare gaps",
+    "accelerating snare rolls",
+    "pocketed ghost percussion",
+    "metallic percussion flicks",
+    "rim-and-snare layers",
+    "evolving drum fills every phrase",
   ],
   future: [
     "sidechained kick bloom",
@@ -394,6 +400,8 @@ export const BASS_TONES: Record<string, string[]> = withBassSounds({
     "muted 808s that bloom on the drop",
     "boomy 808 slides with tuned sub rumble",
     "trap 808 glide and bounce with precise pitch automation",
+    "saturated 808 glide subs",
+    "long-sustain mono 808",
   ],
   wub: [
     "rounded modulated wubs",
@@ -402,6 +410,8 @@ export const BASS_TONES: Record<string, string[]> = withBassSounds({
     "speech-like wobble vowels",
     "wide-to-narrow wobble gestures",
     "bandpass-swept wubs",
+    "LFO-routed wobble arcs",
+    "formant-shifted wobble bass",
   ],
   growl: [
     "low growls",
@@ -409,6 +419,8 @@ export const BASS_TONES: Record<string, string[]> = withBassSounds({
     "vocal-formant growls",
     "short growl stabs",
     "distorted mid-bass snarls",
+    "FM growl pulses",
+    "short metallic growl bursts",
   ],
   reese: [
     "Reese-style movement",
@@ -416,6 +428,8 @@ export const BASS_TONES: Record<string, string[]> = withBassSounds({
     "slow-beating Reese beds",
     "filtered Reese swells",
     "mid-bass Reese pressure",
+    "rolling Reese undertow",
+    "torn Reese layers",
   ],
   neuro: [
     "metallic neuro mid-bass",
@@ -435,6 +449,8 @@ export const BASS_MOVES: Record<string, string[]> = withBassSounds({
     "808 glides that outline the hook",
     "disciplined mono sub with tight attack and clean decay",
     "sidechained synth bass that breathes with the kick",
+    "portamento 808 slides",
+    "808 replies after sample chops",
   ],
   wub: [
     "bass call-and-response",
@@ -442,21 +458,26 @@ export const BASS_MOVES: Record<string, string[]> = withBassSounds({
     "wub answers after snare space",
     "wubs that open after vocal lines",
     "rhythmic wobble syllables",
+    "modulation-rate flips across phrases",
+    "wobble replies between drum gaps",
   ],
   growl: [
     "mid-bass aggression in short phrases",
     "growl stabs between vocal gaps",
     "growls reserved for drop peaks",
+    "growl bursts at transition points",
   ],
   reese: [
     "thick detuned mid-bass pressure",
     "slow Reese motion under half-time",
     "Reese beds that duck under the vocal",
+    "rolling Reese pressure under the hook",
   ],
   neuro: [
     "shifting spectral modulation",
     "mechanical bass motifs",
     "neuro movement in short bursts",
+    "short FM edits between percussion hits",
   ],
 }, "moves");
 
@@ -467,6 +488,8 @@ export const HARMONY: Record<string, string[]> = withGenreVocabulary({
     "sparse dark piano cells",
     "cold pentatonic bells",
     "minimal trap-key stabs",
+    "Phrygian two-note tension",
+    "flat-second bell answers",
   ],
   future: [
     "wide emotional chord stacks",
@@ -488,6 +511,9 @@ export const HARMONY: Record<string, string[]> = withGenreVocabulary({
   soul: [
     "warm extended soul harmony",
     "Rhodes-style voicings",
+    "minor-ninth Rhodes voicings",
+    "add9 and add11 soul voicings",
+    "MPC-chopped harmony stabs",
   ],
   cinematic: [
     "slow drone harmony",
@@ -499,6 +525,7 @@ export const HARMONY: Record<string, string[]> = withGenreVocabulary({
     "shadowy minor beds",
     "sparse dancefloor harmony",
     "minimal hook-supporting chords",
+    "suspended chord voicings",
   ],
 }, "harmony");
 
@@ -557,6 +584,9 @@ export const SOUND_DESIGN: Record<string, string[]> = withGenreVocabulary({
     "large impacts",
     "reverse textures",
     "filtered noise beds",
+    "reload silence hits",
+    "hard-cut impact gaps",
+    "LFO-rate automation",
   ],
   cinematic: [
     "deep drones",
@@ -568,6 +598,9 @@ export const SOUND_DESIGN: Record<string, string[]> = withGenreVocabulary({
     "subtle risers",
     "short transition fills",
     "filtered noise beds",
+    "tape-stop turns",
+    "sample retrigger stutters",
+    "reverse swells and white-noise lifts",
   ],
 }, "soundDesign");
 
@@ -582,11 +615,15 @@ export const ARRANGEMENT: Record<string, string[][]> = {
     ["restrained verses", "massive chorus-sized lift", "stacked-ad-lib finale"],
     ["gradual tension risers", "explosive drop", "intimate bridge pivot"],
     ["verse drums thin for the vocal", "pre-chorus filter swell", "full-drop payoff"],
+    ["snare-roll escalation", "pre-drop choke stop", "denser second drop"],
+    ["selective drum dropouts", "hard-cut fakeout", "second-drop automation lift"],
+    ["sample-led verse pocket", "bass-led drop", "final section with broader bass"],
   ],
   club: [
     ["club-tool intro groove", "mid-track bass showcase", "late percussion climax"],
     ["filter-open intro", "peak-time drop", "stripped percussion outro"],
     ["loop-friendly groove bed", "vocal hook insert", "extended drop tool"],
+    ["DJ-friendly intro", "reload pause", "second drop with wider mids"],
   ],
   emotional: [
     ["intimate verses", "expanding harmonic releases", "emotional peak layering"],
@@ -596,6 +633,7 @@ export const ARRANGEMENT: Record<string, string[][]> = {
   heavy: [
     ["narrow restrained openings", "towering half-time releases", "intimate-to-massive contrast"],
     ["sub-only tease", "full-stack impact", "silence then heavier reprise"],
+    ["negative-space opening", "pre-drop choke", "second drop with faster bass alternation"],
   ],
   cinematic: [
     ["trailer-like tension bed", "impact punctuation", "monumental half-time release"],
@@ -645,6 +683,14 @@ export const MIX: string[] = [
   "full low end that stays tight",
   "soft-knee limiting that keeps transients",
   "subtle stereo widening on harmonies",
+  "mono-locked sub with a wide sample bed",
+  "carved low mids with vivid transient punch",
+  "limiter loudness with stable headroom",
+  "controlled stereo width above a centered low end",
+  "wide mids over a mono-stable sub",
+  "sidechain pump that leaves kick and sample transients intact",
+  "parallel compression for weight",
+  "clean separation between sub, mid-bass, and sample bed",
 ];
 
 export const MASTER: Record<string, string[]> = {

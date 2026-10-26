@@ -598,7 +598,7 @@ function buildHarmony(
     families.includes("rap") ||
     families.includes("drill");
 
-  const h: string[] = [];
+  const h: string[] = [...parsed.harmonyHints];
   if (parsed.key) h.push(`${parsed.key} tonal center`);
   // Rap harmony comes from rap, trap and drill banks only, so sung-chorus voicings stay out.
   const rapFamilies = ["rap", ...families.filter((f) => f === "trap" || f === "drill")];
@@ -656,6 +656,17 @@ function buildMelody(
           "tape-saturated Rhodes chord melodies",
           "ambient chorus-modulated Rhodes lines",
           "sparse neo-soul Rhodes phrases",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("chopped sample")) {
+      return [
+        pick(rng, [
+          "MPC-style chopped soul-sample stabs",
+          "pitched sample fragments with short retriggers",
+          "filtered sample-loop hook fragments",
+          "resampled vocal and soul chops with raw sampler edges",
+          "finger-played sample slices with compact phrase tails",
         ]),
       ];
     }

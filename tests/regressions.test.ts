@@ -64,6 +64,34 @@ describe("melodic sung-rap briefs", () => {
   });
 });
 
+describe("catalog-derived input mapping", () => {
+  it("maps production language from the historical catalog into explicit planner hints", () => {
+    const parsed = parseUserInput(
+      "140 BPM EDM Trap, Phrygian, MPC-style chopped soul sample, snare rolls, LFO wobble, pre-drop choke stop, second drop, negative space, sidechain, stable headroom"
+    );
+    assert.ok(parsed.harmonyHints.includes("Phrygian tension around the flat second"));
+    assert.ok(parsed.explicitInstruments?.includes("chopped sample"));
+    assert.ok(parsed.drumHints.includes("accelerating snare rolls"));
+    assert.ok(parsed.bassHints.includes("LFO-routed wobble movement"));
+    assert.ok(parsed.arrangementHints.includes("pre-drop choke stop"));
+    assert.ok(parsed.arrangementHints.includes("second drop with denser automation and wider mids"));
+    assert.ok(parsed.arrangementHints.includes("negative space and selective drum dropouts"));
+    assert.ok(parsed.mixHints.includes("sidechain pump with transient space"));
+    assert.ok(parsed.mixHints.includes("limiter loudness with stable headroom"));
+  });
+
+  it("uses sample-led melodic phrases instead of ignoring an MPC-style sample request", () => {
+    const prompts = generateStylesPrompts(
+      "130 BPM EDM Trap + Future Bass, MPC-style chopped soul sample, male talk-rap, pre-drop choke stop",
+      { count: 3, seed: 1037115013 }
+    ).prompts;
+    for (const p of prompts) {
+      assert.match(p.styles, /sample|MPC/i, p.styles);
+      assert.match(p.styles, /pre-drop choke/i, p.styles);
+    }
+  });
+});
+
 describe("key parsing", () => {
   it("preserves flat-key spelling instead of turning Bb into BB", () => {
     assert.equal(parseUserInput("140 BPM, Bb minor, future bass").key, "Bb minor");
