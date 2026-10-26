@@ -1,0 +1,46 @@
+name: Capture Live Guide Screenshots
+
+on:
+  push:
+    branches:
+      - evidence/guide-v4-screenshots
+    paths:
+      - .github/workflows/capture-guide-v4.yml
+      - .github/scripts/capture-guide-v4.cjs
+
+permissions:
+  contents: write
+
+jobs:
+  screenshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out screenshot branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          persist-credentials: true
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v4
+        with:
+          node-version: "22"
+      - name: Install screenshot browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture live desktop and mobile Guide
+        run: node .github/scripts/capture-guide-v4.cjs
+      - name: Upload screenshots as workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: guide-v4-live-screenshots
+          path: docs/screenshots/live-guide-v4/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Commit screenshots to evidence branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots/live-guide-v4/
+          git commit -m "Capture deployed v4 Guide desktop and mobile screenshots"
+          git push origin HEAD:evidence/guide-v4-screenshots
