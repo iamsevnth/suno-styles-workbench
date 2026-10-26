@@ -233,7 +233,7 @@ export default function GuidePage() {
             <div className="guide-doc-article-head">
               <StatusPill status={active.status} />
               <p className="guide-doc-position">Chapter {activeIndex + 1} of {GUIDE_CONTENT.length}</p>
-              <h1 id="guide-active-title">{active.title}</h1>
+              <h1 id="guide-active-title"><MarkedText value={active.title} highlight={highlight} /></h1>
               {highlight && (
                 <p className="guide-doc-match-notice">
                   Highlighting search: <strong>{highlight}</strong>

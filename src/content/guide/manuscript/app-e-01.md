@@ -1,6 +1,6 @@
 # Sonic Identity Encyclopedia
 
-Master Library §Mateus — Master Suno Genre & Sonic Identity Library
+Master Sonic Identity Library — Source Manuscript
 Version: 1.0
 Date: Monday, August 10, 2026
 Purpose: Master reference for future Suno genre selection, hybrid design, sonic direction,
