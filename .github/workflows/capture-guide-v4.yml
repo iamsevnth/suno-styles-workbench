@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   screenshot:
@@ -28,7 +29,22 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Capture live desktop and mobile Guide
+      - name: Serve exact successful deployment artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/pages-zip /tmp/pages-site
+          gh run download 40297339376 --repo "$GITHUB_REPOSITORY" --name github-pages --dir /tmp/pages-zip
+          test -s /tmp/pages-zip/artifact.tar
+          tar -xf /tmp/pages-zip/artifact.tar -C /tmp/pages-site
+          test -s /tmp/pages-site/guide.html
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory /tmp/pages-site >/tmp/pages-server.log 2>&1 &
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            curl -fsS http://127.0.0.1:4173/guide.html >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/guide.html >/dev/null
+      - name: Capture deployed desktop and mobile Guide
         run: node .github/scripts/capture-guide-v4.cjs
       - name: Upload screenshots as workflow artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
