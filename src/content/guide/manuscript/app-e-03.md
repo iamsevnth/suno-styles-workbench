@@ -1,9 +1,5 @@
 # Sonic Identity Encyclopedia — Part 3
 
-c identity dominant while allowing Brazilian rhythmic character to
-transform the groove.
-
-
 Master Library §17. Melodic Rap & Emotional Rap
 
 Core
@@ -263,4 +259,97 @@ Both work especially well with Ritual Bass and cinematic hybrids.
 Master Library §31. Primary Mood & Vibe Library
 
 Dark
-   Brooding
+   Brooding   Menacing
+   Sinister
+   Ominous
+   Nocturnal
+   Shadowy
+   Gritty
+   Dystopian
+   Dangerous
+   Predatory
+   Aggressive
+   Apocalyptic
+
+Cinematic
+   Epic
+   Monumental
+   Dramatic
+   Tense
+   Suspenseful
+   Immersive
+   Expansive
+   Atmospheric
+   Story-driven
+   Larger-than-life
+
+Ritualistic
+   Ceremonial
+   Occult
+   Hypnotic
+   Ancient
+   Mystical
+   Tribal
+   Primal
+   Spiritual
+   Entrancing
+   Processional
+
+
+
+Emotional
+   Melancholic
+   Bittersweet
+   Vulnerable
+   Intimate
+   Yearning
+   Reflective
+   Soulful
+   Heartbroken
+   Nostalgic
+   Cathartic
+
+Euphoric
+   Soaring
+   Expansive
+   Uplifting
+   Triumphant
+   Anthemic
+   Explosive
+   Liberating
+
+Futuristic
+   Cybernetic
+   Mechanical
+   Digital
+   Neon
+   High-tech
+   Synthetic
+   Sci-fi
+   Dystopian-futurist
+
+Club / Physical
+   Heavy
+   Bouncy
+   Swaggering
+   Kinetic
+   Hypnotic
+   Head-nodding
+   Dancefloor-driven
+
+
+
+   Percussive
+   Body-moving
+
+Luxury / Late-Night
+   Sleek
+   Dark luxury
+   Polished
+   Moody
+   Seductive
+   Nocturnal
+   Expensive
+   Controlled
+   Minimal
+   Atmospheric

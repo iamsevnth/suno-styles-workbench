@@ -1,12 +1,5 @@
 # Sonic Identity Encyclopedia — Part 2
 
-d deep, cinematic, melodic, dark, minimal, or wubby
-interpretations.
-
-
-
-
-
 Master Library §7. 140 Bass & UK Bass
 
 Core
@@ -293,4 +286,5 @@ A proven blend within the library is approximately:
 70% Trap / Dubstep / 140 UKG Bass
 with
 30% Baile Funk / Favela Funk
-This keeps the bass-musi
+This keeps the bass-music identity dominant while allowing Brazilian rhythmic character to
+transform the groove.

@@ -1,101 +1,5 @@
 # Sonic Identity Encyclopedia — Part 4
 
-   Menacing
-   Sinister
-   Ominous
-   Nocturnal
-   Shadowy
-   Gritty
-   Dystopian
-   Dangerous
-   Predatory
-   Aggressive
-   Apocalyptic
-
-Cinematic
-   Epic
-   Monumental
-   Dramatic
-   Tense
-   Suspenseful
-   Immersive
-   Expansive
-   Atmospheric
-   Story-driven
-   Larger-than-life
-
-Ritualistic
-   Ceremonial
-   Occult
-   Hypnotic
-   Ancient
-   Mystical
-   Tribal
-   Primal
-   Spiritual
-   Entrancing
-   Processional
-
-
-
-Emotional
-   Melancholic
-   Bittersweet
-   Vulnerable
-   Intimate
-   Yearning
-   Reflective
-   Soulful
-   Heartbroken
-   Nostalgic
-   Cathartic
-
-Euphoric
-   Soaring
-   Expansive
-   Uplifting
-   Triumphant
-   Anthemic
-   Explosive
-   Liberating
-
-Futuristic
-   Cybernetic
-   Mechanical
-   Digital
-   Neon
-   High-tech
-   Synthetic
-   Sci-fi
-   Dystopian-futurist
-
-Club / Physical
-   Heavy
-   Bouncy
-   Swaggering
-   Kinetic
-   Hypnotic
-   Head-nodding
-   Dancefloor-driven
-
-
-
-   Percussive
-   Body-moving
-
-Luxury / Late-Night
-   Sleek
-   Dark luxury
-   Polished
-   Moody
-   Seductive
-   Nocturnal
-   Expensive
-   Controlled
-   Minimal
-   Atmospheric
-
-
 Master Library §32. Rhythmic DNA
 The preferred rhythmic universe combines several distinct systems.
 
@@ -344,4 +248,5 @@ Ritual
 Soulful
    Tape warmth
    Sample texture
-   Gui
+   Guitar ambience
+   Filtered harmonic fragments

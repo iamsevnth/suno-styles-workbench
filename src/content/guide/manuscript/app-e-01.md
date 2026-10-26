@@ -253,4 +253,5 @@ Dubstep supplies one of the strongest sonic signatures:
    Space between major transients
    Textural bass conversation
    Drop architecture
-Preferred Dubstep usage often leans towar
+Preferred Dubstep usage often leans toward deep, cinematic, melodic, dark, minimal, or wubby
+interpretations.
