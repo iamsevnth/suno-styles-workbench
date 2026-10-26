@@ -33,7 +33,7 @@ export const ROUTE_META: Record<RouteId, { title: string; description: string }>
   guide: {
     title: "Guide | Suno Workbench",
     description:
-      "Practical guidance for writing briefs, understanding the Styles Compiler, using Suno Create mode, editing songs, Studio workflows and rights-aware uploads.",
+      "Search the complete Suno Workbench production manual, v4 compiler documentation, Suno Create controls, 30 recipes, genre tables, and the 59-section sonic encyclopedia.",
   },
   privacy: {
     title: "Privacy Policy | Suno Workbench",

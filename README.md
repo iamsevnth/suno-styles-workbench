@@ -16,7 +16,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 | --- | --- |
 | **Styles Compiler** | Creates one to six 925–975 character Styles prompts from a short brief, or rebuilds an existing Suno Styles prompt in **Fix Existing Prompt** mode. |
 | **Lyrics Studio** | Builds a song section by section with exact line counts, custom section ordering, Suno section tags and American-English phonetic respelling. |
-| **Guide** | Explains brief writing, compiler logic, genre coverage, Suno Create mode, Song Editor/Studio workflows and rights-aware publishing. |
+| **Guide** | A complete, locally searchable reference manual migrated from a 157-page DOCX, with chapter navigation, the 59-section sonic encyclopedia, recipes, genre and lexicon appendices, verified v4 instructions, and official Suno v6 controls. |
 
 There is no application server, account, analytics service, cookie, API key or AI API call. Compilation and lyric processing run locally. The site also ships as one self-contained `suno-workbench.html` file that works offline.
 
@@ -45,6 +45,14 @@ Paste a Styles prompt that already ran in Suno. Fix mode reparses the musical in
 ## Lyrics Studio
 
 Lyrics Studio includes the existing **Modular Song Structure Order (Custom Sequence)** builder. Sections can be added, duplicated, reordered and assigned their own line counts before generation. The longer-term overhaul plan for making this custom sequence the center of Lyrics Studio is documented in [docs/LYRICS_STUDIO_OVERHAUL.md](docs/LYRICS_STUDIO_OVERHAUL.md).
+
+## Complete searchable Guide
+
+The `/guide` page now contains a chapter-based edition of the author's long-form engineering and production manuscript. The reference content is committed as Markdown in `src/content/guide/manuscript/`; current v4 and official Suno chapters live in `src/content/guide/verified/`.
+
+Search and navigation run in-browser and in the self-contained offline edition, with no network requests or analytics. Each historical chapter carries source-status and v4-reconciliation notes: retired Skills Studio workflows, old prompt title/ID formats, legacy module paths and retired models are not presented as current features. The historically oversized example prompts are **not** validated copy-ready output. A live Genre Coverage chart is computed from the actual library rather than copied from the manuscript.
+
+When editing the manual, update the Markdown chapter and the stable index in `src/lib/guide/manifest.ts`; do not paste new prose into a giant TSX component. Validate the index with `npm test` and the bundled HTML with `npm run build`.
 
 ## Suno Create Mode guidance
 
@@ -104,6 +112,10 @@ src/
     HomePage.tsx
     PrivacyPolicyPage.tsx
     guide/
+  content/
+    guide/
+      verified/
+      manuscript/
   components/
     content/
     layout/
@@ -123,7 +135,7 @@ docs/
 
 ## Light and dark mode
 
-The UI uses the same brand spectrum in both themes. Theme colors are CSS variables in `src/index.css`, and responsive Guide components—including the Genre Coverage chart—derive their colors from those variables rather than hard-coded light-only or dark-only values.
+The UI uses the same brand spectrum in both themes. Theme colors are CSS variables in `src/index.css`. The responsive Guide reader, colored sections, and source-backed Genre Coverage chart derive their colors from those variables rather than hard-coded single-theme values.
 
 ## Credits
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ContentPage } from "../../components/content/Content.tsx";
 import { LogoFull } from "../../components/layout/Logo.tsx";
+import LiveGenreCoverage from "./LiveGenreCoverage.tsx";
 import { GUIDE_CONTENT, type GuideChapter } from "../../lib/guide/content.ts";
 import { GUIDE_ANCHOR_REDIRECTS, GUIDE_GROUPS } from "../../lib/guide/manifest.ts";
 import { parseGuideBlocks } from "../../lib/guide/blocks.ts";
@@ -216,6 +217,7 @@ export default function GuidePage() {
               )}
             </div>
 
+            {active.id === "ch04" && <LiveGenreCoverage />}
             <ManualBody chapter={active} />
 
             <footer className="guide-doc-pager">
