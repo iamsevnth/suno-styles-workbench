@@ -148,7 +148,20 @@ function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
 export function renderStyles(plan: SonicPlan): string {
   let text = compose(plan);
   text = fitToWindow(text, plan);
+  const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
+  if (!hasDrops(families)) text = sanitizeNonDropWording(text);
   return text;
+}
+
+/**
+ * Final semantic guardrail for song/world/ambient families. Phrase banks already filter drop language,
+ * but this protects against a future renderer or padding phrase reintroducing it. The replacements
+ * preserve length, so the 925–975 character window remains unchanged.
+ */
+function sanitizeNonDropWording(text: string): string {
+  return text
+    .replace(/(?<!one-)\bdrops\b/gi, "peaks")
+    .replace(/(?<!one-)\bdrop\b/gi, "peak");
 }
 
 function compose(plan: SonicPlan): string {
