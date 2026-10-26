@@ -91,7 +91,8 @@ export function buildOnePlan(
     attempt?: number;
   } = {}
 ): SonicPlan {
-  const rng = mulberry32(seed >>> 0);
+  const rngSeed = seed >>> 0;
+  const rng = mulberry32(rngSeed);
   const rank = options.diversityRank ?? variantIndex;
   const attempt = options.attempt ?? 0;
 
@@ -261,6 +262,7 @@ export function buildOnePlan(
 
   return {
     bpm,
+    key: parsed.key,
     primaryGenre,
     secondaryGenre,
     accentGenre,
@@ -285,7 +287,7 @@ export function buildOnePlan(
     anchors,
     recipeId,
     variantAxes: [...preset.axes, `seed:${seed % 1000}`, `recipe:${recipeId.slice(0, 48)}`],
-    seed,
+    seed: rngSeed,
   };
 }
 
@@ -596,7 +598,7 @@ function buildHarmony(
     families.includes("rap") ||
     families.includes("drill");
 
-  const h: string[] = [];
+  const h: string[] = [...parsed.harmonyHints];
   if (parsed.key) h.push(`${parsed.key} tonal center`);
   // Rap harmony comes from rap, trap and drill banks only, so sung-chorus voicings stay out.
   const rapFamilies = ["rap", ...families.filter((f) => f === "trap" || f === "drill")];
@@ -654,6 +656,17 @@ function buildMelody(
           "tape-saturated Rhodes chord melodies",
           "ambient chorus-modulated Rhodes lines",
           "sparse neo-soul Rhodes phrases",
+        ]),
+      ];
+    }
+    if (parsed.explicitInstruments.includes("chopped sample")) {
+      return [
+        pick(rng, [
+          "MPC-style chopped soul-sample stabs",
+          "pitched sample fragments with short retriggers",
+          "filtered sample-loop hook fragments",
+          "resampled vocal and soul chops with raw sampler edges",
+          "finger-played sample slices with compact phrase tails",
         ]),
       ];
     }
@@ -807,7 +820,10 @@ function buildArrangement(energy: string, families: string[], parsed: ParsedInpu
       a.push(pick(rng, DNA_HOOK.filter((x) => fitsFamilies(x, families))));
     }
   }
-  return unique(a).slice(0, 4);
+  const familySafe = hasDrops(families)
+    ? a
+    : a.filter((x) => !/(?<!one-)\bdrops?\b|\bdrop-|(?<!one)-drop\b/i.test(x));
+  return unique(familySafe).slice(0, 4);
 }
 
 function buildMix(families: string[], parsed: ParsedInput, rng: () => number): string[] {

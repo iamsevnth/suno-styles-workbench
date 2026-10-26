@@ -101,10 +101,7 @@ export function randomPromptId(length: number = 8): string {
 export function formatAllPromptsTxt(prompts: PromptCandidate[]): string {
   return prompts
     .map((p) => {
-      const id = randomPromptId();
-      const title = (p.phrase || p.title.split("|")[0] || "Untitled").trim();
-      const header = `ID#${id} & ${title} | ${p.bpm} BPM | ${p.characters} Total Characters`;
-      return `${header}\n${p.styles}\n====\n`;
+      return `${p.title}\n${p.styles}\n====\n`;
     })
     .join("\n");
 }

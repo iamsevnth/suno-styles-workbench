@@ -87,7 +87,9 @@ export function generateStylesPrompts(
 
       const characters = styles.length;
       const candidate: PromptCandidate = {
-        title: formatTitle(plan.titlePhrase, plan.bpm, characters),
+        title: formatTitle(plan.seed, plan.bpm, plan.key, characters),
+        seed: plan.seed,
+        key: plan.key,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters,
@@ -115,7 +117,9 @@ export function generateStylesPrompts(
       const styles = forceCharacterWindow(renderStyles(plan), plan.bpm);
       const validation = validatePrompt(styles, plan, peerTexts, peerPlans);
       best = {
-        title: formatTitle(plan.titlePhrase, plan.bpm, styles.length),
+        title: formatTitle(plan.seed, plan.bpm, plan.key, styles.length),
+        seed: plan.seed,
+        key: plan.key,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters: styles.length,

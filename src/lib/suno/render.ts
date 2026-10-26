@@ -13,7 +13,6 @@ import {
   VOCAL_STYLE,
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
-import { toTitleCase } from "./title-case.ts";
 import { SonicPlan } from "./types.ts";
 
 export const MIN_CHARS = 925;
@@ -149,7 +148,20 @@ function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
 export function renderStyles(plan: SonicPlan): string {
   let text = compose(plan);
   text = fitToWindow(text, plan);
+  const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
+  if (!hasDrops(families)) text = sanitizeNonDropWording(text);
   return text;
+}
+
+/**
+ * Final semantic guardrail for song/world/ambient families. Phrase banks already filter drop language,
+ * but this protects against a future renderer or padding phrase reintroducing it. The replacements
+ * preserve length, so the 925–975 character window remains unchanged.
+ */
+function sanitizeNonDropWording(text: string): string {
+  return text
+    .replace(/(?<!one-)\bdrops\b/gi, "peaks")
+    .replace(/(?<!one-)\bdrop\b/gi, "peak");
 }
 
 function compose(plan: SonicPlan): string {
@@ -695,8 +707,10 @@ function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function formatTitle(phrase: string, bpm: number, characters: number): string {
-  const words = phrase.trim().split(/\s+/).slice(0, 6);
-  const titled = toTitleCase(words.join(" "));
-  return `${titled} | ${bpm} BPM | ${characters} total characters`;
+export function formatSeed(seed: number): string {
+  return String(seed >>> 0).padStart(10, "0");
+}
+
+export function formatTitle(seed: number, bpm: number, key: string | undefined, characters: number): string {
+  return `Seed #: ${formatSeed(seed)} | BPM: ${bpm} | Key: ${key ?? "--"} | Total Characters: ${characters}`;
 }

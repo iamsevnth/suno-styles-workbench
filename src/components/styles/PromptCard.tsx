@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toTitleCase } from "../../lib/suno/title-case.ts";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 
 function PlanCell({ label, value }: { label: string; value: string | number | undefined }) {
@@ -25,7 +24,7 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
     <article className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 p-4 border-b border-[var(--border)]">
         <div>
-          <h3 className="text-base font-semibold text-[var(--fg)]">{toTitleCase(prompt.title)}</h3>
+          <h3 className="text-base font-semibold text-[var(--fg)]">{prompt.title}</h3>
           <span className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
             {prompt.characters} total characters
           </span>

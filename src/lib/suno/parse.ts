@@ -210,6 +210,11 @@ export function parseUserInput(
   if (/\breese\b/i.test(text)) bassHints.push("Reese bass");
   if (/\bneuro\b/i.test(text)) bassHints.push("modulated neuro mid-bass");
   if (/\bsub\b/i.test(text)) bassHints.push("deep mono sub");
+  if (/\blfo|oscillat/i.test(text)) bassHints.push("LFO-routed wobble movement");
+  if (/\bportamento\b/i.test(text)) bassHints.push("portamento bass slides");
+  if (/\bfm\s+(?:growl|bass|mid[- ]?bass)/i.test(text)) bassHints.push("FM growl pulses");
+  if (/\bcall[- ]and[- ]response\b/i.test(text)) bassHints.push("bass call-and-response");
+  if (/\blong (?:sub|808) (?:tail|sustain)/i.test(text)) bassHints.push("long mono sub sustain");
 
   const drumHints: string[] = [];
   if (/\btrap hats?|hi[- ]?hats?\b/i.test(text)) drumHints.push("rapid trap hats");
@@ -217,6 +222,20 @@ export function parseUserInput(
   if (/\bpunchy kicks?\b/i.test(text)) drumHints.push("punchy kicks");
   if (/\bspacious snare\b/i.test(text)) drumHints.push("spacious snare placement");
   if (/\bhard downbeat\b/i.test(text)) drumHints.push("hard downbeat kicks");
+  if (/\bsnare rolls?\b/i.test(text)) drumHints.push("accelerating snare rolls");
+  if (/\brim (?:ticks?|clicks?)\b/i.test(text)) drumHints.push("rim ticks between snare gaps");
+  if (/\bghost percussion\b/i.test(text)) drumHints.push("pocketed ghost percussion");
+  if (/\bmetallic percussion\b/i.test(text)) drumHints.push("metallic percussion flicks");
+  if (/\btom (?:fills?|accents?)\b/i.test(text)) drumHints.push("evolving tom fills");
+
+  const harmonyHints: string[] = [];
+  if (/\bphrygian\b/i.test(text)) harmonyHints.push("Phrygian tension around the flat second");
+  if (/\bminor\s+(?:add9|9th|ninth)\b|\bminor9\b/i.test(text)) harmonyHints.push("minor add9 voicings");
+  if (/\badd11\b|\b11th\b/i.test(text)) harmonyHints.push("add11 extensions");
+  if (/\bsuspended\b|\bsus2\b|\bsus4\b/i.test(text)) harmonyHints.push("suspended chord voicings");
+  if (/\b(?:mpc[- ]style|chopped)\s+(?:soul|gospel|r&b)?\s*sample/i.test(text)) {
+    harmonyHints.push("chopped sample harmony fragments");
+  }
 
   const arrangementHints: string[] = [];
   if (/\bbuild\b/i.test(text)) arrangementHints.push("gradual build");
@@ -224,12 +243,27 @@ export function parseUserInput(
   if (/\bbreakdown\b/i.test(text)) arrangementHints.push("stripped breakdown");
   if (/\bcontrast\b/i.test(text)) arrangementHints.push("intimate-to-massive contrast");
   if (/\bkinetic\b/i.test(text)) arrangementHints.push("groove-forward momentum", "drop-focused payoff");
+  if (/\bpre[- ]?drop\b.*\bchoke|\bchoke stops?\b|\bhard cuts?\b/i.test(text)) {
+    arrangementHints.push("pre-drop choke stop");
+  }
+  if (/\bsecond drop\b|\bdrop ?2\b/i.test(text)) {
+    arrangementHints.push("second drop with denser automation and wider mids");
+  }
+  if (/\bnegative space\b|\bselective silence\b|\bdrum dropouts?\b|\bdropouts? for tension\b/i.test(text)) {
+    arrangementHints.push("negative space and selective drum dropouts");
+  }
+  if (/\breload\b|\bfakeout\b/i.test(text)) arrangementHints.push("reload pause and fakeout silence");
 
   const mixHints: string[] = [];
   if (/\bwide\b/i.test(text)) mixHints.push("wide harmonic field");
   if (/\bmono\b/i.test(text)) mixHints.push("centered mono low end");
   if (/\bcrisp\b/i.test(text)) mixHints.push("crisp drum transients");
   if (/\breverb\b/i.test(text)) mixHints.push("cinematic reverb tails");
+  if (/\bsidechain|side[- ]chained\b/i.test(text)) mixHints.push("sidechain pump with transient space");
+  if (/\bheadroom\b/i.test(text)) mixHints.push("limiter loudness with stable headroom");
+  if (/\blow[- ]?mids?\b/i.test(text)) mixHints.push("controlled low mids");
+  if (/\bstereo width|stereo widening\b/i.test(text)) mixHints.push("controlled stereo width");
+  if (/\bparallel comp(?:ression)?\b/i.test(text)) mixHints.push("parallel compression for weight");
 
   const soundDesignHints: string[] = [];
   if (/\bglitch\b/i.test(text)) soundDesignHints.push("digital glitches");
@@ -237,6 +271,10 @@ export function parseUserInput(
   if (/\bgranular\b/i.test(text)) soundDesignHints.push("granular textures");
   if (/\bmetallic\b/i.test(text)) soundDesignHints.push("metallic modulation");
   if (/\briser|impacts?\b/i.test(text)) soundDesignHints.push("cinematic risers and impacts");
+  if (/\bwhite[- ]noise\b/i.test(text)) soundDesignHints.push("white-noise lifts");
+  if (/\btape[- ]?stop\b/i.test(text)) soundDesignHints.push("tape-stop turns");
+  if (/\breverse (?:swell|cymbal|texture)/i.test(text)) soundDesignHints.push("reverse swells");
+  if (/\b(?:sample|chop).*(?:stutter|retrigger)|\bretrigger/i.test(text)) soundDesignHints.push("sample retrigger stutters");
 
   const drafts: string[] = [];
   if (looksLikeDraft) drafts.push(text);
@@ -270,7 +308,8 @@ export function parseUserInput(
   let key: string | undefined;
   const keyMatch = text.match(/\b([A-G](?:#|b)?)\s*(minor|major|min|maj)\b/i);
   if (keyMatch) {
-    const tonic = keyMatch[1].toUpperCase();
+    const rawTonic = keyMatch[1];
+    const tonic = rawTonic.charAt(0).toUpperCase() + rawTonic.slice(1);
     const qual = keyMatch[2].toLowerCase();
     key = qual.startsWith("min") ? `${tonic} minor` : `${tonic} major`;
   }
@@ -289,6 +328,7 @@ export function parseUserInput(
     grooveHints,
     bassHints,
     drumHints,
+    harmonyHints,
     arrangementHints,
     mixHints,
     soundDesignHints,
@@ -404,6 +444,7 @@ function extractExplicitInstruments(text: string): string[] {
     [/\borgans?\b/i, "organ"],
     [/\bhand drums?|percussion|congas?|bongos?|djembe|cajon\b/i, "hand percussion"],
     [/\bvocal chops?\b/i, "vocal chops"],
+    [/\b(?:mpc[- ]style|chopped|pitched[- ]?up)\s+(?:soul|gospel|r&b)?\s*sample(?:s|d)?\b/i, "chopped sample"],
   ];
 
   for (const [re, name] of map) {

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toTitleCase } from "../../lib/suno/title-case.ts";
 import { HistoryEntry } from "../../lib/suno/types.ts";
 
 interface HistoryPanelProps {
@@ -79,7 +78,7 @@ export default function HistoryPanel({ history, onCopy, onExport, onClear }: His
                       {entry.prompts.map((p) => (
                         <div key={p.recipeId ?? p.title}>
                           <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-medium text-[var(--fg)]">{toTitleCase(p.title)}</p>
+                            <p className="text-xs font-medium text-[var(--fg)]">{p.title}</p>
                             <button
                               type="button"
                               onClick={() => onCopy(p.styles)}

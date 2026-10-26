@@ -12,6 +12,7 @@ export interface ParsedInput {
   grooveHints: string[];
   bassHints: string[];
   drumHints: string[];
+  harmonyHints: string[];
   arrangementHints: string[];
   mixHints: string[];
   soundDesignHints: string[];
@@ -64,6 +65,7 @@ export interface VocalPreferences {
 
 export interface SonicPlan {
   bpm: number;
+  key?: string;
   primaryGenre: string;
   secondaryGenre?: string;
   accentGenre?: string;
@@ -109,6 +111,8 @@ export interface HardGates {
 
 export interface PromptCandidate {
   title: string;
+  seed: number;
+  key?: string;
   phrase: string;
   bpm: number;
   characters: number;
@@ -126,6 +130,8 @@ export interface GenerateResult {
 
 export interface HistoryPromptItem {
   title: string;
+  seed?: number;
+  key?: string;
   styles: string;
   characters: number;
   bpm: number;
