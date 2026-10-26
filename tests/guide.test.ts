@@ -37,6 +37,15 @@ describe("complete Guide manuscript", () => {
     assert.ok(GUIDE_CHAPTERS.some(x => x.id === "app-e-06"));
   });
 
+  it("splits the sonic encyclopedia at numbered section headings without cutting words", () => {
+    const parts = GUIDE_CHAPTERS.filter(x => x.id.startsWith("app-e-"));
+    assert.equal(parts.length, 6);
+    const text = parts.map(x => readFileSync(sourcePath(x.id, x.status), "utf8"));
+    for (const part of text.slice(1)) assert.match(part, /^# Sonic Identity Encyclopedia — Part \d+\n\nMaster Library §\d+\./);
+    const sectionNumbers = text.join("\\n").match(/Master Library §\d+\./g) ?? [];
+    assert.ok(sectionNumbers.length >= 59, `Expected all 59 numbered sonic-identity sections, found ${sectionNumbers.length}`);
+  });
+
   it("keeps the current v4 and official Suno reference separate from the historical source", () => {
     const current = GUIDE_CHAPTERS.find(x => x.id === "current-workbench");
     const official = GUIDE_CHAPTERS.find(x => x.id === "create-mode");

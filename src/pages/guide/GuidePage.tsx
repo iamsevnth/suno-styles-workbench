@@ -78,7 +78,7 @@ function ManualBody({ chapter, highlight }: { chapter: GuideChapter; highlight: 
             {block.items.map((item, j) => <li key={j}><InlineText text={item} highlight={highlight} /></li>)}
           </ul>
         );
-        if (block.type === "pre") return <pre key={i} className="guide-doc-pre">{block.text}</pre>;
+        if (block.type === "pre") return <pre key={i} tabIndex={0} role="region" aria-label="Source reference table or code excerpt" className="guide-doc-pre">{block.text}</pre>;
         return <p key={i} className="guide-doc-paragraph"><InlineText text={block.text} highlight={highlight} /></p>;
       })}
     </div>
