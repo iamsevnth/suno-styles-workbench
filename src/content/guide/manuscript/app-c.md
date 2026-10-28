@@ -826,7 +826,7 @@ MELODY         soul          2       lyrical intimate melodic phrases | soft sou
 MELODY         general       3       sparse memorable motifs | short identity motifs | few-
                                      note hooks with strong contour
 
-SOUND_DESIG    trap          4       tape-stop fills | gunshot-style snare rooms | vinyl-crackle
+SOUND_DESIG    trap          4       tape-stop fills | sharp cracking snare rooms | vinyl-crackle
 N                                    air on verses | reverse-hat lifters
 
 

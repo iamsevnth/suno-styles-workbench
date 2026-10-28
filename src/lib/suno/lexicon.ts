@@ -564,7 +564,7 @@ export const MELODY: Record<string, string[]> = withGenreVocabulary({
 export const SOUND_DESIGN: Record<string, string[]> = withGenreVocabulary({
   trap: [
     "tape-stop fills",
-    "gunshot-style snare rooms",
+    "sharp cracking snare rooms",
     "vinyl-crackle air on verses",
     "reverse-hat lifters",
   ],
