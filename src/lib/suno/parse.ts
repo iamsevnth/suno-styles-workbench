@@ -1,3 +1,4 @@
+import { dropMismatchedCompiled } from "./affinity.ts";
 import { inferBlendBand } from "./genre-atlas.ts";
 import { bpmNotes, resolveGenreBlend, stripTemplateBoilerplate, stripVocalLeadIn } from "./blend.ts";
 import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
@@ -175,11 +176,12 @@ export function parseUserInput(
   );
   const atmospheres = ATMOSPHERE_WORDS.filter((a) => lower.includes(a));
 
+  const instrumentText = dropMismatchedCompiled(text, genres);
   const instruments: string[] = [];
   for (const [re, label] of INSTRUMENT_PATTERNS) {
-    if (re.test(text) && !instruments.includes(label)) instruments.push(label);
+    if (re.test(instrumentText) && !instruments.includes(label)) instruments.push(label);
   }
-  const explicitInstruments = extractExplicitInstruments(text);
+  const explicitInstruments = extractExplicitInstruments(instrumentText);
 
   const instrumental = /\binstrumental\b/i.test(text);
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
@@ -322,7 +324,7 @@ export function parseUserInput(
   }
 
   return {
-    raw: text,
+    raw: instrumentText,
     count,
     genres: genres.slice(0, 3),
     genreNotes: [...blend.notes, ...(bpm != null ? bpmNotes(genres, bpm) : [])],
