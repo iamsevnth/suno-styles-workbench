@@ -417,7 +417,10 @@ function assemble(
   sentences.push(...pads);
 
   // 8. Mix and finish.
-  const mix = claim(dedupeSimilar(plan.mix)).slice(0, d.mix);
+  // A mix note that re-names a sound the sections above already described ("kick and 808 carved apart"
+  // after "sliding 808") is skipped even when it also names something new: each sound is stated once.
+  const restated = (phrase: string) => [...conceptsOf(phrase)].some((c) => seen.has(c));
+  const mix = claim(dedupeSimilar(plan.mix).filter((m) => !restated(m))).slice(0, d.mix);
   const master = take(plan.master, d.master);
   if (mix.length) {
     sentences.push(`${MIX_LEADS[c.mixLead % MIX_LEADS.length]} ${joinList(mix)}${master.length ? `, finished for ${joinList(master)}` : ""}.`);

@@ -1,3 +1,4 @@
+import { type Section, Selector } from "./affinity.ts";
 import { bpmNotes, checkBlendBpm, dedupeByConcept, reconcileMoods } from "./blend.ts";
 import { namedBpmConflict, pickByBand, pickFaithfulAccent } from "./genre-atlas.ts";
 import {
@@ -219,14 +220,15 @@ export function buildOnePlan(
     lockedBass ??
     bassFamilies[(presetIndex + Math.floor(rng() * bassFamilies.length) + rank) % bassFamilies.length];
 
-  const groove = buildGroove(families, preset.rhythmFamily, parsed, rng, metricFeel);
-  const drums = buildDrums(families, parsed, rng);
-  const { bass, bassBehavior } = buildBass(bassFamily, families, parsed, rng);
-  const harmony = buildHarmony(families, moodPrimary, parsed, rng);
-  const melody = buildMelody(families, moodPrimary, parsed, rng);
-  const soundDesign = buildSoundDesign(families, moodPrimary, parsed, rng);
-  const arrangement = buildArrangement(preset.energy, families, parsed, rng);
-  const mix = buildMix(families, parsed, rng);
+  const selector = new Selector([primaryGenre, secondaryGenre, accentGenre], parsed.raw);
+  const groove = scrub(selector, "groove", buildGroove(families, preset.rhythmFamily, parsed, rng, metricFeel, selector), parsed.grooveHints);
+  const drums = scrub(selector, "drums", buildDrums(families, parsed, rng, selector), parsed.drumHints);
+  const { bass, bassBehavior } = buildBass(bassFamily, families, parsed, rng, selector);
+  const harmony = scrub(selector, "harmony", buildHarmony(families, moodPrimary, parsed, rng, selector), parsed.harmonyHints);
+  const melody = scrub(selector, "melody", buildMelody(families, moodPrimary, parsed, rng, selector), parsed.explicitInstruments ?? []);
+  const soundDesign = scrub(selector, "soundDesign", buildSoundDesign(families, moodPrimary, parsed, rng, selector), parsed.soundDesignHints);
+  const arrangement = scrub(selector, "arrangement", buildArrangement(preset.energy, families, parsed, rng), parsed.arrangementHints);
+  const mix = scrub(selector, "mix", buildMix(families, parsed, rng), parsed.mixHints);
   const master = buildMaster(preset.energy, families, rng);
   const vocals = buildVocals(parsed, rank, rng, attempt, families);
   const instruments = selectInstruments(
@@ -238,7 +240,8 @@ export function buildOnePlan(
     vocals,
     parsed,
     families,
-    rng
+    rng,
+    selector
   );
 
   const donors = {
@@ -527,12 +530,22 @@ const GROOVE_HINT_PHRASES: Record<string, string> = {
   "head-nod": "head-nod pocket",
 };
 
+/**
+ * Drops phrases whose style does not belong to the blend (see affinity.ts). Phrases the brief supplied itself
+ * are protected, and a section is never emptied.
+ */
+function scrub(sel: Selector, section: Section, items: string[], protectedItems: string[]): string[] {
+  const kept = sel.clean(items, section, protectedItems);
+  return kept.length ? kept : items.slice(0, 1);
+}
+
 function buildGroove(
   families: string[],
   family: string,
   parsed: ParsedInput,
   rng: () => number,
-  metricFeel: string
+  metricFeel: string,
+  sel: Selector
 ): string[] {
   // The metric feel (half-time, 2-step, four-on-the-floor) is already named by the drum sentence's feel phrase.
   const g = parsed.grooveHints
@@ -543,10 +556,10 @@ function buildGroove(
   if (family === "trap" && !keys.includes("trap")) keys.push("trap");
   if (family === "baile" && !keys.includes("baile")) keys.push("baile");
   if (family === "ritual" && !keys.includes("cinematic")) keys.push("cinematic");
-  g.push(...pickFamily(rng, GROOVE, keys, 3));
-  g.push(...pickFamily(rng, DNA_GROOVE, keys, 1));
+  g.push(...sel.pick(rng, GROOVE, keys, 3, "groove"));
+  g.push(...sel.pick(rng, DNA_GROOVE, keys, 1, "groove"));
   if (parsed.moods.some((m) => /kinetic|energetic|high energy|hype/.test(m))) {
-    g.push(oneFamily(rng, GROOVE, families));
+    g.push(sel.one(rng, GROOVE, families, "groove"));
   }
   return dedupeByConcept(unique(g)).slice(0, 4);
 }
@@ -554,9 +567,9 @@ function buildGroove(
 /** UKG's defining layer: every UKG prompt names its skippy hi-hat and shaker topline. */
 const UKG_TOPLINE = /skipp|shuffl|syncopated/i;
 
-function buildDrums(families: string[], parsed: ParsedInput, rng: () => number): string[] {
+function buildDrums(families: string[], parsed: ParsedInput, rng: () => number, sel: Selector): string[] {
   const d = [...parsed.drumHints];
-  d.push(...pickFamily(rng, DRUMS, families, 5 + Math.floor(rng() * 2)));
+  d.push(...sel.pick(rng, DRUMS, families, 5 + Math.floor(rng() * 2), "drums"));
   if (families.includes("ukg") && !d.some((x) => UKG_TOPLINE.test(x))) {
     d.splice(parsed.drumHints.length, 0, pick(rng, DRUMS.ukg.filter((x) => UKG_TOPLINE.test(x))));
   }
@@ -568,7 +581,8 @@ function buildBass(
   family: string,
   families: string[],
   parsed: ParsedInput,
-  rng: () => number
+  rng: () => number,
+  sel: Selector
 ): { bass: string[]; bassBehavior: string[] } {
   const bass = [...parsed.bassHints];
   const behavior: string[] = [];
@@ -585,7 +599,7 @@ function buildBass(
   behavior.push(pick(rng, fitting(BASS_MOVES[family] ?? BASS_MOVES["808"])));
 
   const hasBassDna = families.some((f) => DNA_BASS[f]);
-  if (hasBassDna && rng() > 0.4) behavior.push(...pickFamily(rng, DNA_BASS, families, 1));
+  if (hasBassDna && rng() > 0.4) behavior.push(...sel.pick(rng, DNA_BASS, families, 1, "bass"));
 
   // A second bass color, only from families this plan actually contains.
   const otherFamilies = allowedBassFamilies(families).filter((f) => f !== family);
@@ -615,7 +629,8 @@ function buildHarmony(
   families: string[],
   mood: string,
   parsed: ParsedInput,
-  rng: () => number
+  rng: () => number,
+  sel: Selector
 ): string[] {
   const isRap =
     parsed.vocals?.style === "rap" ||
@@ -635,16 +650,16 @@ function buildHarmony(
   // Rap harmony comes from rap, trap and drill banks only, so sung-chorus voicings stay out.
   const rapFamilies = ["rap", ...families.filter((f) => f === "trap" || f === "drill")];
   const harmFamilies = isRap ? rapFamilies : families;
-  h.push(...pickFamily(rng, HARMONY, harmFamilies, 2));
+  h.push(...sel.pick(rng, HARMONY, harmFamilies, 2, "harmony"));
   if (rng() > 0.4) {
-    const raw = pickFamily(rng, DNA_HARMONY, harmFamilies, 1);
+    const raw = sel.pick(rng, DNA_HARMONY, harmFamilies, 1, "harmony");
     const filtered = isRap
       ? raw.filter((x) => !/harmonies|soaring|stacked harmonies|soulful lifts/i.test(x))
       : raw;
     h.push(...(filtered.length ? filtered : ["minimal trap-key stabs"]));
   }
   if (["dark", "ominous", "melancholic", "menacing", "nocturnal", "aggressive"].includes(mood)) {
-    h.push(oneFamily(rng, DARK_HARMONY_BANK, harmFamilies));
+    h.push(sel.one(rng, DARK_HARMONY_BANK, harmFamilies, "harmony"));
   }
   return unique(h).slice(0, 3);
 }
@@ -653,7 +668,8 @@ function buildMelody(
   families: string[],
   _mood: string,
   parsed: ParsedInput,
-  rng: () => number
+  rng: () => number,
+  sel: Selector
 ): string[] {
   const isRap =
     parsed.vocals?.style === "rap" ||
@@ -787,20 +803,21 @@ function buildMelody(
         "ambient resonant mallets",
       ];
 
-  return [pick(rng, melodicPalette)];
+  return [pick(rng, melodicPalette.filter((x) => sel.allows(x, "melody")))];
 }
 
 function buildSoundDesign(
   families: string[],
   mood: string,
   parsed: ParsedInput,
-  rng: () => number
+  rng: () => number,
+  sel: Selector
 ): string[] {
   const s = [...parsed.soundDesignHints];
   const keys = [...families];
   if (/cinematic|ritual/.test(mood)) keys.push("cinematic");
-  s.push(...pickFamily(rng, SOUND_DESIGN, keys, 2 + Math.floor(rng() * 2)));
-  if (rng() > 0.45) s.push(...pickFamily(rng, DNA_PALETTE, keys, 1));
+  s.push(...sel.pick(rng, SOUND_DESIGN, keys, 2 + Math.floor(rng() * 2), "soundDesign"));
+  if (rng() > 0.45) s.push(...sel.pick(rng, DNA_PALETTE, keys, 1, "soundDesign"));
   if (rng() > 0.7) s.push(pick(rng, DNA_FX.filter((x) => fitsFamilies(x, families))));
   if (families.includes("trap") && families.includes("future") && rng() > 0.55) {
     s.push(DNA_HYBRID["trap future-bass"]);
@@ -1170,7 +1187,8 @@ function selectInstruments(
   vocals: VocalPreferences,
   parsed: ParsedInput,
   families: string[],
-  rng: () => number
+  rng: () => number,
+  sel: Selector
 ): string[] {
   const isRap =
     vocals.style === "rap" ||
@@ -1186,6 +1204,7 @@ function selectInstruments(
     families.includes("drill");
 
   const inst: string[] = [];
+  const named: string[] = [];
 
   // 1. If user specified explicit instruments, preserve ALL of them with varied textures
   if (parsed.explicitInstruments && parsed.explicitInstruments.length > 0) {
@@ -1196,6 +1215,7 @@ function selectInstruments(
       } else {
         inst.push(exp);
       }
+      named.push(inst[inst.length - 1]);
     }
   }
 
@@ -1281,7 +1301,7 @@ function selectInstruments(
   }
 
   // NOTICE: NO inst.push(who) — vocals are never added to the instrument list!
-  return unique(inst).slice(0, 8);
+  return scrub(sel, "instruments", unique(inst), [...named, ...parsed.instruments]).slice(0, 8);
 }
 
 function shufflePick<T>(rng: () => number, arr: T[]): T[] {
