@@ -370,7 +370,7 @@ Budget: Balanced | v6 Sliders: Style 70% | Weirdness 45% | Variety 0 (Off)
 
     Compiled 925–975 Character Styles Prompt (1173 chars)
     Aggressive, mechanical, and crushing hybrid of Djent, Cyber Trap, and Industrial Metal locked at
-    140 BPM in a syncopated half-time pocket. Precision-triggered double-kick bursts, gunshot
+    140 BPM in a syncopated half-time pocket. Precision-triggered double-kick bursts, sharp cracking
     snare backbeats, and rapid-fire cybernetic trap hi-hat rolls lock into tight polyrhythmic
     syncopation. A subterranean mono 808 sub-bass drop and distorted dark synth bass reinforce
     every palm-muted guitar chug with tectonic low-frequency weight. Low-tuned eight-string
@@ -528,7 +528,7 @@ Blueprint Telemetry: Cinematic Score / Tearout / Cinematic Dubstep | Locked Temp
     Compiled 925–975 Character Styles Prompt (1172 chars)
     Apocalyptic, orchestral, and ferocious collision of Cinematic Score, Tearout, and Cinematic
     Dubstep anchored at 145 BPM in a monumental half-time pocket. Thunderous orchestral taiko
-    drums and timpani impacts fuse with gunshot tearout dubstep snares and transient-heavy kick
+    drums and timpani impacts fuse with sharp cracking tearout dubstep snares and transient-heavy kick
     drums for maximum physical shockwave. A subterranean mono sub-bass foundation supports
     rapid-fire, metallic tearout machine-gun bass stabs, dissonant brassy sustain growls, and pitch-
     dropping sub bombs. Urgent staccato chamber string ostinatos, brazen low-brass war horns,

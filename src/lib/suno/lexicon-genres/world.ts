@@ -283,7 +283,7 @@ export const BAILE: FamilyLexicon = {
   soundDesign: [
     "distorted vocal chops",
     "crowd chants",
-    "gunshot-style snare hits",
+    "sharp cracking snare hits",
     "siren swells",
     "crowd-hype layers",
     "megaphone vocal FX",

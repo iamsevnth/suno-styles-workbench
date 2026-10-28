@@ -1,3 +1,4 @@
+import { bpmNotes, checkBlendBpm, dedupeByConcept, reconcileMoods } from "./blend.ts";
 import { namedBpmConflict, pickByBand, pickFaithfulAccent } from "./genre-atlas.ts";
 import {
   ARRANGEMENT,
@@ -138,6 +139,10 @@ export function buildOnePlan(
       PROFILE.preferredBpmCenters[primaryGenre] ??
       primaryDef?.defaultBpm ??
       (parsed.profileEnabled ? 140 : 128);
+    // Blended genres with different home tempos meet in the middle, weighted toward the primary.
+    if (secondaryGenre && !families.includes("ukg")) {
+      bpm = checkBlendBpm([primaryGenre, secondaryGenre, accentGenre].filter((g): g is string => Boolean(g)), undefined).compromise;
+    }
     // UKG is a 140 BPM style, so every UKG variation keeps 140 unless the brief names a tempo.
     if (rank > 0 && !familyKeys([primaryGenre]).includes("ukg")) {
       const deltas = [0, 2, -2, 4, -4, 6];
@@ -156,9 +161,12 @@ export function buildOnePlan(
       : familyMoods.length
       ? shufflePick(rng, familyMoods)
       : ["atmospheric"];
-  const moodPrimary = moodPool[Math.floor(rng() * moodPool.length) % moodPool.length];
-  const moodSecondary = parsed.moods.length
-    ? moodPool.find((m) => m !== moodPrimary)
+  // A brief's own moods are reconciled into one phrase, so "dark and aggressive" and "emotional" read as
+  // "dark and aggressive with an emotional edge" instead of two competing moods.
+  const reconciled = parsed.moods.length ? reconcileMoods(parsed.moods) : undefined;
+  const moodPrimary = reconciled?.primary ?? moodPool[Math.floor(rng() * moodPool.length) % moodPool.length];
+  const moodSecondary = reconciled
+    ? reconciled.secondary
     : rng() > 0.5
     ? moodPool.find((m) => m !== moodPrimary)
     : undefined;
@@ -211,7 +219,7 @@ export function buildOnePlan(
     lockedBass ??
     bassFamilies[(presetIndex + Math.floor(rng() * bassFamilies.length) + rank) % bassFamilies.length];
 
-  const groove = buildGroove(families, preset.rhythmFamily, parsed, rng);
+  const groove = buildGroove(families, preset.rhythmFamily, parsed, rng, metricFeel);
   const drums = buildDrums(families, parsed, rng);
   const { bass, bassBehavior } = buildBass(bassFamily, families, parsed, rng);
   const harmony = buildHarmony(families, moodPrimary, parsed, rng);
@@ -269,6 +277,8 @@ export function buildOnePlan(
     donors,
     moodPrimary,
     moodSecondary,
+    moodPhrase: reconciled?.phrase,
+    bpmNotes: bpmNotes([primaryGenre, secondaryGenre, accentGenre].filter((g): g is string => Boolean(g)), bpm),
     atmosphere: unique(atmosphere).slice(0, 3),
     metricFeel,
     groove,
@@ -374,9 +384,11 @@ function diversifyGenres(
 
   if (locked.length > 0 && !wantsVariety) {
     let genres = [...locked];
-    if (genres.length >= 2 && rank > 0) {
-      const rot = (rank + attempt) % genres.length;
-      genres = [...genres.slice(rot), ...genres.slice(0, rot)];
+    // The first-named genre is the primary in every variation; only the supporting genres trade places.
+    if (genres.length >= 3 && rank > 0) {
+      const rest = genres.slice(1);
+      const rot = (rank + attempt) % rest.length;
+      genres = [genres[0], ...rest.slice(rot), ...rest.slice(0, rot)];
     }
     if (band === "unhinged" && genres.length < 3) {
       const extra = pickFaithfulAccent(rng, pool, locked, genres, "unhinged", parsed.bpm, allowed);
@@ -448,7 +460,9 @@ function buildAnchors(parsed: ParsedInput, bpm: number): string[] {
   for (const h of parsed.drumHints) anchors.push(h);
   for (const h of parsed.soundDesignHints) anchors.push(h);
   for (const h of parsed.instruments.slice(0, 4)) anchors.push(h);
-  for (const m of parsed.moods.slice(0, 3)) anchors.push(m);
+  // Only the moods the reconciled phrase keeps are anchors; a dropped contradiction is not a requirement.
+  const mood = reconcileMoods(parsed.moods);
+  for (const m of parsed.moods) if (mood && new RegExp(`\\b${m}\\b`, "i").test(mood.phrase)) anchors.push(m);
   if (parsed.key) anchors.push(parsed.key);
   if (parsed.instrumental) anchors.push("instrumental");
   if (parsed.vocals?.presentation) {
@@ -506,13 +520,24 @@ function pickTitle(
   return phrase;
 }
 
+/** Bare groove adjectives from the brief ("swung") become phrases that read as part of a sentence. */
+const GROOVE_HINT_PHRASES: Record<string, string> = {
+  swung: "swung groove",
+  syncopated: "syncopated accents",
+  "head-nod": "head-nod pocket",
+};
+
 function buildGroove(
   families: string[],
   family: string,
   parsed: ParsedInput,
-  rng: () => number
+  rng: () => number,
+  metricFeel: string
 ): string[] {
-  const g = [...parsed.grooveHints];
+  // The metric feel (half-time, 2-step, four-on-the-floor) is already named by the drum sentence's feel phrase.
+  const g = parsed.grooveHints
+    .filter((h) => h !== metricFeel)
+    .map((h) => GROOVE_HINT_PHRASES[h] ?? h);
   const keys = [...families];
   if (family === "garage" && !keys.includes("garage") && !keys.includes("ukg")) keys.push("garage");
   if (family === "trap" && !keys.includes("trap")) keys.push("trap");
@@ -523,7 +548,7 @@ function buildGroove(
   if (parsed.moods.some((m) => /kinetic|energetic|high energy|hype/.test(m))) {
     g.push(oneFamily(rng, GROOVE, families));
   }
-  return unique(g).slice(0, 4);
+  return dedupeByConcept(unique(g)).slice(0, 4);
 }
 
 /** UKG's defining layer: every UKG prompt names its skippy hi-hat and shaker topline. */
@@ -531,11 +556,12 @@ const UKG_TOPLINE = /skipp|shuffl|syncopated/i;
 
 function buildDrums(families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const d = [...parsed.drumHints];
-  d.push(...pickFamily(rng, DRUMS, families, 3 + Math.floor(rng() * 2)));
+  d.push(...pickFamily(rng, DRUMS, families, 5 + Math.floor(rng() * 2)));
   if (families.includes("ukg") && !d.some((x) => UKG_TOPLINE.test(x))) {
     d.splice(parsed.drumHints.length, 0, pick(rng, DRUMS.ukg.filter((x) => UKG_TOPLINE.test(x))));
   }
-  return unique(d).slice(0, 5);
+  // Synonymous drum parts ("sharp snares" beside "accelerating snare rolls") collapse to the first named.
+  return dedupeByConcept(unique(d)).slice(0, 5);
 }
 
 function buildBass(
@@ -569,7 +595,13 @@ function buildBass(
     if (rng() > 0.35) behavior.push(pick(rng, fitting(BASS_MOVES[extra])));
   }
   if (behavior.length === 0) behavior.push("sustained low end under the moving parts");
-  return { bass: unique(bass).slice(0, 4), bassBehavior: unique(behavior).slice(0, 3) };
+  // 808, "sliding 808" and "portamento bass slides" are one sound; a mono sub is named once.
+  const seenBass = new Set<string>();
+  const bassOut = dedupeByConcept(unique(bass), seenBass).slice(0, 3);
+  // The first movement is always kept; later ones must add something the bass line has not said.
+  const [firstMove, ...laterMoves] = unique(behavior);
+  const behaviorOut = [firstMove, ...dedupeByConcept(laterMoves, new Set(seenBass))].filter(Boolean).slice(0, 3);
+  return { bass: bassOut, bassBehavior: behaviorOut.length ? behaviorOut : ["sustained low end under the moving parts"] };
 }
 
 const DARK_HARMONY = /dark|minor|cold|shadow|eerie|tense|haunting|brooding|ominous|sinister/i;
@@ -777,7 +809,7 @@ function buildSoundDesign(
   } else if (families.includes("soul") && families.includes("cinematic") && rng() > 0.55) {
     s.push(DNA_HYBRID["r&b cinematic"]);
   }
-  return unique(s).slice(0, 4);
+  return dedupeByConcept(unique(s)).slice(0, 4);
 }
 
 function buildArrangement(energy: string, families: string[], parsed: ParsedInput, rng: () => number): string[] {

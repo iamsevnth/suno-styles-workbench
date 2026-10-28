@@ -298,7 +298,7 @@ export const DRILL: FamilyLexicon = {
     "dark piano riffs",
   ],
   soundDesign: [
-    "gunshot-style snare FX",
+    "short cracking snare FX",
     "police-siren swells",
     "reverse piano hits",
     "eerie ambience",

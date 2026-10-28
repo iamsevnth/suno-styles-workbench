@@ -2,6 +2,8 @@ export interface ParsedInput {
   raw: string;
   count: number;
   genres: string[];
+  /** Genres the blend resolver merged or dropped, and tempo conflicts, as readable notes. */
+  genreNotes?: string[];
   bpm?: number;
   key?: string;
   moods: string[];
@@ -79,6 +81,10 @@ export interface SonicPlan {
   };
   moodPrimary: string;
   moodSecondary?: string;
+  /** The reconciled mood as one phrase ("dark and aggressive with an emotional edge"), when the brief named moods. */
+  moodPhrase?: string;
+  /** Tempo conflicts between the requested BPM and the blended genres. */
+  bpmNotes?: string[];
   atmosphere: string[];
   metricFeel: string;
   groove: string[];

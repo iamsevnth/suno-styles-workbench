@@ -1,4 +1,5 @@
 import { inferBlendBand } from "./genre-atlas.ts";
+import { bpmNotes, resolveGenreBlend, stripTemplateBoilerplate, stripVocalLeadIn } from "./blend.ts";
 import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
 import { ParsedInput, VocalPreferences } from "./types.ts";
 
@@ -130,7 +131,8 @@ export function parseUserInput(
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
   }
 ): ParsedInput {
-  const text = raw.trim();
+  // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
+  const text = stripTemplateBoilerplate(raw.trim());
   const lower = text.toLowerCase();
   const looksLikeDraft =
     text.length > 400 ||
@@ -161,11 +163,16 @@ export function parseUserInput(
   if (/\britual\s+bass\b/i.test(text) && !genres.some((g) => /ritual/i.test(g))) {
     genres.push("Ritual Bass");
   }
-  if (genres.includes("Deep Dubstep") && genres.includes("Dubstep")) {
-    genres.splice(genres.indexOf("Dubstep"), 1);
-  }
 
-  const moods = MOOD_WORDS.filter((m) => includesPhrase(lower, m));
+  // One primary plus at most two supporting genres: repeats and a broad genre named beside its own
+  // sub-genre ("Trap" beside "Aggressive Trap", "Dubstep" beside "Deep Dubstep") collapse here.
+  const blend = resolveGenreBlend(genres);
+  genres.splice(0, genres.length, ...blend.genres);
+
+  // Moods in the order the brief used them, so the first-named mood leads.
+  const moods = MOOD_WORDS.filter((m) => includesPhrase(lower, m)).sort(
+    (a, b) => moodPosition(lower, a) - moodPosition(lower, b)
+  );
   const atmospheres = ATMOSPHERE_WORDS.filter((a) => lower.includes(a));
 
   const instruments: string[] = [];
@@ -317,7 +324,8 @@ export function parseUserInput(
   return {
     raw: text,
     count,
-    genres: genres.slice(0, 4),
+    genres: genres.slice(0, 3),
+    genreNotes: [...blend.notes, ...(bpm != null ? bpmNotes(genres, bpm) : [])],
     bpm,
     key,
     moods,
@@ -414,6 +422,12 @@ function extractGenresInOrder(text: string): string[] {
   return hits.map((h) => h.name);
 }
 
+function moodPosition(hay: string, mood: string): number {
+  const escaped = mood.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, "i").exec(hay);
+  return m ? m.index : Number.MAX_SAFE_INTEGER;
+}
+
 /** Whole-word match that tolerates punctuation, so "uplifting," and "dark." both count. */
 function includesPhrase(hay: string, needle: string): boolean {
   const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -465,8 +479,15 @@ const VOCAL_CLAUSE_RE =
  */
 function dropNonVocalClauses(segment: string): string {
   const [first, ...rest] = segment.split(/\s*,\s*/);
-  return [first, ...rest.filter((clause) => VOCAL_CLAUSE_RE.test(clause))].join(", ");
+  // A clause that opens another section of a compiled prompt ("Instrumentation is built around ...") ends
+  // the vocal description; "harmonic" in it must not read as a vocal word.
+  const end = rest.findIndex((clause) => OTHER_SECTION_RE.test(clause));
+  const own = end < 0 ? rest : rest.slice(0, end);
+  return [first, ...own.filter((clause) => VOCAL_CLAUSE_RE.test(clause))].join(", ");
 }
+
+const OTHER_SECTION_RE =
+  /^(?:instrumentation|palette|the sound palette|arranged with|textures? use|texture design|fx bed|transitions lean|scene changes|ear-candy|mix\b|the mix|balance leans|finish the mix|arrangement|the arrangement|form uses|structure|the record|sections? (?:move|run)|the harmonic bed|melodic hooks|low end|the low end|bass is|drums sit|the rhythm settles)/i;
 
 function extractVocalDetails(text: string, lower: string, instrumental: boolean): VocalPreferences {
   const vocals: VocalPreferences = {};
@@ -608,7 +629,7 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
     /(?:(?:[a-z-]+\s+){0,2}(?:black\s+|white\s+|african\s+)?\b(?:male|female|lead)\s+(?:[a-z-]+\s+){0,2}vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
   const match = text.match(vocalSegmentRegex);
   if (match && match[0].trim().length > 10) {
-    vocals.rawDescription = dropNonVocalClauses(match[0].trim());
+    vocals.rawDescription = stripVocalLeadIn(dropNonVocalClauses(match[0].trim()));
   } else if (hasVocalMention) {
     // Comma and "+" separate genres from the vocal in one-line briefs ("Melodic Trap, male rap"),
     // so only the part that names the vocal is quoted, never the genre list.
@@ -616,7 +637,7 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
     const vc = clauses.find((c) =>
       /\b(vocal|vocals|voice|singer|singing|rapper|rap|sung-rap|melodic-rap)\b/i.test(c)
     );
-    if (vc) vocals.rawDescription = vc.trim();
+    if (vc) vocals.rawDescription = stripVocalLeadIn(vc.trim());
   }
 
   if (procList.length) {

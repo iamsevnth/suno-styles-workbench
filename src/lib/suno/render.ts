@@ -1,8 +1,8 @@
+import { conceptsOf, dedupeByConcept, dedupeSimilar, genreClause, isCovered, joinList, reconcileMoods, sentenceCase } from "./blend.ts";
 import { familyKeys, fitsFamilies, hasDrops } from "./families.ts";
 import {
   FAMILY_PADDING,
   FEELS,
-  GENRE_GLUE,
   MICROS,
   oneFamily,
   PADDING,
@@ -147,7 +147,6 @@ function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
 
 export function renderStyles(plan: SonicPlan): string {
   let text = compose(plan);
-  text = fitToWindow(text, plan);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   if (!hasDrops(families)) text = sanitizeNonDropWording(text);
   return text;
@@ -164,195 +163,359 @@ function sanitizeNonDropWording(text: string): string {
     .replace(/(?<!one-)\bdrop\b/gi, "peak");
 }
 
+/* -------------------------------------------------------------------------------------------- */
+/* Composition                                                                                    */
+/*                                                                                                */
+/* A Styles prompt is a fixed sequence of sections, each one natural sentence:                    */
+/*   1 genre blend + BPM + mood   2 drums & groove   3 bass   4 harmony / melody / texture         */
+/*   5 instrumentation   6 vocals   7 arrangement   8 mix                                         */
+/* The plan decides WHAT is said; this file decides the order, the connective wording and how     */
+/* much of each section fits in the 925–975 character window.                                    */
+/* -------------------------------------------------------------------------------------------- */
+
+/** How many items each section may list. The renderer starts at FULL and shrinks or grows from there. */
+interface Detail {
+  prod: number;
+  drums: number;
+  groove: number;
+  bass: number;
+  behavior: number;
+  harm: number;
+  mel: number;
+  sd: number;
+  inst: number;
+  arr: number;
+  mix: number;
+  master: number;
+}
+
+const FULL: Detail = { prod: 1, drums: 3, groove: 2, bass: 3, behavior: 2, harm: 2, mel: 1, sd: 2, inst: 8, arr: 3, mix: 4, master: 1 };
+
+/** Over the window: take detail away in order of least value, one step at a time. */
+const SHRINK_STEPS: [keyof Detail, number][] = [
+  ["master", 0], ["prod", 0], ["mel", 0], ["inst", 6], ["mix", 3], ["sd", 1], ["behavior", 1], ["groove", 1],
+  ["harm", 1], ["inst", 5], ["arr", 2], ["mix", 2], ["drums", 2], ["inst", 4], ["sd", 0], ["bass", 2],
+  ["inst", 3], ["arr", 1], ["groove", 0], ["harm", 0], ["mix", 1], ["inst", 2], ["behavior", 0], ["drums", 1],
+  ["inst", 1], ["inst", 0],
+];
+
+/** Under the window: add detail in order of value before any generic sentence is used. */
+const GROW_STEPS: [keyof Detail, number][] = [
+  ["drums", 4], ["sd", 3], ["mel", 2], ["mix", 5], ["arr", 4], ["groove", 3], ["behavior", 3], ["inst", 9],
+];
+
+/** Everything about a plan that is chosen once, so shrinking and growing never reroll the wording. */
+interface Choices {
+  feel: string;
+  prod: string;
+  harmVerb: string;
+  melTemplate: string;
+  textureTemplate: string;
+  drumForm: number;
+  bassForm: number;
+  instIntro: number;
+  arrForm: number;
+  mixLead: number;
+  vocal: string;
+  moodPhrase: string;
+  genreText: string;
+  isBassMusic: boolean;
+}
+
 function compose(plan: SonicPlan): string {
   const rng = mulberry32((plan.seed ^ 2779096485) >>> 0);
-  const template = Math.floor(rng() * 10);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
-  const genreStr = genreClause(plan, rng);
-
-  const moodBits = [plan.moodPrimary, plan.moodSecondary, plan.atmosphere[0]]
-    .filter((v): v is string => Boolean(v))
-    .filter((v, i, a) => a.findIndex((x) => x.toLowerCase() === v.toLowerCase()) === i)
-    .slice(0, 2);
-
   const fits = (phrase: string) => fitsFamilies(phrase, families);
-  const isBassMusic = hasDrops(families);
-  const feel = feelPhrase(plan.metricFeel, families, rng);
-  const drums = plan.drums.slice(0, 3).join(", ");
-  const groove = plan.groove.slice(0, 2).join(" and ");
-  const bass = plan.bass.slice(0, 3).join(", ");
-  const behavior = plan.bassBehavior.slice(0, 2).join(" and ");
-  const harm = plan.harmony.slice(0, 2).join(" and ");
-  const mel = plan.melody[0];
-  const sd = plan.soundDesign.slice(0, 2).join(" and ");
-  const arr = plan.arrangement.slice(0, 2).join(" and ");
-  const mix = plan.mix.slice(0, 4).join(", ");
-  const master = plan.master[0];
-  const instruments = plan.instruments.slice(0, 8).join(", ");
-  const prod = oneFamily(rng, PRODUCTION, families);
+  const keepCaps = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
+  const supporting = [plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
 
+  const choices: Choices = {
+    feel: feelPhrase(plan.metricFeel, families, rng),
+    prod: oneFamily(rng, PRODUCTION, families),
+    harmVerb: pick2(rng, PRODUCTION_VERBS.harm.filter(fits)),
+    melTemplate: pick2(rng, MELODY_TEMPLATES),
+    textureTemplate: pick2(rng, [...PRODUCTION_VERBS.texture]).trim(),
+    drumForm: Math.floor(rng() * DRUM_FORMS.length),
+    bassForm: Math.floor(rng() * BASS_FORMS.length),
+    instIntro: Math.floor(rng() * INSTRUMENT_INTROS.length),
+    arrForm: Math.floor(rng() * ARRANGEMENT_FORMS.length),
+    mixLead: Math.floor(rng() * MIX_LEADS.length),
+    vocal: vocalSection(plan, rng, fits, Math.floor(rng() * 4)),
+    moodPhrase: plan.moodPhrase ?? reconcileMoods([plan.moodPrimary, plan.moodSecondary ?? ""].filter(Boolean))?.phrase ?? plan.moodPrimary,
+    genreText: genreClause(plan.primaryGenre, supporting),
+    isBassMusic: hasDrops(families),
+  };
+
+  const anchors = anchorsToCheck(plan);
+  const build = (detail: Detail, extras: string[], pads: string[]) => assemble(plan, choices, detail, extras, pads, keepCaps);
+  const covers = (text: string, anchor: string) =>
+    hasAnchor(text, anchor) || (!VOCAL_ANCHOR.test(anchor) && !namesInstrument(anchor) && isCovered(text, anchor));
+  const missingIn = (text: string) => anchors.filter((a) => !/\bBPM\b/i.test(a) && !covers(text, a));
+
+  // Brief elements the plan's sections never mention join the instrumentation list instead of a filler sentence.
+  const detail: Detail = { ...FULL };
+  const extras = missingIn(build(detail, [], []));
+  let text = build(detail, extras, []);
+
+  // 1. Over the window: remove detail, never an anchor the brief asked for.
+  for (const strict of [true, false]) {
+    for (const [key, value] of SHRINK_STEPS) {
+      if (text.length <= MAX_CHARS) break;
+      if (detail[key] <= value) continue;
+      const trial = { ...detail, [key]: value };
+      const next = build(trial, extras, []);
+      if (strict && anchors.some((a) => covers(text, a) && !covers(next, a))) continue;
+      Object.assign(detail, trial);
+      text = next;
+    }
+  }
+
+  // 2. Under the window: add more of what the plan already chose, then genre sentences, then neutral ones.
+  if (text.length < MIN_CHARS) {
+    for (const [key, value] of GROW_STEPS) {
+      if (text.length >= MIN_CHARS) break;
+      if (detail[key] >= value) continue;
+      const trial = { ...detail, [key]: value };
+      const next = build(trial, extras, []);
+      if (next.length <= MAX_CHARS && next.length > text.length) {
+        Object.assign(detail, trial);
+        text = next;
+      }
+    }
+  }
+  const pads: string[] = [];
+  if (text.length < MIN_CHARS) {
+    for (const pad of padCandidates(plan, families, text, rng)) {
+      if (text.length >= MIN_CHARS) break;
+      const next = build(detail, extras, [...pads, pad]);
+      if (next.length <= MAX_CHARS) {
+        pads.push(pad);
+        text = next;
+      }
+    }
+  }
+  if (text.length > MAX_CHARS) text = trimKeepingInstruments(text, MAX_CHARS);
+
+  text = sentenceCase(text, keepCaps);
+  if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(text)) text = `${plan.bpm} BPM ${text}`;
+  return text.replace(/\s+/g, " ").trim();
+}
+
+const DRUM_FORMS = [
+  (feel: string, drums: string, groove: string, tail: string) =>
+    `${cap(article(feel))} ${feel} carries ${drums}${groove ? `, with ${groove}` : ""}${tail}.`,
+  (feel: string, drums: string, groove: string, tail: string) =>
+    `Drums sit in ${article(feel)} ${feel}: ${drums}${groove ? `, plus ${groove}` : ""}${tail}.`,
+  (feel: string, drums: string, groove: string, tail: string) =>
+    `The rhythm settles into ${article(feel)} ${feel} built from ${drums}${groove ? `, with ${groove}` : ""}${tail}.`,
+];
+
+const BASS_FORMS = [
+  (bass: string, behavior: string) => `The low end pairs ${bass}${behavior ? ` with ${behavior}` : ""}.`,
+  (bass: string, behavior: string) => `Bass is built on ${bass}${behavior ? `, moving through ${behavior}` : ""}.`,
+  (bass: string, behavior: string) => `Low end centers on ${bass}${behavior ? `, articulated by ${behavior}` : ""}.`,
+];
+
+/** Agreement-free: every template works for one melodic item or several. */
+const MELODY_TEMPLATES = [
+  "Melodic hooks lean on {m}, kept short and memorable.",
+  "Hooks are built from {m}, repeating like a chant.",
+  "The lead role goes to {m}, surfacing at section peaks.",
+  "{m} answer the bass sparingly",
+];
+
+const INSTRUMENT_INTROS = [
+  "The sound palette centers on",
+  "Instrumentation features",
+  "Arranged with",
+  "Instrumentation is built around",
+  "Acoustic palette includes",
+];
+
+const ARRANGEMENT_FORMS = ["The arrangement moves through", "The record unfolds as", "Form runs through"];
+const MIX_LEADS = ["Mix with", "Mix for", "Finish the mix with", "Balance the mix around"];
+
+/** Sounds the brief can name outright; they need their own word in the prompt, not just a related one. */
+const NAMED_INSTRUMENT_CONCEPTS = new Set(["keys", "guitar", "strings", "bells", "plucks", "drones", "percussion"]);
+
+function namesInstrument(anchor: string): boolean {
+  return [...conceptsOf(anchor)].some((c) => NAMED_INSTRUMENT_CONCEPTS.has(c)) ||
+    /\b(flute|sax|saxophone|trumpet|harp|organ|synth|choir|violin|cello|marimba|vibraphone|rhodes|wurlitzer)\b/i.test(anchor);
+}
+
+function article(phrase: string): string {
+  return /^[aeiou]/i.test(phrase) ? "an" : "a";
+}
+
+/** Join the first `count` items; an empty list stays empty so the section can drop out. */
+function take(items: string[], count: number): string[] {
+  return items.slice(0, Math.max(0, count));
+}
+
+function assemble(
+  plan: SonicPlan,
+  c: Choices,
+  d: Detail,
+  extras: string[],
+  pads: string[],
+  keepCaps: string[]
+): string {
+  const sentences: string[] = [];
+  // Concepts already named by earlier sections: later sections never name the same sound again.
+  const seen = new Set<string>();
+  const claim = (items: string[]) => dedupeByConcept(items, seen);
+
+  // 1. Primary genre, tempo and feel; the supporting genres carry explicit roles.
+  const prod = d.prod > 0 ? `, delivered as ${c.prod}` : "";
+  sentences.push(`${plan.bpm} BPM ${c.genreText}, ${c.moodPhrase}${prod}.`);
+
+  // 2. Drums and groove.
+  const drums = claim(take(plan.drums, d.drums));
+  const groove = claim(take(plan.groove, d.groove));
+  const tail = c.isBassMusic && drums.length ? ", leaving space before each bass answer" : "";
+  if (drums.length) sentences.push(DRUM_FORMS[c.drumForm % DRUM_FORMS.length](c.feel, joinList(drums), joinList(groove), tail));
+  else sentences.push(`The rhythm settles into ${article(c.feel)} ${c.feel}${groove.length ? ` with ${joinList(groove)}` : ""}.`);
+
+  // 3. Bass.
+  const bass = claim(take(plan.bass, d.bass));
+  // "808 glides into the downbeat" after "sliding 808" says the same thing twice, so movement is claimed too.
+  const behavior = claim(take(plan.bassBehavior, d.behavior));
+  if (bass.length) sentences.push(BASS_FORMS[c.bassForm % BASS_FORMS.length](joinList(bass), joinList(behavior)));
+  else if (behavior.length) sentences.push(`The low end moves through ${joinList(behavior)}.`);
+
+  // 4. Harmony, melody and texture.
+  const harm = claim(dedupeSimilar(take(plan.harmony, d.harm)));
+  const mel = claim(take(plan.melody, d.mel));
+  const sd = claim(take(plan.soundDesign, d.sd));
+  const musical: string[] = [];
+  if (harm.length) musical.push(`The harmonic bed uses ${joinList(harm)} to ${c.harmVerb}.`);
+  if (mel.length) musical.push(c.melTemplate.replace("{m}", joinList(mel)).replace(/^(\{m\}|.)/, (m) => m.toUpperCase()).replace(/([^.])$/, "$1."));
+  if (sd.length) musical.push(c.textureTemplate.replace("{sd}", joinList(sd)));
+  sentences.push(...musical);
+
+  // 5. Instrumentation: only sounds the sections above have not already named, plus brief elements nothing else carried.
+  // An instrument the brief named ("Rhodes") stays even when a texture line already mentioned keys.
+  const named = (plan.anchors ?? []).filter(namesInstrument);
+  const claimedInst = claim(take(plan.instruments, d.inst).filter((i) => !named.some((a) => hasAnchor(i, a))));
+  const keptInst = take(plan.instruments, d.inst).filter((i) => named.some((a) => hasAnchor(i, a)));
+  const instruments = [...keptInst, ...claimedInst, ...extras].filter((v, i, all) => all.indexOf(v) === i);
+  if (instruments.length) sentences.push(`${INSTRUMENT_INTROS[c.instIntro % INSTRUMENT_INTROS.length]} ${joinList(instruments)}.`);
+
+  // 6. Vocals.
+  sentences.push(c.vocal);
+
+  // 7. Arrangement arc.
+  // A stage that only restates a sound already described ("heavier 808") adds nothing to the arc; the arc keeps two stages at least.
+  const stages = take(plan.arrangement, d.arr);
+  const fresh = dedupeByConcept(stages, new Set(seen));
+  const keep = new Set(fresh);
+  for (const stage of stages) if (keep.size < Math.min(2, stages.length)) keep.add(stage);
+  const arr = stages.filter((stage) => keep.has(stage));
+  if (arr.length) sentences.push(`${ARRANGEMENT_FORMS[c.arrForm % ARRANGEMENT_FORMS.length]} ${arr.join(", then ")}.`);
+
+  // Genre sentences that top up the length sit just before the mix so the mix stays last.
+  sentences.push(...pads);
+
+  // 8. Mix and finish.
+  const mix = claim(dedupeSimilar(plan.mix)).slice(0, d.mix);
+  const master = take(plan.master, d.master);
+  if (mix.length) {
+    sentences.push(`${MIX_LEADS[c.mixLead % MIX_LEADS.length]} ${joinList(mix)}${master.length ? `, finished for ${joinList(master)}` : ""}.`);
+  }
+
+  return sentences.join(" ").replace(/\s+/g, " ").trim();
+}
+
+/** The vocal sentence is built once; it keeps its own character budget (VOCAL_BUDGET). */
+function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => boolean, variant: number): string {
+  const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   const isRapStyle =
-    plan.vocals.style === "rap" ||
-    plan.vocals.style === "talk-rap" ||
-    plan.vocals.style === "melodic-rap" ||
-    plan.vocals.style === "sung-rap" ||
-    plan.vocals.style === "sing-rap" ||
-    plan.vocals.style === "mumble-rap" ||
-    plan.vocals.style === "soundcloud-rap" ||
-    plan.vocals.style === "autotuned-rap" ||
-    plan.vocals.style === "lyrical-rap" ||
-    families.includes("rap") ||
-    families.includes("drill");
-
-  let s1: string;
-  let s2: string;
-  let s3: string;
-
-  if (template === 0) {
-    s1 = `${plan.bpm} BPM ${genreStr} with ${moodBits.join(", ")} atmosphere and ${prod}.`;
-    s2 = `A ${feel} uses ${drums}${
-      groove ? ` to create ${groove}` : ""
-    }${isBassMusic ? " before each major low-end response" : ""}.`;
-    s3 = `${cap(
-      bass
-    )} form the low-end hierarchy, with ${behavior}, leaving space between phrases so silence shapes the groove.`;
-  } else if (template === 1) {
-    s1 = `${plan.bpm} BPM ${genreStr}. Mood stays ${moodBits.join(" and ")}, engineered for ${prod}.`;
-    s2 = `Rhythm centers on a ${feel}: ${drums} outline ${
-      groove || "the pocket"
-    }${isBassMusic ? ", then yield for bass entries" : ""}.`;
-    s3 = `Low-end focus is ${bass}, driven by ${behavior}${isBassMusic ? ", with mono sub authority under moving mid-bass" : ""}.`;
-  } else if (template === 2) {
-    s1 = `Write a ${plan.bpm} BPM ${genreStr} record — ${moodBits.join(", ")} tone, ${prod}.`;
-    s2 = `Groove language is ${feel} with ${drums}; ${
-      groove || "pocket and weight"
-    } define the body motion.`;
-    s3 = `Bass stack: ${bass}. Movement comes from ${behavior}, saving full-band intensity for the peaks.`;
-  } else if (template === 3) {
-    s1 = `${plan.bpm} BPM. ${cap(genreStr)} energy, ${moodBits.join("/")} atmosphere, ${prod}.`;
-    s2 = `${cap(feel)} programming (${drums}) builds ${
-      groove || "head-nod space"
-    }${isBassMusic ? " ahead of each bass answer" : ""}.`;
-    s3 = `${cap(bass)} carry the foundation via ${behavior}, keeping phrases punchy and intentional.`;
-  } else if (template === 4) {
-    s1 = `${plan.bpm} BPM ${genreStr} built for ${moodBits.join(" and ")} nights — ${prod}.`;
-    s2 = `Drums lead with ${drums} inside a ${feel}, locking ${
-      groove || "the pocket"
-    } so each section has somewhere to land.`;
-    s3 = `The bass conversation is ${bass}, moving through ${behavior}.`;
-  } else if (template === 5) {
-    s1 = `Design a ${plan.bpm} BPM ${genreStr} with ${moodBits.join(", ")} color and ${prod}.`;
-    s2 = `${cap(drums)} sit in a ${feel}; groove identity is ${groove || "weight and space"}.`;
-    s3 = `Low end is scored as ${bass}, articulated by ${behavior}.`;
-  } else if (template === 6) {
-    s1 = `${plan.bpm} BPM ${genreStr}. High-definition ${moodBits.join(" ")} energy, ${prod}.`;
-    s2 = `The pocket is a ${feel} — ${drums} in front, ${
-      groove || "space after the snare"
-    } behind.`;
-    s3 = `The low end pairs ${bass} with ${behavior}, and rests are treated as hits.`;
-  } else if (template === 7) {
-    s1 = `${cap(genreStr)} at ${plan.bpm} BPM, ${moodBits.join(" plus ")} atmosphere, ${prod}.`;
-    s2 = `Metric feel: ${feel}. Kit language: ${drums}. Body feel: ${groove || "physical pocket"}.`;
-    s3 = `Bass architecture (${bass}) speaks in ${behavior}.`;
-  } else if (template === 8) {
-    s1 = `${plan.bpm} BPM ${genreStr} — ${prod}, ${moodBits.join(" and ")} in feel.`;
-    s2 = `${cap(feel)} frame, drums as ${drums}, groove as ${groove || "nod and gap"}.`;
-    s3 = `${cap(bass)} take turns via ${behavior} rather than stacking into a wall.`;
-  } else {
-    s1 = `A ${plan.bpm} BPM ${genreStr} cut: ${moodBits.join(", ")} mood, ${prod}.`;
-    s2 = `Program a ${feel} with ${drums} so ${groove || "the pocket"} stays readable.`;
-    s3 = `Keep ${bass} musical: ${behavior}.`;
-  }
-
-  // Harmonic bed & Melodic motifs
-  let s4 = "";
-  if (harm) {
-    const harmVerb = pick2(rng, PRODUCTION_VERBS.harm.filter(fits));
-    s4 += `${cap(harm)} ${harmVerb}`;
-    if (mel) {
-      const melBit = pick2(rng, [...PRODUCTION_VERBS.mel]).replace("{m}", mel);
-      s4 += melBit;
-    }
-    s4 += ".";
-  }
-  if (sd) {
-    s4 += (s4 ? " " : "") + pick2(rng, [...PRODUCTION_VERBS.texture]).replace("{sd}", sd);
-  }
-
-  // Unified Vocal Section
-  let sVocal = "";
-  if (plan.vocals.present) {
-    const v = plan.vocals;
-    const who = v.presentation === "female" ? "female" : v.presentation === "male" ? "male" : "lead";
-
-    if (hasRichVocalDescription(v)) {
-      // Direct, authentic enhancement of user's exact vocal description into Suno audio terms
-      const rawText = v.rawDescription!.replace(/\.$/, "");
-      const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
-      // The brief's words may already say "with"; then the room is joined without another one.
-      const room = withCount(rawText) > 0 ? texture.split(/\s+with\s+/)[0] : texture;
-      const joins =
-        withCount(rawText) > 0 || withCount(room) > 0
-          ? ["engineered for", "captured in", "finished in", "set in"]
-          : ["engineered with", "captured with", "finished with", "balanced with"];
-
-      const intros = [
-        `Vocal performance features ${rawText}, ${joins[0]} ${room}.`,
-        `Lead vocals deliver ${rawText}, ${joins[1]} ${room}.`,
-        `Vocal delivery showcases ${rawText}, ${joins[2]} ${room}.`,
-        `Topline features ${rawText}, ${joins[3]} ${room}.`,
-      ];
-      sVocal = intros[template % intros.length];
-    } else {
-      const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
-      const fitting = (bank: string[]) => (bank.filter(fits).length ? bank.filter(fits) : bank);
-      const stylePhrase = pick2(rng, fitting(VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap));
-      const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
-      const arc = pick2(rng, fitting(arcBank ?? VOCAL_ARC.rap));
-      // A tone or register the brief named ("breathy female alto") is the voice; otherwise the
-      // planned phrase for the genre is.
-      const identity = v.briefVoice
-        ? `${v.briefVoice} ${
-            /^(melodic-rap|sung-rap|sing-rap)$/.test(v.style ?? "")
-              ? "melodic rap vocal"
-              : hasRapVocal(plan)
-                ? "rap flow"
-                : "vocal"
-          }`
-        : v.delivery && v.delivery.length > 15
-          ? v.delivery
-          : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
-      const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][template % 3];
-      sVocal = vocalSentence(intro, identity, v, stylePhrase, arc);
-    }
-  } else {
-    sVocal = pick2(rng, [
+    RAP_STYLES.has(plan.vocals.style ?? "") || families.includes("rap") || families.includes("drill");
+  if (!plan.vocals.present) {
+    return pick2(rng, [
       "Arrangement stays strictly instrumental, letting bass motifs and atmospheric textures lead the melodic hook role.",
       "Composed as a pure instrumental cut, driven by bass movement and rhythmic space rather than a lead vocal.",
       "Instrumental arrangement where melodic motifs and percussion carry the primary topline focus.",
     ]);
   }
+  const v = plan.vocals;
+  const who = v.presentation === "female" ? "female" : v.presentation === "male" ? "male" : "lead";
 
-  const mixLead = pick2(rng, [...PRODUCTION_VERBS.mixLead]);
-  let s5 = `${mixLead} ${mix}`;
-  if (master) s5 += `, finished with ${master}`;
-  s5 += `. ${pick2(rng, [...PRODUCTION_VERBS.form])} ${arr}.`;
+  if (hasRichVocalDescription(v)) {
+    // The brief's own vocal words, translated into one engineered-room clause.
+    const rawText = v.rawDescription!.replace(/\.$/, "");
+    const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
+    // The brief's words may already say "with"; then the room is joined without another one.
+    const room = withCount(rawText) > 0 ? texture.split(/\s+with\s+/)[0] : texture;
+    const joins =
+      withCount(rawText) > 0 || withCount(room) > 0
+        ? ["engineered for", "captured in", "finished in", "set in"]
+        : ["engineered with", "captured with", "finished with", "balanced with"];
+    const intros = [
+      `Vocal performance features ${rawText}, ${joins[0]} ${room}.`,
+      `Lead vocals deliver ${rawText}, ${joins[1]} ${room}.`,
+      `Vocal delivery showcases ${rawText}, ${joins[2]} ${room}.`,
+      `Topline features ${rawText}, ${joins[3]} ${room}.`,
+    ];
+    return intros[variant % intros.length];
+  }
 
-  // Flowing instrumentation phrasing without rigid label headers
-  const instIntros = [
-    `The arrangement centers on ${instruments}.`,
-    `Instrumentation features ${instruments}.`,
-    `Arranged with ${instruments}.`,
-    `Instrumentation is built around ${instruments}.`,
-    `Acoustic palette includes ${instruments}.`,
-  ];
-  const s6 = instIntros[template % instIntros.length];
+  const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
+  const fitting = (bank: string[]) => (bank.filter(fits).length ? bank.filter(fits) : bank);
+  const stylePhrase = pick2(rng, fitting(VOCAL_STYLE[styleKey] ?? VOCAL_STYLE.rap));
+  const arcBank = VOCAL_ARC[styleKey] ?? (isRapStyle ? VOCAL_ARC.rap : VOCAL_ARC.sung);
+  const arc = pick2(rng, fitting(arcBank ?? VOCAL_ARC.rap));
+  // A tone or register the brief named ("breathy female alto") is the voice; otherwise the planned phrase is.
+  const identity = v.briefVoice
+    ? `${v.briefVoice} ${
+        /^(melodic-rap|sung-rap|sing-rap)$/.test(v.style ?? "")
+          ? "melodic rap vocal"
+          : hasRapVocal(plan)
+            ? "rap flow"
+            : "vocal"
+      }`
+    : v.delivery && v.delivery.length > 15
+      ? v.delivery
+      : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
+  const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][variant % 3];
+  return vocalSentence(intro, identity, v, stylePhrase, arc);
+}
 
-  return [s1, s2, s3, s4.trim(), sVocal.trim(), s5.trim(), s6.trim()]
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+/**
+ * Sentences that top a short prompt up to the window, best first: the genre's own, then neutral ones.
+ * A sentence is skipped when the sounds it names are already in the text, so padding never repeats a section.
+ */
+function padCandidates(plan: SonicPlan, families: string[], text: string, rng: () => number): string[] {
+  const fits = (phrase: string) => fitsFamilies(phrase, families);
+  const present = conceptsOf(text);
+  const fresh = (sentence: string) => {
+    const concepts = [...conceptsOf(sentence)];
+    return concepts.length === 0 || concepts.some((k) => !present.has(k));
+  };
+  const familyPadding = families.flatMap((f) => FAMILY_PADDING[f] ?? []).filter((p) => suitsVocal(p, plan));
+  const genericPadding = hasRapVocal(plan)
+    ? [
+        ...rapPaddingFor(plan.vocals.style),
+        ...PADDING.filter((p) => !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(p)),
+      ]
+    : PADDING;
+  const shuffled = (list: string[]) =>
+    list
+      .map((e, i) => ({ e, i: (rng() * 1000 + i) % list.length }))
+      .sort((a, b) => a.i - b.i)
+      .map((x) => x.e);
+  const ordered = [
+    ...shuffled(familyPadding),
+    ...shuffled(genericPadding.filter((p) => !/vocal|singing|harmonies|sung/i.test(p))),
+    ...MICROS,
+  ].filter(fits);
+  const out: string[] = [];
+  for (const sentence of ordered) {
+    if (!fresh(sentence) || out.includes(sentence)) continue;
+    out.push(sentence);
+  }
+  // Last resorts, used only when everything above has been tried.
+  return [...out, FINAL_PAD];
 }
 
 function feelPhrase(feel: string, families: string[], rng: () => number): string {
@@ -360,213 +523,9 @@ function feelPhrase(feel: string, families: string[], rng: () => number): string
   return opts.length ? opts[Math.floor(rng() * opts.length) % opts.length] : "steady rhythmic pocket";
 }
 
-function genreClause(plan: SonicPlan, rng: () => number): string {
-  if (plan.secondaryGenre && plan.accentGenre) {
-    const glue = pick2(rng, [...GENRE_GLUE]);
-    return glue
-      .replace("{p}", plan.primaryGenre)
-      .replace("{s}", plan.secondaryGenre)
-      .replace("{a}", plan.accentGenre);
-  }
-  if (plan.secondaryGenre) {
-    return rng() > 0.5
-      ? `${plan.primaryGenre} and ${plan.secondaryGenre} hybrid`
-      : `${plan.primaryGenre} x ${plan.secondaryGenre} hybrid`;
-  }
-  if (plan.accentGenre) {
-    return `${plan.primaryGenre} with ${plan.accentGenre} accents`;
-  }
-  return plan.primaryGenre;
-}
-
 function pick2<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
-
-function fitToWindow(text: string, plan: SonicPlan): string {
-  let t = text.replace(/\s+/g, " ").trim();
-  const rng = mulberry32((plan.seed ^ 1597463007) >>> 0);
-  const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
-  const fits = (phrase: string) => fitsFamilies(phrase, families);
-
-  if (t.length > MAX_CHARS) {
-    const compressions: [RegExp, string][] = [
-      [/, leaving space between phrases so silence shapes the groove/g, ""],
-      [/, finished with [^.]*/g, ""],
-      [/ keep the emotional center clear/g, " anchor the harmony"],
-      [/, while [^,]+ stay sparse and memorable/g, ""],
-      [/; [^.]+\./g, "."],
-      [/moving from intimate restraint to powerful layered peaks/g, "moving intimate-to-powerful"],
-      [/shifting soft close-mic lines into stacked peaks/g, "moving intimate-to-powerful"],
-      [/with layered harmonies and subtle delay throws/g, "with layered harmonies"],
-      [/before each major low-end response/g, "before each bass response"],
-      [/and modern bass production/g, "and bass-forward production"],
-      [/and club-ready bass production/g, "and bass-forward production"],
-      [/and weight-driven hybrid production/g, "and bass-forward production"],
-      [/Arrangement moves through/g, "Form uses"],
-      [/Structure rides/g, "Form uses"],
-      [/Texture design uses/g, "Textures use"],
-      [/FX bed includes/g, "Textures use"],
-      [/Transitions lean on/g, "Textures use"],
-      [/form the low-end hierarchy, with/g, "drive the low end via"],
-      [/Low-end focus is/g, "Low end is"],
-      [/Mix architecture prioritizes/g, "Mix favors"],
-      [/\s+/g, " "],
-    ];
-    for (const [re, rep] of compressions) {
-      if (t.length <= MAX_CHARS) break;
-      t = t.replace(re, rep).replace(/\s+/g, " ").trim();
-    }
-  }
-
-  if (t.length > MAX_CHARS) {
-    t = shrinkToMax(t, plan);
-  }
-
-  if (t.length < MIN_CHARS) {
-    const familyPadding = families
-      .flatMap((f) => FAMILY_PADDING[f] ?? [])
-      .filter((p) => suitsVocal(p, plan));
-    const genericPadding = hasRapVocal(plan)
-      ? [
-          ...rapPaddingFor(plan.vocals.style),
-          ...PADDING.filter(
-            (p) =>
-              !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(
-                p
-              )
-          ),
-        ]
-      : PADDING;
-
-    const shuffled = (list: string[]) =>
-      list
-        .map((e, i) => ({ e, i: (rng() * 1000 + i) % list.length }))
-        .sort((a, b) => a.i - b.i)
-        .map((x) => x.e);
-    const groovePadding = [
-      `Groove emphasis stays on ${
-        plan.groove[0] ?? "pocket and weight"
-      } with disciplined spacing and punchy transient response.`,
-      `Rhythmic pocket remains locked to ${
-        plan.groove[0] ?? "the foundation"
-      } with clean transient dynamics.`,
-    ];
-    // The genre's own descriptive sentences go first; generic ones only top up.
-    const order = [
-      ...shuffled(familyPadding),
-      ...shuffled([...genericPadding.filter((p) => !/vocal|singing|harmonies|sung/i.test(p)), ...groovePadding]),
-    ].filter(fits);
-    for (const e of order) {
-      if (t.length >= MIN_CHARS) break;
-      if (t.length + 1 + e.length <= MAX_CHARS) {
-        t = insertBeforeInstruments(t, e);
-      }
-    }
-  }
-
-  const micros = MICROS.filter(fits);
-  for (const m of micros) {
-    if (t.length >= MIN_CHARS) break;
-    if (t.length + 1 + m.length <= MAX_CHARS) {
-      t = insertBeforeInstruments(t, m);
-    }
-  }
-
-  if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
-
-  let guard = 0;
-  while (t.length < MIN_CHARS && guard < 10) {
-    guard++;
-    if (t.length + 1 + FINAL_PAD.length <= MAX_CHARS) {
-      t = insertBeforeInstruments(t, FINAL_PAD);
-    } else break;
-  }
-
-  if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(t)) {
-    t = `${plan.bpm} BPM ${t}`.replace(/\s+/g, " ").trim();
-    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
-  }
-
-  t = ensureAnchors(t, plan);
-
-  if (
-    !/Mix priorities favor|Mix favors|Mix architecture prioritizes|The mix keeps|Balance leans on/i.test(
-      t
-    )
-  ) {
-    const mixClause = `Mix priorities favor ${plan.mix.slice(0, 3).join(", ")}.`;
-    const candidate = insertBeforeInstruments(t, mixClause);
-    if (candidate.length <= MAX_CHARS) t = candidate;
-    else {
-      t = t
-        .replace(
-          /Dynamic arc moves from restrained detail into explosive half-time weight, then returns to reflective space before a final expanded release\.\s*/i,
-          ""
-        )
-        .replace(/\s+/g, " ")
-        .trim();
-      const c2 = insertBeforeInstruments(t, mixClause);
-      if (c2.length <= MAX_CHARS) t = c2;
-    }
-  }
-
-  if (hasRapVocal(plan)) {
-    t = t
-      .replace(/bright stacked female harmonies/gi, "bright female rap doubles")
-      .replace(/stacked background harmonies on chorus lifts/gi, "stacked background hype shouts on hook drops")
-      .replace(/stacked background harmonies/gi, "stacked background ad-lib doubles")
-      .replace(/layered vocal harmonies on hook/gi, "layered ad-lib chants on hook")
-      .replace(/layered harmonies/gi, "stereo doubles")
-      .replace(/wide harmonic ad-libs/gi, "wide stereo ad-lib echoes")
-      .replace(/melodic lift with a soaring top-line fragment/gi, "cold pluck hook motif")
-      .replace(/pads, harmonies, and ambience/gi, "pads, ad-libs, and ambience")
-      .replace(/a harmony, a wobble syllable/gi, "a vocal chop, an 808 slide");
-  }
-
-  return t.replace(/\s+/g, " ").trim();
-}
-
-/**
- * Over the limit, drop whole filler sentences first (dropFillerSentence protects the vocal
- * line, the BPM and the brief's anchors); cut mid-text only when nothing else can go.
- */
-function shrinkToMax(text: string, plan: SonicPlan): string {
-  const anchors = anchorsToCheck(plan);
-  let t = text;
-  for (let guard = 0; t.length > MAX_CHARS && guard < 8; guard++) {
-    const next = dropFillerSentence(t, anchors);
-    if (next === t) break;
-    t = next;
-  }
-  // The protected sentences alone can still be too long (three-genre briefs): shorten them
-  // before the last-resort cut, which would otherwise slice off the vocal sentence.
-  for (const shorten of PROTECTED_SHORTENINGS) {
-    if (t.length <= MAX_CHARS) break;
-    t = shorten(t).replace(/\s+/g, " ").trim();
-  }
-  if (t.length <= MAX_CHARS) return t;
-  // Last resort: cut the other sentences, never the vocal one.
-  const vocal = t.match(VOCAL_SENTENCE)?.[0];
-  if (!vocal) return trimKeepingInstruments(t, MAX_CHARS);
-  const others = t.replace(vocal, " ").replace(/\s+/g, " ").trim();
-  return insertBeforeInstruments(trimKeepingInstruments(others, MAX_CHARS - vocal.length - 1), vocal);
-}
-
-const VOCAL_SENTENCE =
-  /(?:Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features)[^.]*\./;
-
-const PROTECTED_SHORTENINGS: ((text: string) => string)[] = [
-  // Drop the vocal's effects clause ("..., treated with X and Y.").
-  (t) => t.replace(VOCAL_SENTENCE, (sentence) => sentence.replace(/, (?:treated|engineered|captured|finished|balanced) with [^.]*\./, ".")),
-  // Keep the first five instruments.
-  (t) =>
-    t.replace(new RegExp(`(${INSTRUMENT_HEADER_RE.source})([^.]*)\\.`, "i"), (_m, header: string, list: string) =>
-      `${header}${list.split(",").slice(0, 5).join(",")}.`
-    ),
-  // Drop the vocal arc, keeping who sings and how.
-  (t) => t.replace(VOCAL_SENTENCE, (sentence) => sentence.replace(/^([^,]*),[^.]*\./, "$1.")),
-];
 
 /** Anchors the plan writes for the vocal ("male rap flow", "female vocals"), not the brief's own words. */
 const VOCAL_ANCHOR = /^(female|male|lead) (rap flow|vocals)$/i;
@@ -603,70 +562,12 @@ function anchorsToCheck(plan: SonicPlan): string[] {
   return all.filter((a) => !vocalAnchors.has(a));
 }
 
-/** One natural sentence for every brief element the prose has not mentioned yet. */
-function anchorSentence(missing: string[]): string {
-  const list =
-    missing.length === 1
-      ? missing[0]
-      : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
-  return `The production keeps ${list} front and center.`;
-}
-
-function ensureAnchors(text: string, plan: SonicPlan): string {
-  const need = anchorsToCheck(plan);
-  let t = text;
-
-  const missing = need.filter((anchor) => !hasAnchor(t, anchor) && !/\bBPM\b/i.test(anchor));
-  if (missing.length) {
-    const clause = anchorSentence(missing);
-    let guard = 0;
-    while (t.length + 1 + clause.length > MAX_CHARS && guard < 6) {
-      guard++;
-      const next = dropFillerSentence(t, need);
-      if (next === t) break;
-      t = next;
-    }
-    t = insertBeforeInstruments(t, clause);
-    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
-  }
-
-  if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(t)) {
-    t = `${plan.bpm} BPM ${t}`.replace(/\s+/g, " ").trim();
-    if (t.length > MAX_CHARS) t = shrinkToMax(t, plan);
-  }
-  if (t.length < MIN_CHARS && t.length + 1 + FINAL_PAD.length <= MAX_CHARS) {
-    t = insertBeforeInstruments(t, FINAL_PAD);
-  }
-  return t.replace(/\s+/g, " ").trim();
-}
-
 const INSTRUMENT_HEADER_RE =
-  /(?:The arrangement centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes)/i;
+  /(?:The sound palette centers on|Instrumentation features|Arranged with|Instrumentation is built around|Acoustic palette includes)/i;
 
 function findInstrumentationIndex(text: string): number {
   const m = text.match(INSTRUMENT_HEADER_RE);
   return m && m.index != null ? m.index : -1;
-}
-
-function dropFillerSentence(text: string, anchors: string[]): string {
-  const instIdx = findInstrumentationIndex(text);
-  const head = instIdx > 0 ? text.slice(0, instIdx).trim() : text;
-  const tail = instIdx > 0 ? text.slice(instIdx) : "";
-  const parts = head.split(/(?<=\.)\s+/).filter(Boolean);
-  if (parts.length < 3) return text;
-  let drop = -1;
-  for (let i = parts.length - 1; i >= 1; i--) {
-    // An anchor only protects the sentence holding its last remaining mention.
-    const rest = [...parts.slice(0, i), ...parts.slice(i + 1), tail].join(" ");
-    if (anchors.some((a) => hasAnchor(parts[i], a) && !hasAnchor(rest, a))) continue;
-    if (/\bbpm\b/i.test(parts[i])) continue;
-    if (/vocal performance|lead vocal|vocal delivery|topline features|vocals center|vocals:/i.test(parts[i])) continue; // Never drop vocal section!
-    drop = i;
-    break;
-  }
-  if (drop < 0) return text;
-  parts.splice(drop, 1);
-  return `${parts.join(" ")}${tail ? " " + tail : ""}`.replace(/\s+/g, " ").trim();
 }
 
 export function insertBeforeInstruments(text: string, clause: string): string {
