@@ -121,7 +121,7 @@ describe("prompt prose", () => {
   });
 
   it("keeps the vocal sentence when three-genre briefs run long", () => {
-    const vocalSentence = /Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features/;
+    const vocalSentence = /Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features|, with [^.]*(?:vocal|rap|chops|sung)/;
     for (const brief of [
       "Trap + Baile Funk + Deep Dubstep, kinetic, 140 BPM",
       "Future Bass + UK Garage + Trap, emotional, cinematic, 136 BPM",

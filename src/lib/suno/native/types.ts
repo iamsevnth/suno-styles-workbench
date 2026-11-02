@@ -19,6 +19,22 @@ export interface NativeSub {
   moods: string[];
   /** Whether the genre sings by default when the brief says nothing about vocals. */
   vocal: "sung" | "none";
+  /** Vocal style when the brief says nothing about it ("chops" for a bass-music track, "rap" for a rap one). */
+  vocalStyle?: "chops" | "rap" | "melodic-rap" | "autotuned-rap" | "sung";
+  /** How a rap vocal sits in this genre; used instead of `vocals` when the brief asks for rap. */
+  rapVocals?: string[];
+  /** Part of the bass/rap world: non-EDM wording is a hard validation failure. */
+  edm?: boolean;
+  /** Show the user's own wording (riddim, dnb, baile) in the opening clause instead of the catalog name. */
+  keepWords?: boolean;
+  /** Always show the catalog name, never the user's own spelling ("2-step garage" is still "UK Garage"). */
+  keepName?: boolean;
+  /** A short rhythm phrase that joins the drums when this genre is a supporting genre in a blend. */
+  signature?: string;
+  /** Extra check on the whole brief before a match counts (plain "trap" is EDM trap unless the brief raps). */
+  context?: (lowerText: string) => boolean;
+  /** Section headings for genres that read better with their own words ("Bass design and chords"). */
+  headings?: { bass?: string; textures?: string };
   /** Lead (hero) parts, used when the brief names no instrument. */
   leads: string[];
   drums: string[];

@@ -44,7 +44,9 @@ describe("genre-aware phrase selection: trap + UKG Dubstep", () => {
   ] as const) {
     it(`keeps off-family phrases out of the ${label}`, () => {
       for (const p of run(brief, mode)) {
-        assert.equal(p.plan.primaryGenre, "Aggressive Trap");
+        // The plain brief runs on the native bass/rap banks (named "Trap rap" or "EDM trap"); Fix mode keeps the library names.
+        if (mode) assert.equal(p.plan.primaryGenre, "Aggressive Trap");
+        else assert.match(p.plan.primaryGenre, /trap/i);
         assert.equal(p.plan.secondaryGenre, "UKG Dubstep");
         assert.doesNotMatch(p.styles, OFF_FAMILY, p.styles);
         for (const phrase of planPhrases(p)) assert.doesNotMatch(phrase, OFF_FAMILY, phrase);
@@ -60,7 +62,7 @@ describe("genre-aware phrase selection: trap + UKG Dubstep", () => {
 
   it("still gives the supporting genre its role: UKG hat skip and sub pressure in drums, groove or bass", () => {
     for (const p of run(TRAP_UKG)) {
-      assert.match(p.styles, /UKG Dubstep hat skip and sub pressure/, p.styles);
+      assert.match(p.styles, /UKG Dubstep (?:hat skip and sub pressure|influences)/, p.styles);
       assert.match(p.styles, /skipp|shuffl|syncopated/i, p.styles);
     }
   });

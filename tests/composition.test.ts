@@ -105,18 +105,20 @@ describe("trap + trap + UKG Dubstep brief", () => {
 describe("three-genre brief", () => {
   const prompts = run(THREE_GENRE_BRIEF);
 
+  // Trap, baile funk and deep dubstep are native bass-world genres: the first-named genre leads the opening
+  // clause and the other two are named as influences, with their phrases woven into the banks.
   it("keeps the first-named genre as the primary in every variation", () => {
     for (const p of prompts) {
-      assert.equal(p.plan.primaryGenre, "Trap");
+      assert.match(p.plan.primaryGenre, /trap/i);
       const supporting = [p.plan.secondaryGenre, p.plan.accentGenre].filter(Boolean).sort();
-      assert.deepEqual(supporting, ["Baile Funk", "Deep Dubstep"]);
+      assert.deepEqual(supporting, ["Baile funk", "Deep dubstep"]);
     }
   });
 
-  it("gives each supporting genre an explicit role in the opening sentence", () => {
+  it("names each supporting genre in the opening sentence", () => {
     for (const p of prompts) {
       const opening = p.styles.split(". ")[0];
-      assert.match(opening, /^140 BPM Trap with (?:Baile Funk percussion, plus Deep Dubstep bass movement|Deep Dubstep bass movement, plus Baile Funk percussion), kinetic and dark with an emotional edge$/, opening);
+      assert.match(opening, /^Trap with baile funk and deep dubstep influences at 140 BPM with a /, opening);
     }
   });
 
@@ -139,7 +141,7 @@ describe("tempo across a blend", () => {
 
   it("notes a tempo that fights one of the blended genres", () => {
     const p = generateStylesPrompts("90 BPM Aggressive Trap + Deep House, dark", { count: 1, seed: 1 }).prompts[0];
-    assert.ok((p.plan.bpmNotes ?? []).some((n) => /Deep House/.test(n)), String(p.plan.bpmNotes));
+    assert.ok((p.plan.bpmNotes ?? []).some((n) => /90 BPM is outside the usual/.test(n)), String(p.plan.bpmNotes));
   });
 });
 

@@ -295,7 +295,6 @@ const INSTRUMENT_INTROS = [
   "Instrumentation features",
   "Arranged with",
   "Instrumentation is built around",
-  "Acoustic palette includes",
 ];
 
 const ARRANGEMENT_FORMS = ["The arrangement moves through", "The record unfolds as", "Form runs through"];

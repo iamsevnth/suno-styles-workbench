@@ -117,7 +117,8 @@ describe("whole library sweep", () => {
           if (!hasDrops(families) && DROP_WORDS.test(p.styles)) fail("drop wording");
           // Genre names ("UKG Dubstep") are not sound vocabulary, so only the compiler's own phrases are checked.
           const phrases = withoutGenreNames(p);
-          if (!families.some((f) => BASS_MUSIC_FAMILIES.has(f)) && BASS_MUSIC_WORDS.test(phrases)) fail("bass-music sound");
+          // Native bass, rap and club banks are bass music by design; their genre purity is covered by edm-generator.test.ts.
+          if (!p.plan.native?.edm && !families.some((f) => BASS_MUSIC_FAMILIES.has(f)) && BASS_MUSIC_WORDS.test(phrases)) fail("bass-music sound");
         }
       }
     }

@@ -1,3 +1,4 @@
+import { EDM_SUBS } from "./catalog-edm.ts";
 import { NativeSub, SubBanks } from "./types.ts";
 
 /** Builds a sub-genre from a family's shared banks plus its own overrides. */
@@ -5,7 +6,7 @@ function make(
   id: string,
   name: string,
   match: RegExp,
-  base: Required<Pick<NativeSub, keyof SubBanks & keyof NativeSub>> & SubBanks,
+  base: Required<Omit<Pick<NativeSub, keyof SubBanks & keyof NativeSub>, "vocalStyle" | "rapVocals" | "edm" | "keepWords" | "keepName" | "signature" | "context" | "headings">> & SubBanks,
   own: SubBanks & { bpm: [number, number, number] }
 ): NativeSub {
   return { id, name, match, ...(base as object), ...own } as NativeSub;
@@ -425,6 +426,9 @@ const GENERAL: Base = {
 const NOT_BASS = "(?<![\\w-])";
 
 export const NATIVE_SUBS: NativeSub[] = [
+  // Bass music, club and rap: dedicated banks, never mixed with the families below.
+  ...EDM_SUBS,
+
   // Techno
   make("melodic-techno", "Melodic techno", /\bmelodic techno\b/, TECHNO, {
     bpm: [120, 128, 124],

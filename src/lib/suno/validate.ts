@@ -1,4 +1,4 @@
-import { bassMusicLeaks, hasConflictingBpm, moodClash, vocalInInstrumental } from "./consistency.ts";
+import { bassMusicLeaks, hasConflictingBpm, isBassWorld, moodClash, nonEdmBleed, vocalInInstrumental } from "./consistency.ts";
 import { familyKeys, hasDrops } from "./families.ts";
 import { HARD_MAX_CHARS, MAX_CHARS, MIN_CHARS } from "./render.ts";
 import { HardGates, SonicPlan } from "./types.ts";
@@ -49,6 +49,7 @@ export function validatePrompt(
 
   const contradictions = findContradictions(styles, plan);
   const noContradictions = contradictions.length === 0;
+  const noGenreBleed = !contradictions.includes("non_edm_bleed");
   for (const c of contradictions) issues.push(`contradiction:${c}`);
 
   const score = scorePrompt(styles, plan, {
@@ -70,6 +71,7 @@ export function validatePrompt(
       stylesOnly,
       uniqueness,
       noContradictions,
+      noGenreBleed,
     },
     issues,
     score,
@@ -87,7 +89,8 @@ export function findContradictions(styles: string, plan: SonicPlan): string[] {
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   // Native families never use bass-music wording. Hip-hop and R&B on the older path legitimately use 808s and hat rolls.
   const leaks = bassMusicLeaks(styles, plan.briefText ?? "").filter((w) => plan.native || !/^(?:808s?|hi-hat rolls?|trap hats?)$/.test(w));
-  if ((plan.native || !hasDrops(families)) && leaks.length) found.push("bass_music_phrasing");
+  if (((plan.native && !plan.native.edm) || (!plan.native && !hasDrops(families))) && leaks.length) found.push("bass_music_phrasing");
+  if (isBassWorld(families, plan.native?.edm, !!plan.native) && nonEdmBleed(styles, [plan.briefText, plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(" ")).length) found.push("non_edm_bleed");
   return found;
 }
 
@@ -110,7 +113,8 @@ export function criticalGatesPass(gates: HardGates): boolean {
     gates.protectedReferences &&
     gates.positivePrompting &&
     gates.stylesOnly &&
-    gates.noContradictions !== false
+    gates.noContradictions !== false &&
+    gates.noGenreBleed !== false
   );
 }
 

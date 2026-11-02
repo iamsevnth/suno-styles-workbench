@@ -41,10 +41,12 @@ export interface NativeRoute {
   /** Catalog ids of the primary and (optional) secondary sub-genre; "general" for unknown genres. */
   primary: string;
   secondary?: string;
+  /** A third distinct sub-genre; it adds a little flavour and a name in the opening clause. */
+  tertiary?: string;
   /** The user's own genre words when the library has no entry for them. */
   verbatim?: string;
   /** The user's own spelling of the matched sub-genres ("lo-fi jazz hop"), used for the opening clause. */
-  labels?: { primary?: string; secondary?: string };
+  labels?: { primary?: string; secondary?: string; tertiary?: string };
 }
 
 /** The native pipeline's section banks, already rotated for this variant. */
@@ -53,6 +55,9 @@ export interface NativeParts {
   sections: Record<string, string[]>;
   scenes: string[];
   textures: string[];
+  /** The primary or secondary sub-genre belongs to the bass/rap world. */
+  edm?: boolean;
+  headings?: { bass?: string; textures?: string };
 }
 
 export interface VocalPreferences {
@@ -151,6 +156,8 @@ export interface HardGates {
   uniqueness: boolean;
   /** No conflicting BPMs, vocal terms in instrumentals, mood clashes or bass-music phrasing in other genres. */
   noContradictions?: boolean;
+  /** Non-EDM wording (acoustic guitar, vinyl crackle...) in a bass/rap prompt that the brief did not ask for. */
+  noGenreBleed?: boolean;
 }
 
 export interface PromptCandidate {

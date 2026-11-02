@@ -4,7 +4,7 @@ import { bpmNotes, resolveGenreBlend, stripTemplateBoilerplate, stripVocalLeadIn
 import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
 import { extractBriefPhrases } from "./brief.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./native/catalog.ts";
-import { nativeCovers, nativeHits } from "./native/compose.ts";
+import { labelOf, nativeCovers, nativeHits } from "./native/compose.ts";
 import { NativeRoute, ParsedInput, VocalPreferences } from "./types.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
@@ -192,7 +192,15 @@ export function parseUserInput(
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
   // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres
+  // A brief that raps with no genre at all is a rap record: the native modern-rap and sung-rap banks take it,
+  // and the seeded library genres below stay only for draft and rewrite modes.
+  let seedText = "";
+  const seeded = new Set<string>();
   if (genres.length === 0 && vocals.style && vocals.style !== "sung" && vocals.style !== "chops") {
+    if (nativeHits(text).length === 0) {
+      seedText = vocals.style === "melodic-rap" || vocals.style === "autotuned-rap" ? "autotuned sung-rap" : vocals.style === "mumble-rap" ? "trap rap" : "modern rap";
+    }
+    const before = genres.length;
     if (vocals.style === "mumble-rap") {
       genres.push("SoundCloud Trap", "Minimal Dark Trap");
     } else if (vocals.style === "autotuned-rap") {
@@ -206,6 +214,7 @@ export function parseUserInput(
     } else {
       genres.push("Southern Trap", "Aggressive Trap");
     }
+    genres.slice(before).forEach((g) => seeded.add(g));
   }
 
   const grooveHints: string[] = [];
@@ -334,8 +343,9 @@ export function parseUserInput(
     return !!matchGenre(c) || nativeHits(c).length > 0 || MOOD_WORDS.some((m) => includesPhrase(c, m));
   });
   const nativeNotes: string[] = [];
-  const hits = nativeHits(text);
+  const hits = nativeHits(seedText ? `${text}, ${seedText}` : text);
   const uncovered = genres.filter((g) => {
+    if (seeded.has(g) && (seedText || hits.length)) return false;
     const def = matchGenre(g);
     return !(def && nativeCovers(hits, def));
   });
@@ -347,10 +357,12 @@ export function parseUserInput(
       native = {
         primary: hits[0].sub.id,
         secondary: hits[1] && hits[1].sub.id !== hits[0].sub.id ? hits[1].sub.id : undefined,
+        tertiary: hits[2] && hits[2].sub.id !== hits[0].sub.id && hits[2].sub.id !== hits[1]?.sub.id ? hits[2].sub.id : undefined,
         verbatim: phrases.unknownGenres[0],
         labels: {
-          primary: hits[0].text.replace(/\s+/g, " ").trim().split(" ").length > 1 || /-/.test(hits[0].text) ? hits[0].text : undefined,
-          secondary: hits[1] && hits[1].sub.id !== hits[0].sub.id ? hits[1].text : undefined,
+          tertiary: hits[2] && hits[2].sub.id !== hits[0].sub.id && hits[2].sub.id !== hits[1]?.sub.id ? labelOf(hits[2]) : undefined,
+          primary: labelOf(hits[0]),
+          secondary: hits[1] && hits[1].sub.id !== hits[0].sub.id ? labelOf(hits[1]) : undefined,
         },
       };
     } else if (!hits.length && genres.length === 0) {
@@ -361,6 +373,7 @@ export function parseUserInput(
     const primary = NATIVE_SUBS.find((sub) => sub.id === native.primary) ?? GENERAL_SUB;
     finalGenres = native.verbatim ? [native.verbatim] : native.primary === "general" ? [] : [primary.name];
     if (native.secondary) finalGenres.push(NATIVE_SUBS.find((sub) => sub.id === native.secondary)?.name ?? "");
+    if (native.tertiary) finalGenres.push(NATIVE_SUBS.find((sub) => sub.id === native.tertiary)?.name ?? "");
     finalGenres = finalGenres.filter(Boolean);
     if (native.verbatim) {
       nativeNotes.push(

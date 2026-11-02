@@ -19,7 +19,7 @@ export interface Hit {
   text: string;
 }
 
-const NOUN_AFTER = /^\s+(?:percussion|guitars?|hats?|drums?|bass|vocals?|synths?|riffs?|pads?|samples?|kicks?|snares?|loops?|bells?|stabs?)\b/i;
+const NOUN_AFTER = /^\s+(?:percussion|guitars?|hats?|drums?|bass|vocals?|synths?|riffs?|pads?|samples?|kicks?|snares?|loops?|bells?|stabs?|hooks?|chords?|leads?|melod(?:y|ies)|vocal|keys|piano|strings?|chops?)\b/i;
 
 /** Every native sub-genre the brief names, in the order it names them; a sub inside a longer match is dropped. */
 export function nativeHits(text: string): Hit[] {
@@ -27,6 +27,7 @@ export function nativeHits(text: string): Hit[] {
   const hits: Hit[] = [];
   for (const sub of NATIVE_SUBS) {
     const re = new RegExp(sub.match.source, "g");
+    if (sub.context && !sub.context(lower)) continue;
     for (const m of lower.matchAll(re)) {
       const index = m.index ?? 0;
       // "folk ballad", "indie anthem": the noun after a genre belongs to the genre.
@@ -64,16 +65,43 @@ export function nativeCovers(hits: Hit[], genre: { name: string; aliases?: strin
 
 const capFirst = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
+/** Acronyms keep their capitals when the user's lower-cased words become a label ("ukg dubstep" is "UKG dubstep"). */
+const ACRONYMS: [RegExp, string][] = [
+  [/\bukg\b/g, "UKG"],
+  [/\buk\b/g, "UK"],
+  [/\bedm\b/g, "EDM"],
+  [/\bdnb\b/g, "DnB"],
+  [/\bd&b\b/g, "D&B"],
+  [/\br&b\b/g, "R&B"],
+];
+export function acronyms(words: string): string {
+  return ACRONYMS.reduce((t, [re, to]) => t.replace(re, to), words);
+}
+
 /** The user's own genre words, capitalised only at the start so nothing is rewritten. */
 export function verbatimLabel(words: string): string {
-  return capFirst(words.trim());
+  return capFirst(acronyms(words.trim()));
+}
+
+/** A label in the middle of a sentence: the first letter drops to lower case unless the word is an acronym. */
+export function midSentenceLabel(words: string): string {
+  const w = acronyms(words.trim());
+  return /^[A-Z]{2}/.test(w) ? w : w.charAt(0).toLowerCase() + w.slice(1);
+}
+
+/** The label to show for a hit when it differs from the catalog name; undefined when the name already says it. */
+export function labelOf(hit: Hit): string | undefined {
+  if (hit.sub.keepName) return undefined;
+  const text = hit.text.replace(/\s+/g, " ").trim();
+  if (text.split(" ").length > 1 || /-/.test(text)) return text.toLowerCase() === hit.sub.name.toLowerCase() ? undefined : text;
+  return hit.sub.keepWords && text.toLowerCase() !== hit.sub.name.toLowerCase() ? text : undefined;
 }
 
 /* ------------------------------------------------------------------------------------------ */
 /* Plan                                                                                        */
 /* ------------------------------------------------------------------------------------------ */
 
-const VOCAL_WORD = /\bvocal|sing|choir|voice|lyric|rap\b/i;
+const VOCAL_WORD = /\bvocal|\bsing\w*|\bchoir|\bvoice|\blyric|\brap(?:s|per|ping)?\b|\bad-?libs?\b|\bchants?\b|\bshouts?\b|\bchops?\b|\bhook phrase/i;
 
 function shuffled<T>(rng: () => number, items: T[]): T[] {
   const out = [...items];
@@ -116,7 +144,7 @@ const NATIVE_MOODS = [
 const CALM_WORDS = new Set(["calm", "mellow", "chill", "relaxed", "peaceful", "serene", "gentle", "tender", "cozy", "sleepy", "breezy", "dreamy", "intimate", "restrained", "reflective", "warm"]);
 const HARSH_WORDS = new Set(["aggressive", "dark", "menacing", "gritty", "heavy", "explosive", "frantic", "raw", "energetic", "hype", "powerful", "intense", "relentless", "brutal"]);
 
-const article = (word: string) => (/^[aeiou]/i.test(word) ? "an" : "a");
+const article = (word: string) => (/^(?:[aio]|e(?!u)|u(?![snl]i|[ts]e|ni))/i.test(word) ? "an" : "a");
 
 function moodsOf(parsed: ParsedInput, instrumentPhrases: string[], genreWords = ""): string[] {
   const text = parsed.raw.toLowerCase();
@@ -153,18 +181,42 @@ const wordsOf = (s: string) => new Set(s.toLowerCase().match(/[a-z]+/g) ?? []);
 
 const VOCAL_DELIVERY_RE = /\b(?:shouted|screamed|growled|raspy|husky|breathy|airy|smoky|whispered|belted|crooned|falsetto|gritty|raw|soulful|operatic|gravelly|twangy|sweet|silky|soft|hushed|powerful|nasal)\b/g;
 
-function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean): string {
+const RAP_KIND: Record<string, string> = {
+  rap: "rap vocal",
+  "talk-rap": "talk-rap vocal",
+  "melodic-rap": "sung-rap vocal",
+  "sung-rap": "sung-rap vocal",
+  "sing-rap": "sung-rap vocal",
+  "autotuned-rap": "autotuned rap vocal",
+  "mumble-rap": "mumble rap vocal",
+  "soundcloud-rap": "mumble rap vocal",
+  "lyrical-rap": "lyrical rap vocal",
+};
+
+/** The vocal style a brief gets: its own, "sung" when it names a voice but no style, else the genre's default. */
+function styleOf(v: VocalPreferences | undefined, fallback: string | undefined): string | undefined {
+  const asked = !!(v && (v.style || v.presentation || v.timbre || v.briefVoice || v.register));
+  return v?.style ?? (asked ? "sung" : fallback);
+}
+
+function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean, fallbackStyle?: string): string {
   if (instrumental) return "";
   const v = parsed.vocals;
   const voice = voiceOf(v);
-  const kind = isRapStyle(v) ? "rap vocal" : v?.style === "chops" ? "vocal chops" : "lead vocal";
+  const style = styleOf(v, fallbackStyle);
+  const kind = style && RAP_KIND[style] ? RAP_KIND[style] : style === "chops" ? "vocal chops" : "lead vocal";
   const subject = voice ? `${voice} ${kind}` : kind;
   // Only descriptors the brief itself wrote; the parser also plans extras the user never asked for.
   const brief = parsed.raw.toLowerCase();
   // Vocal delivery words the brief wrote that the parser may not list as descriptors ("shouted", "raspy").
   const spoken = (brief.match(VOCAL_DELIVERY_RE) ?? []).filter((w) => !voice.toLowerCase().includes(w));
-  const own = [...(v?.descriptors ?? []), ...spoken].filter((d, i, all) => all.indexOf(d) === i).filter((d) => brief.includes(d.toLowerCase()) && !voice.toLowerCase().includes(d.toLowerCase())).slice(0, 2);
-  const processing = v?.processingFromBrief ? (v?.processing ?? []).slice(0, 1) : [];
+  const ownAll = [...(v?.descriptors ?? []), ...spoken].filter((d, i, all) => all.indexOf(d) === i).filter((d) => brief.includes(d.toLowerCase()) && !voice.toLowerCase().includes(d.toLowerCase()));
+  // Effects the brief wrote ("slapback delay", "light autotune") stay in the vocal line, in the brief's order.
+  const processingAll = (v?.processing ?? []).filter((x) => brief.includes(x.toLowerCase().split(/[\s-]+/)[0].slice(0, 6)));
+  // A brief that describes the voice at length gets a longer vocal line; otherwise one short clause.
+  const detailed = new Set([v?.register, v?.timbre, v?.delivery, ...ownAll, ...processingAll].filter(Boolean)).size >= 4 || (v?.rawDescription?.trim().split(/\s+/).length ?? 0) >= 10;
+  const own = ownAll.slice(0, detailed ? 3 : 2);
+  const processing = processingAll.filter((x) => !own.some((o) => o.toLowerCase().includes(x.toLowerCase().split(/[\s-]+/)[0].slice(0, 6)))).slice(0, detailed ? 3 : v?.processingFromBrief ? 1 : processingAll.length ? 1 : 0);
   const taken = wordsOf([subject, ...own, ...processing].join(" "));
   const approach = approaches.find((a) => ![...wordsOf(a)].some((w) => w.length > 3 && taken.has(w))) ?? approaches[0];
   return [subject, ...own, ...processing, own.length || processing.length ? "" : approach].filter(Boolean).join(", ");
@@ -191,6 +243,12 @@ function distinct(lists: string[][]): string[][] {
   });
 }
 
+function nativeDetail(v: ParsedInput["vocals"]): "compact" | "detailed" {
+  if (!v) return "compact";
+  const traits = new Set([v.register, v.timbre, v.delivery, v.language, ...(v.descriptors ?? []), ...(v.processing ?? [])].filter(Boolean));
+  return traits.size >= 4 || (v.rawDescription?.trim().split(/\s+/).length ?? 0) >= 10 ? "detailed" : "compact";
+}
+
 export function buildNativePlan(
   parsed: ParsedInput,
   seed: number,
@@ -199,7 +257,8 @@ export function buildNativePlan(
   const route = parsed.native as NativeRoute;
   const primary = subById(route.primary);
   const secondary = route.secondary ? subById(route.secondary) : undefined;
-  const rng = mulberry32(seed ^ hashString(`${route.primary}|${route.secondary ?? ""}|${opts.variantIndex ?? 0}`));
+  const tertiary = route.tertiary ? subById(route.tertiary) : undefined;
+  const rng = mulberry32(seed ^ hashString(`${route.primary}|${route.secondary ?? ""}|${route.tertiary ?? ""}|${opts.variantIndex ?? 0}`));
   const rankOffset = (opts.diversityRank ?? 0) + (opts.attempt ?? 0);
 
   const instrumental =
@@ -219,9 +278,17 @@ export function buildNativePlan(
 
   const bank = (key: keyof NativeSub): string[] => {
     const p = (primary[key] as string[] | undefined) ?? [];
-    const s = secondary ? ((secondary[key] as string[] | undefined) ?? []) : [];
+    // A non-EDM secondary (pop, folk) never lends phrases to a bass or rap record.
+    const lends = secondary && (!primary.edm || secondary.edm);
+    const s = lends ? ((secondary[key] as string[] | undefined) ?? []) : [];
     // Secondary genre flavors the pool but the primary's phrases come first.
-    const pool = uniq([...shuffled(rng, p), ...shuffled(rng, s).slice(0, 2)]);
+    const sp = shuffled(rng, p);
+    const ss = shuffled(rng, s).slice(0, 2);
+    const t = tertiary && primary.edm && tertiary.edm ? ((tertiary[key] as string[] | undefined) ?? []) : [];
+    const tt = shuffled(rng, t).slice(0, 1);
+    // A bass or rap blend weaves the second genre in from the second phrase on, so both worlds are audible.
+    const woven = primary.edm && ss.length ? [sp[0], ss[0], tt[0], sp[1], ss[1], ...sp.slice(2)].filter((x): x is string => !!x) : [...sp, ...ss];
+    const pool = uniq(woven);
     const allowed = instrumental ? pool.filter((x) => !VOCAL_WORD.test(x)) : pool;
     // Rotate so sibling variants lead with different phrases even when the shuffles collide.
     const rot = allowed.length ? rankOffset % Math.min(allowed.length, p.length || allowed.length) : 0;
@@ -233,7 +300,12 @@ export function buildNativePlan(
   const instrumentPhrases = (parsed.instrumentPhrases ?? []).map(stripBpm);
 
   const leadBank = bank("leads");
-  const leads = instrumentPhrases.length ? instrumentPhrases.slice(0, 3) : leadBank.slice(0, 3);
+  // A bass or rap record keeps the instruments the brief names (hand percussion, strings, piano) beside its own leads.
+  const NAMED_KEEP = /^(?:guitar|strings|piano|Rhodes electric piano|brass|flute|saxophone|harp|organ|hand percussion|chopped sample|mallets|bells)$/;
+  const namedInstruments = primary.edm ? (parsed.explicitInstruments ?? []).filter((i) => NAMED_KEEP.test(i)).map((i) => (i === "chopped sample" ? "chopped sample hits" : i)) : [];
+  const leads = instrumentPhrases.length
+    ? instrumentPhrases.slice(0, 3)
+    : uniq([...namedInstruments.slice(0, 2), ...leadBank]).slice(0, 3);
 
   const genreWords = [route.labels?.primary, route.labels?.secondary, primary.name, route.verbatim].filter(Boolean).join(" ");
   const moodList = moodsOf(parsed, instrumentPhrases, genreWords);
@@ -249,18 +321,20 @@ export function buildNativePlan(
   const userDesign = parsed.soundDesignHints.map(stripBpm);
 
   const primaryName = route.labels?.primary ? verbatimLabel(route.labels.primary) : primary.name;
-  const secondaryName = route.labels?.secondary ?? secondary?.name.toLowerCase();
+  const secondaryName = route.labels?.secondary ? midSentenceLabel(route.labels.secondary) : secondary ? midSentenceLabel(secondary.name) : undefined;
+  const tertiaryName = route.labels?.tertiary ? midSentenceLabel(route.labels.tertiary) : tertiary ? midSentenceLabel(tertiary.name) : undefined;
   const genreLabel = route.verbatim
     ? secondary
-      ? `${verbatimLabel(route.verbatim)} meets ${primaryName.toLowerCase()}`
+      ? `${verbatimLabel(route.verbatim)} meets ${midSentenceLabel(primaryName)}`
       : verbatimLabel(route.verbatim)
     : primary.id === "general"
       ? ""
       : secondary
-        ? `${primaryName} with ${secondaryName} influences`
+        ? `${primaryName} with ${secondaryName}${tertiaryName ? ` and ${tertiaryName}` : ""} influences`
         : primaryName;
 
-  const approaches = bank("vocals");
+  const vocalStyle = styleOf(parsed.vocals, primary.vocalStyle);
+  const approaches = vocalStyle && RAP_KIND[vocalStyle] && (primary.rapVocals?.length || secondary?.rapVocals?.length) ? bank("rapVocals") : bank("vocals");
   const [dLeads, dDrums, dBass, dHarmony, dTextures, dExtras] = distinct([
     leads,
     uniq([...userDrums, ...bank("drums")]),
@@ -269,10 +343,18 @@ export function buildNativePlan(
     uniq([...briefTextures, ...userDesign, ...bank("textures")]),
     uniq(bank("extras")),
   ]);
+  // A supporting bass or rap genre's signature rhythm joins the primary's first drum phrase, so the blend is audible
+  // even when the drum line only has room for one phrase.
+  const signatures = [secondary, tertiary].filter((x): x is NativeSub => !!x && !!x.edm && !!primary.edm && !!x.signature).map((x) => x.signature as string);
+  const withSignatures = (drums: string[]) => {
+    if (!signatures.length || !drums.length) return drums;
+    const [first, ...rest] = drums;
+    return uniq([`${first} plus ${signatures[0]}`, ...signatures.slice(1), ...rest]);
+  };
   const sections: Record<string, string[]> = {
     leads: dLeads.map(proper),
-    vocal: [proper(vocalLine(parsed, approaches, instrumental))].filter(Boolean),
-    drums: dDrums,
+    vocal: [proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle))].filter(Boolean),
+    drums: withSignatures(dDrums),
     bass: dBass,
     harmony: dHarmony,
     textures: dTextures,
@@ -283,7 +365,14 @@ export function buildNativePlan(
     ending: bank("endings"),
   };
 
-  const parts: NativeParts = { genreLabel, sections, scenes, textures: briefTextures };
+  const parts: NativeParts = {
+    genreLabel,
+    sections,
+    scenes,
+    textures: briefTextures,
+    edm: !!primary.edm,
+    headings: primary.headings ?? (primary.edm ? { bass: "Bass design and chords", textures: "Sound design" } : undefined),
+  };
   const key = parsed.key;
 
   const anchors = uniq([
@@ -302,8 +391,8 @@ export function buildNativePlan(
   if (instrumental) vocals.present = false;
   else {
     if (vocals.present === undefined) vocals.present = true;
-    vocals.style ??= "sung";
-    vocals.detail ??= "compact";
+    vocals.style ??= (styleOf(parsed.vocals, primary.vocalStyle) as VocalPreferences["style"]) ?? "sung";
+    vocals.detail ??= nativeDetail(parsed.vocals);
   }
 
   const recipeId = hashString(
@@ -315,6 +404,7 @@ export function buildNativePlan(
     key,
     primaryGenre: genreLabel || "Original",
     secondaryGenre: secondary?.name,
+    accentGenre: tertiary?.name,
     donors: {},
     moodPrimary,
     moodPhrase,
@@ -397,10 +487,10 @@ function compose(plan: SonicPlan, d: Detail): string {
 
   if (d.drums && s.drums.length) out.push(sentence(`Drums: ${listOf(take(s.drums, d.drums))}`));
   const low = [...take(s.bass, d.bass), ...take(s.harmony, d.harmony)];
-  if (low.length) out.push(sentence(`Bass and harmony: ${listOf(low)}`));
+  if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
   const tex = [...take(s.textures, d.textures), ...take(s.extras, d.extras)];
-  if (tex.length) out.push(sentence(`Textures: ${listOf(tex)}`));
+  if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
   const prod = [...take(s.era, d.era), ...take(s.mix, d.mix)];
   if (prod.length) out.push(sentence(`Production: ${listOf(prod)}`));

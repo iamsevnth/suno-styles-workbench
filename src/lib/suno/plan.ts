@@ -56,6 +56,7 @@ import { expandMood, GENRES, matchGenre } from "./ontology.ts";
 import { PROFILE } from "./profile.ts";
 import { mulberry32, pick } from "./rng.ts";
 import { buildNativePlan } from "./native/compose.ts";
+import { isBassWorld, nonEdmBleed } from "./consistency.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
 
 export function buildPlans(
@@ -281,7 +282,14 @@ export function buildOnePlan(
 
   // A brief that asks for acoustic guitar never gets an electric one added next to it.
   const acousticOnly = /\b(?:acoustic|nylon|classical|steel-string)\b/i.test(parsed.raw) && !/\belectric\b/i.test(parsed.raw);
-  const noElectric = (list: string[]) => (acousticOnly ? list.filter((x) => !/\b(?:electric|distorted|overdriven) guitars?\b/i.test(x)) : list);
+  const noElectricOnly = (list: string[]) => (acousticOnly ? list.filter((x) => !/\b(?:electric|distorted|overdriven) guitars?\b/i.test(x)) : list);
+  // Bass music, club and rap never pick up acoustic, band or lo-fi phrases the brief did not ask for.
+  const bassWorld = isBassWorld(familyKeys([primaryGenre, secondaryGenre, accentGenre]), undefined, false);
+  const allowed = [parsed.raw, primaryGenre, secondaryGenre, accentGenre].filter(Boolean).join(" ");
+  const noElectric = (list: string[]) => {
+    const kept = noElectricOnly(list);
+    return bassWorld ? kept.filter((x) => nonEdmBleed(x, allowed).length === 0) : kept;
+  };
 
   return {
     bpm,
@@ -294,20 +302,20 @@ export function buildOnePlan(
     moodSecondary,
     moodPhrase: reconciled?.phrase,
     bpmNotes: bpmNotes([primaryGenre, secondaryGenre, accentGenre].filter((g): g is string => Boolean(g)), bpm),
-    atmosphere: unique(atmosphere).slice(0, 3),
+    atmosphere: noElectric(unique(atmosphere)).slice(0, 3),
     metricFeel,
     groove,
-    drums,
-    bass,
-    bassBehavior,
+    drums: noElectric(drums),
+    bass: noElectric(bass),
+    bassBehavior: noElectric(bassBehavior),
     harmony: noElectric(harmony),
     melody: noElectric(melody),
     instruments: noElectric(instruments),
     vocals,
-    arrangement,
+    arrangement: noElectric(arrangement),
     // The brief's own textures and scenes come first, in its own words.
     soundDesign: noElectric(unique([...(parsed.textures ?? []), ...(parsed.scenes ?? []).map((sc) => `${sc} ambience`), ...soundDesign])),
-    mix,
+    mix: noElectric(mix),
     master,
     titlePhrase,
     anchors,

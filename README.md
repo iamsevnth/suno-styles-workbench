@@ -123,6 +123,8 @@ Every generated Styles prompt is designed to:
 
 Techno, house, lo-fi/jazz, folk/indie, rock/punk, metal, country, synthwave, pop, ambient and cinematic briefs use their own phrase banks (`src/lib/suno/native/`). The compiler adds detail only until the prompt reaches the window, so there is no filler text. Everything runs offline in the browser with no LLM or API calls.
 
+Bass, club and rap genres have their own dedicated banks too (`src/lib/suno/native/catalog-edm.ts`): bass EDM, bass house, dubstep, brostep, deep dubstep, UKG dubstep, wobble bass, glitch bass, drum & bass, drumstep, UK garage, future bass, future house, future beats, EDM trap, moombahton, baile funk, afro tech house, modern rap, trap rap and autotuned sung-rap. Sibling genres use different drums, bass design, leads, vocals, arrangement and BPM ranges. A hard gate (`noGenreBleed`, the `non_edm_bleed` contradiction) fails any prompt for these genres that carries acoustic, band, orchestral or lo-fi wording the brief did not ask for; blends such as "dubstep + baile funk" stay inside the bass and rap world. Rap and sung-rap lyrics use bracketed delivery tags (`[Verse 1 | autotuned sung-rap, melodic]`, `[Hook | chant]`) and bracketed ad-libs.
+
 ### Create From Brief
 
 Start with the few facts that must survive: lead genre, BPM, voice, signature instruments, groove, and mood. Workbench fills the missing production details from the appropriate sound family.

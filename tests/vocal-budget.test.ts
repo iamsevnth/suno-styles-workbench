@@ -16,7 +16,9 @@ function promptsFor(brief: string): PromptCandidate[] {
   return SEEDS.flatMap((seed) => generateStylesPrompts(brief, { count: 3, seed }).prompts);
 }
 
-const vocalOf = (p: PromptCandidate) => p.styles.match(VOCAL_SENTENCE)?.[0] ?? "";
+// The native pipeline (bass, rap and club genres, among others) puts the voice in the opening clause: ", with female lead vocal, ...".
+const NATIVE_VOCAL_CLAUSE = /,\s+with\s+([^.]*)\./;
+const vocalOf = (p: PromptCandidate) => p.styles.match(VOCAL_SENTENCE)?.[0] ?? p.styles.match(NATIVE_VOCAL_CLAUSE)?.[1] ?? "";
 
 describe("vocal share of the Styles prompt", () => {
   const BASIC_BRIEFS = [
