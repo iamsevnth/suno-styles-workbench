@@ -6,7 +6,7 @@ export const ARTIST_LEAK_RE =
 export const NEGATIVE_RE =
   /\b(avoid|exclude|excluding|without\s+(?:any|the|a)\b|don't|do not|never\s+use|no\s+(?:vocals|drums|bass|guitars?|synths?)\b)/i;
 export const LYRICS_RE =
-  /\b(verse\s*1|chorus:|bridge:|lyrics:|rhyme scheme|write lyrics|\[verse\]|\[chorus\])\b/i;
+  /(?:^|\n)\s*(?:lyrics|chorus|verse\s*\d*|bridge)\s*:\s*\S|\[(?:verse|chorus|bridge)\]|\b(?:write lyrics|rhyme scheme)\b/i;
 
 export interface ValidationResult {
   hardGates: HardGates;

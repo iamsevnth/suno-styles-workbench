@@ -130,6 +130,9 @@ export function buildOnePlan(
   const primaryGenre = genres[0];
   const secondaryGenre = genres[1];
   const accentGenre = genres[2];
+  // Aggressive bass styles should not drift into film-score vocabulary absent an explicit request.
+  const avoidUnrequestedCinematic = /\b(?:brostep|riddim|briddim|tearout)\b/i.test(primaryGenre) &&
+    !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(parsed.raw);
   const primaryDef = matchGenre(primaryGenre);
   const families = familyKeys([primaryGenre, secondaryGenre, accentGenre]);
 
@@ -166,7 +169,8 @@ export function buildOnePlan(
   // A brief's own moods are reconciled into one phrase, so "dark and aggressive" and "emotional" read as
   // "dark and aggressive with an emotional edge" instead of two competing moods.
   const reconciled = parsed.moods.length ? reconcileMoods(parsed.moods) : undefined;
-  const moodPrimary = reconciled?.primary ?? moodPool[Math.floor(rng() * moodPool.length) % moodPool.length];
+  const initialMood = reconciled?.primary ?? moodPool[Math.floor(rng() * moodPool.length) % moodPool.length];
+  const moodPrimary = avoidUnrequestedCinematic && /cinematic|epic|monumental/i.test(initialMood) ? "aggressive" : initialMood;
   const moodSecondary = reconciled
     ? reconciled.secondary
     : rng() > 0.5
@@ -283,13 +287,15 @@ export function buildOnePlan(
     const term = x.toLowerCase().replace(/[^a-z0-9- ]/g, "").trim();
     return term.length >= 3 && text.toLowerCase().includes(term);
   });
-  const allow = (arr: string[]) => arr.filter((item) => !excluded(item));
+  const allow = (arr: string[]) => arr.filter((item) => !excluded(item) &&
+    (!avoidUnrequestedCinematic || !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(item)));
   const basePlan: SonicPlan = {
     bpm,
     key: parsed.key,
     meter: parsed.meter,
     exclusions: parsed.exclusions,
     arrangementCues: parsed.arrangementCues,
+    avoidUnrequestedCinematic,
     primaryGenre,
     secondaryGenre,
     accentGenre,
@@ -307,7 +313,15 @@ export function buildOnePlan(
     harmony: allow(harmony),
     melody: allow(melody),
     instruments: allow(instruments),
-    vocals,
+    vocals: avoidUnrequestedCinematic ? {
+      ...vocals,
+      processing: allow(vocals.processing ?? []),
+      textureVariations: allow(vocals.textureVariations ?? []),
+      delivery: vocals.delivery && !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(vocals.delivery)
+        ? vocals.delivery : "focused vocal articulation",
+      deliveryDetail: vocals.deliveryDetail && !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(vocals.deliveryDetail)
+        ? vocals.deliveryDetail : undefined,
+    } : vocals,
     arrangement: allow(arrangement),
     soundDesign: allow(soundDesign),
     mix: allow(mix),

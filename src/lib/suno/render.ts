@@ -226,7 +226,8 @@ interface Choices {
 function compose(plan: SonicPlan): string {
   const rng = mulberry32((plan.seed ^ 2779096485) >>> 0);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
-  const fits = (phrase: string) => fitsFamilies(phrase, families);
+  const fits = (phrase: string) => fitsFamilies(phrase, families) &&
+    (!plan.avoidUnrequestedCinematic || !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(phrase));
   const keepCaps = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
   const supporting = [plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
 
@@ -449,7 +450,10 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
 
   if (hasRichVocalDescription(v)) {
     // The brief's own vocal words, translated into one engineered-room clause.
-    const rawText = v.rawDescription!.replace(/\.$/, "");
+    const rawDescription = v.rawDescription!.replace(/\.$/, "");
+    const rawText = v.presentation && !new RegExp(`\\b${v.presentation}\\b`, "i").test(rawDescription)
+      ? `${v.presentation} ${rawDescription}`
+      : rawDescription;
     const texture = v.textureVariations?.[0] ?? "crisp close-mic presence and polished stereo imaging";
     // The brief's words may already say "with"; then the room is joined without another one.
     const room = withCount(rawText) > 0 ? texture.split(/\s+with\s+/)[0] : texture;
@@ -492,7 +496,8 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
  * A sentence is skipped when the sounds it names are already in the text, so padding never repeats a section.
  */
 function padCandidates(plan: SonicPlan, families: string[], text: string, rng: () => number): string[] {
-  const fits = (phrase: string) => fitsFamilies(phrase, families);
+  const fits = (phrase: string) => fitsFamilies(phrase, families) &&
+    (!plan.avoidUnrequestedCinematic || !/\b(?:cinematic|orchestral|trailer|film score|soundtrack)\b/i.test(phrase));
   const present = conceptsOf(text);
   const fresh = (sentence: string) => {
     const concepts = [...conceptsOf(sentence)];

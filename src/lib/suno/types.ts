@@ -79,6 +79,7 @@ export interface SonicPlan {
   arrangementCues?: ArrangementCue[];
   sonicIdentity?: string;
   variationMode?: "precision" | "exploration" | "ab";
+  avoidUnrequestedCinematic?: boolean;
   primaryGenre: string;
   secondaryGenre?: string;
   accentGenre?: string;

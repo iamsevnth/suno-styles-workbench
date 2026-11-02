@@ -153,10 +153,8 @@ export function parseUserInput(
   const tempoIntent = parseTempoIntent(metadataText);
   const bpm = tempoIntent.bpm;
 
-  const wantsVariety =
-    /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(
-      text
-    );
+  const wantsVariety = options?.mode !== "rewrite" &&
+    /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(text);
 
   const genres = extractGenresInOrder(text);
   // "UKG" on its own means UKG dubstep, never UK garage.
@@ -185,7 +183,17 @@ export function parseUserInput(
   }
   const explicitInstruments = extractExplicitInstruments(instrumentText);
 
-  const instrumental = /\binstrumental\b/i.test(text) || constraints.exclusions.some((x) => /^(?:lyrical |lead )?vocals?$|^singing$|^rap(?:ping)?$/i.test(x));
+  // "Instrumental breakdown" or "instrumental answers" does not cancel a named singer.
+  const explicitlyInstrumental = /^\s*(?:a\s+)?instrumental\b/i.test(text) ||
+    /\b(?:instrumental[- ]only|purely\s+instrumental|strictly\s+instrumental|fully\s+instrumental|mostly\s+instrumental|instrumental[- ]led)\b/i.test(text) ||
+    /\b(?:an?\s+)?instrumental\s+(?:track|song|piece|cut|version|remix)\b/i.test(text) ||
+    /(?:^|[,;\n]\s*)instrumental\s*(?=[,;.\n]|$)/i.test(text) ||
+    /\b(?:track|song|cut|piece)\s+(?:is|stays|remains)\s+instrumental\b/i.test(text);
+  // A descriptive "future-house instrumental" is a production type, but a named singer
+  // alongside "instrumental answers" keeps the lead. Resolve this at the sentence level.
+  const namesVocalist = /\b(?:male|female)\b[^.!?\n]{0,55}\b(?:rapper|singer|vocal|voice|lead|singing)\b|\b(?:rapper|singer|vocalist|singing|rapping)\b/i.test(text);
+  const instrumental = explicitlyInstrumental || (!namesVocalist && /\binstrumental\b/i.test(text)) ||
+    constraints.exclusions.some((x) => /^(?:lyrical |lead )?vocals?$|^singing$|^rap(?:ping)?$/i.test(x));
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
   // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres

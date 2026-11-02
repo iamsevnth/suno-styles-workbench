@@ -19,16 +19,52 @@ export interface ConstraintIntent {
   exclusions: string[];
 }
 
-const EXCLUSION_CLAUSE = /(^|[,;.\n]\s*)(?:please\s+)?(?:do\s+not(?:\s+use)?|don't(?:\s+use)?|never(?:\s+use)?|exclude|avoid|without|no)\s+([^,;.\n]+)/gim;
+const NEGATION = /\b(?:do\s+not(?:\s+use)?|don't(?:\s+use)?|never(?:\s+use)?|exclude|avoiding|avoid|without|no)\s+/gi;
+const POSITIVE_CONTINUATION = /,\s*(?=(?:female|male|instrumental|\d{2,3}\s*BPM|please|use|keep|make|include|feature|add|begin|open|lead\s+with|introduce|then|instead|however|but|with|while|over)\b)/i;
 
+/** An exclusion comma-list is one scope, not only its first item. */
 export function extractConstraintIntent(raw: string): ConstraintIntent {
+  // Preserve the positive intent in common negative idioms, never invert it to loudness.
+  raw = raw.replace(/\bavoid flattening the groove with constant maximal loudness\b/gi,
+    "keep the groove dynamic with controlled loudness");
   const exclusions: string[] = [];
-  const positiveText = raw.replace(EXCLUSION_CLAUSE, (_match, boundary: string, clause: string) => {
-    const cleaned = clause.trim().replace(/^(?:any|the|a)\s+/i, "").replace(/\s+(?:please|at all)$/i, "");
-    if (cleaned) exclusions.push(cleaned);
-    return boundary && /^\s*[,;.]/.test(boundary) ? boundary[0] + " " : " ";
-  }).replace(/\s+([,;.])/g, "$1").replace(/(?:[,;]\s*){2,}/g, ", ").trim();
-  return { positiveText, exclusions: [...new Set(exclusions)] };
+  let positive = "";
+  let cursor = 0;
+  NEGATION.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = NEGATION.exec(raw))) {
+    const start = match.index;
+    if (start < cursor) continue;
+    const after = raw.slice(NEGATION.lastIndex);
+    // "Never let" and "without losing" are creative hierarchy guidance, not exclusion lists.
+    if (/^let\b|^(?:losing|masking|flattening|changing|turning|sacrificing)\b/i.test(after)) continue;
+    const nextBoundary = after.search(/[;.\n]/);
+    const clause = after.slice(0, nextBoundary < 0 ? undefined : nextBoundary);
+    const nextNegation = clause.search(/,\s*(?:no|never|exclude|avoiding|avoid|without|do\s+not|don't)\b/i);
+    // A colon after an excluded noun introduces positive guidance ("Avoid noise: keep the motif clear").
+    const colon = clause.indexOf(":");
+    const positiveStart = clause.search(POSITIVE_CONTINUATION);
+    const boundaries = [nextBoundary < 0 ? after.length : nextBoundary];
+    if (nextNegation >= 0) boundaries.push(nextNegation);
+    if (colon >= 0) boundaries.push(colon);
+    if (positiveStart >= 0) boundaries.push(positiveStart);
+    const length = Math.min(...boundaries);
+    const content = after.slice(0, length).trim().replace(/^any\s+|^the\s+|^a\s+/i, "");
+    const items = content.split(/,\s*|\s+(?:and|or)\s+/i)
+      .map((item) => item.replace(/^or\s+|^and\s+/i, "").trim())
+      .filter(Boolean);
+    if (!items.length) continue;
+    positive += raw.slice(cursor, start);
+    exclusions.push(...items);
+    cursor = NEGATION.lastIndex + length;
+    NEGATION.lastIndex = cursor;
+  }
+  positive += raw.slice(cursor);
+  positive = positive.replace(/\s+,/g, ",").replace(/,\s*([.;])/g, "$1")
+    .replace(/\s+([.;])/g, "$1").replace(/(?:[,;]\s*){2,}/g, ", ")
+    .replace(/;\s*\./g, ".").replace(/([.!?])\s*:\s*/g, "$1 ")
+    .replace(/\s{2,}/g, " ").trim();
+  return { positiveText: positive, exclusions: [...new Set(exclusions)] };
 }
 
 export function parseTempoIntent(raw: string): { bpm?: number; mentions: TempoMention[] } {
@@ -98,11 +134,12 @@ export function parseArrangementCues(raw: string): ArrangementCue[] {
     for (const fragment of parts) {
       const text = fragment.trim();
       if (!text) continue;
-      const bars = text.match(/\b(\d{1,2})[- ]bar\b|\b(\d{1,2})\s+bars?\b/i);
-      const barCount = bars ? Number(bars[1] ?? bars[2]) : undefined;
+      const bars = text.match(/\b(\d{1,2})[- ]bar\b|\b(\d{1,2})\s+bars?\b|\b(one|two|four|eight|sixteen|thirty[- ]two)[- ]bar(?:s)?\b/i);
+      const words: Record<string, number> = { one: 1, two: 2, four: 4, eight: 8, sixteen: 16, "thirty-two": 32 };
+      const barCount = bars ? Number(bars[1] ?? bars[2]) || words[bars[3]?.toLowerCase()] : undefined;
       if (/\bdrop\s*2\b|\bsecond drop\b/i.test(text)) push("drop2", text, barCount);
       else if (/\bdrop\s*1\b|\bfirst drop\b/i.test(text)) push("drop1", text, barCount);
-      else if (/\b(?:full[- ]beat|one[- ]beat|single[- ]beat) silence\b|\bfake[- ]?out\b|\breload\b/i.test(text)) push("silence", text, barCount);
+      else if (/\b(?:full[- ]beat|one[- ]beat|single[- ]beat|hard) silence\b|\b(?:full|one|single)\s+beat\s+of\s+silence\b|\b(?:full[- ]beat|one[- ]beat)\s+blackout\b|\bfake[- ]?out\b|\breload\b|\bcut(?:s)?\s+to\s+silence\b/i.test(text)) push("silence", text, barCount);
       else if (/\bbreakdown\b|\bbridge\b/i.test(text)) push("breakdown", text, barCount);
       else if (/\bbuilds?\b|\briser\b/i.test(text)) push("build", text, barCount);
       else if (/\boutro\b/i.test(text)) push("outro", text, barCount);
