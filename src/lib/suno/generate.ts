@@ -32,7 +32,7 @@ export function generateStylesPrompts(
     variationMode: options.variationMode,
   });
 
-  const count = Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
+  const count = options.variationMode === "ab" ? 2 : Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
   const seed =
     options.seed !== undefined
       ? options.seed
@@ -70,12 +70,26 @@ export function generateStylesPrompts(
 
     for (let attempt = 0; attempt < 14; attempt++) {
       const planSeed = seed + i * 9973 + attempt * 10007 + attempt * attempt * 17;
-      const plan = buildPlans(parsed, planSeed, 1, {
+      let plan = buildPlans(parsed, planSeed, 1, {
         variantIndex: i + attempt * count,
         forceDiversity: attempt > 0 || i > 0,
         diversityRank: i,
         attempt,
       })[0];
+      if (options.variationMode === "ab" && i === 1 && peerPlans[0]) {
+        const reference = peerPlans[0];
+        const baseArticulation = reference.bassBehavior[0] ?? "sustained sub notes";
+        const altArticulation = /staccato|short|clipped|punctuat/i.test(baseArticulation)
+          ? "long sustained notes with deliberate tails"
+          : "short clipped staccato articulations";
+        plan = {
+          ...reference,
+          bassBehavior: [altArticulation, ...reference.bassBehavior.slice(1)],
+          recipeId: reference.recipeId + "|ab:bass-articulation",
+          variantAxes: ["A/B: bass articulation only"],
+          variationMode: "ab",
+        };
+      }
 
       let styles = renderStyles(plan);
       if (usedRecipes.has(plan.recipeId)) {
