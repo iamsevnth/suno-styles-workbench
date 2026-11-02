@@ -41,6 +41,26 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
         </button>
       </div>
 
+      {prompt.identity ? (
+        <div className="px-4 pt-3 text-xs text-[var(--fg-muted)]">
+          <strong className="text-[var(--fg)]">Sonic Identity:</strong> {prompt.identity.replace(/-/g, " ")}
+        </div>
+      ) : null}
+      {prompt.exclude ? (
+        <div className="mx-4 mt-3 flex flex-wrap gap-3 items-center rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3">
+          <div className="flex-1 min-w-0">
+            <div className="label-caps-sm">Suno Exclude Field</div>
+            <div className="mt-1 text-sm break-words text-[var(--fg)]">{prompt.exclude}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onCopy(prompt.exclude || "")}
+            className="px-3 h-8 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
+          >
+            Copy Exclude
+          </button>
+        </div>
+      ) : null}
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
 
       <button
@@ -58,6 +78,8 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
           <PlanCell label="BPM" value={plan.bpm} />
           <PlanCell label="Mood" value={plan.moodPrimary} />
           <PlanCell label="Metric Feel" value={plan.metricFeel} />
+          <PlanCell label="Sonic Identity" value={plan.sonicIdentity?.replace(/-/g, " ")} />
+          <PlanCell label="Key / Meter" value={[plan.key, plan.meter].filter(Boolean).join(" · ")} />
           <PlanCell label="Rhythm Donor" value={plan.donors?.rhythm} />
           <PlanCell label="Bass Donor" value={plan.donors?.bass} />
           <PlanCell label="Bass Stack" value={(plan.bass || []).slice(0, 3).join(", ")} />
