@@ -54,6 +54,9 @@ export const SONIC_IDENTITIES: SonicIdentity[] = [
 ];
 
 export function identitiesForGenre(primary: string): SonicIdentity[] {
+  // Project-specific UKG is 140 half-time trap/sub pressure, not garage and not brostep.
+  // Do not let broad /dubstep/ identity patterns introduce wobble, Reese or growls.
+  if (/\bUKG\b/i.test(primary)) return [];
   return SONIC_IDENTITIES.filter((identity) => identity.genrePattern.test(primary));
 }
 
@@ -65,6 +68,8 @@ export function chooseSonicIdentity(primary: string, rank: number, mode: "precis
 }
 
 export function applySonicIdentity(plan: SonicPlan, parsed: ParsedInput, rank: number, mode: "precision" | "exploration" | "ab" = "precision"): SonicPlan {
+  // Supporting UKG remains rhythm/sub-pressure-only, not a license to introduce brostep vocabulary.
+  if ([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].some((genre) => /\bUKG\b/i.test(genre ?? ""))) return plan;
   const identity = chooseSonicIdentity(plan.primaryGenre, rank, mode);
   if (!identity) return plan;
   const locked = (part: string) => (parsed.exclusions ?? []).some((x) => x.toLowerCase().includes(part.toLowerCase()) || part.toLowerCase().includes(x.toLowerCase()));
