@@ -40,8 +40,8 @@ export function validatePrompt(
   if (!stylesOnly) issues.push("lyrics_content");
 
   const exclusionLeakage = (plan.exclusions ?? []).filter((x) => {
-    const normalized = x.replace(/[.*+?^${}()|[\]\\]/g, "\\  let uniqueness = true;").trim();
-    return normalized.length >= 3 && new RegExp(`\\b${normalized}\\b`, "i").test(styles);
+    const normalized = x.trim().toLowerCase();
+    return normalized.length >= 3 && styles.toLowerCase().includes(normalized);
   });
   const instrumentalLeakage = !plan.vocals.present && /\b(?:for the vocal|female vocals|male vocals|lead vocal(?:s)?|vocal pocket)\b/i.test(styles);
   const coherence = exclusionLeakage.length === 0 && !instrumentalLeakage;
