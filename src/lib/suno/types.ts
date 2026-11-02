@@ -11,6 +11,7 @@ export interface ParsedInput {
   tempoMentions?: TempoMention[];
   exclusions?: string[];
   arrangementCues?: ArrangementCue[];
+  variationMode?: "precision" | "exploration" | "ab";
   moods: string[];
   atmospheres: string[];
   instruments: string[];
