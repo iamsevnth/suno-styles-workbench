@@ -9,6 +9,9 @@ import type { ParsedInput, SonicPlan } from "./types.ts";
 export function repairExistingPrompt(raw: string, parsed: ParsedInput, plan: SonicPlan): string | null {
   const { body } = splitPromptHeader(raw);
   if (body.trim().length < 700) return null;
+  // Earlier Workbench outputs contain known boilerplate and should be recompiled, not treated as authoritative user-authored prose.
+  if (/the harmonic bed uses|the sound palette centers|translation stays clear|the record unfolds as|the rhythm settles into/i.test(body)) return null;
+  if (body.split(/(?<=[.!?])\s+/).filter(Boolean).length < 4) return null;
   const positive = extractConstraintIntent(body).positiveText
     .replace(/^```(?:text)?\s*/i, "")
     .replace(/\s*```$/, "")
