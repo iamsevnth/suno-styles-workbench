@@ -908,7 +908,7 @@ function buildMix(families: string[], parsed: ParsedInput, rng: () => number): s
   const fits = (x: string) => fitsFamilies(x, families);
   m.push(...MIX.filter(fits).sort(() => rng() - 0.5).slice(0, familyMix.length ? 1 : 3));
   if (rng() > 0.5) m.push(pick(rng, DNA_MIX.filter(fits)));
-  return unique(m).slice(0, 5);
+  return unique(m).filter((phrase) => !families.includes("ukg") || !/\borchestral\b/i.test(phrase)).slice(0, 5);
 }
 
 /** The family's own mastering language when it has some; otherwise the energy bank. */
