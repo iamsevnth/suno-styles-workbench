@@ -3,6 +3,7 @@ import { inferBlendBand } from "./genre-atlas.ts";
 import { bpmNotes, resolveGenreBlend, stripTemplateBoilerplate, stripVocalLeadIn } from "./blend.ts";
 import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
 import { ParsedInput, VocalPreferences } from "./types.ts";
+import { extractConstraintIntent, parseTempoIntent, parseKeyIntent, parseMeterIntent, parseArrangementCues, splitPromptHeader } from "./intent.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
 const N_FLAG_RE = /(?:^|\s)(?:-n|--count)\s*(\d{1,2})\b/i;
@@ -133,7 +134,10 @@ export function parseUserInput(
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
-  const text = stripTemplateBoilerplate(raw.trim());
+  const { body, header } = splitPromptHeader(raw);
+  const constraints = extractConstraintIntent(stripTemplateBoilerplate(body));
+  const text = constraints.positiveText;
+  const metadataText = header ? `${header}\n${text}` : text;
   const lower = text.toLowerCase();
   const looksLikeDraft =
     text.length > 400 ||
@@ -145,11 +149,8 @@ export function parseUserInput(
   const countMatch = text.match(COUNT_RE) || text.match(N_FLAG_RE);
   if (countMatch) count = Math.min(12, Math.max(1, parseInt(countMatch[1], 10)));
 
-  let bpm: number | undefined;
-  const bpmAll = [...text.matchAll(/\b(\d{2,3})\s*bpm\b/gi)];
-  if (bpmAll.length) {
-    bpm = clampBpm(parseInt(bpmAll[bpmAll.length - 1][1], 10));
-  }
+  const tempoIntent = parseTempoIntent(metadataText);
+  const bpm = tempoIntent.bpm;
 
   const wantsVariety =
     /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(
@@ -183,7 +184,7 @@ export function parseUserInput(
   }
   const explicitInstruments = extractExplicitInstruments(instrumentText);
 
-  const instrumental = /\binstrumental\b/i.test(text);
+  const instrumental = /\binstrumental\b/i.test(text) || constraints.exclusions.some((x) => /^(?:lyrical |lead )?vocals?$|^singing$|^rap(?:ping)?$/i.test(x));
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
   // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres
@@ -267,7 +268,7 @@ export function parseUserInput(
   if (/\bwide\b/i.test(text)) mixHints.push("wide harmonic field");
   if (/\bmono\b/i.test(text)) mixHints.push("centered mono low end");
   if (/\bcrisp\b/i.test(text)) mixHints.push("crisp drum transients");
-  if (/\breverb\b/i.test(text)) mixHints.push("cinematic reverb tails");
+  if (/\breverb\b/i.test(text)) mixHints.push(/\b(?:short|dry|tight|small)\b[^.\n,;]{0,35}\breverb\b|\breverb\b[^.\n,;]{0,35}\b(?:short|dry|tight|small)\b/i.test(text) ? "short dry reverb" : "reverb space matched to the arrangement");
   if (/\bsidechain|side[- ]chained\b/i.test(text)) mixHints.push("sidechain pump with transient space");
   if (/\bheadroom\b/i.test(text)) mixHints.push("limiter loudness with stable headroom");
   if (/\blow[- ]?mids?\b/i.test(text)) mixHints.push("controlled low mids");
@@ -279,7 +280,7 @@ export function parseUserInput(
   if (/\bdrone\b/i.test(text)) soundDesignHints.push("deep drones");
   if (/\bgranular\b/i.test(text)) soundDesignHints.push("granular textures");
   if (/\bmetallic\b/i.test(text)) soundDesignHints.push("metallic modulation");
-  if (/\briser|impacts?\b/i.test(text)) soundDesignHints.push("cinematic risers and impacts");
+  if (/\briser|impacts?\b/i.test(text)) soundDesignHints.push(/\b(?:cinematic|trailer|orchestral)\b/i.test(text) ? "cinematic risers and impacts" : "rising noise and transition impacts");
   if (/\bwhite[- ]noise\b/i.test(text)) soundDesignHints.push("white-noise lifts");
   if (/\btape[- ]?stop\b/i.test(text)) soundDesignHints.push("tape-stop turns");
   if (/\breverse (?:swell|cymbal|texture)/i.test(text)) soundDesignHints.push("reverse swells");
@@ -314,14 +315,9 @@ export function parseUserInput(
     mode = detail >= 3 ? "advanced" : genres.length || bpm ? "standard" : "minimal";
   }
 
-  let key: string | undefined;
-  const keyMatch = text.match(/\b([A-G](?:#|b)?)\s*(minor|major|min|maj)\b/i);
-  if (keyMatch) {
-    const rawTonic = keyMatch[1];
-    const tonic = rawTonic.charAt(0).toUpperCase() + rawTonic.slice(1);
-    const qual = keyMatch[2].toLowerCase();
-    key = qual.startsWith("min") ? `${tonic} minor` : `${tonic} major`;
-  }
+  const key = parseKeyIntent(metadataText);
+  const meter = parseMeterIntent(metadataText);
+  const arrangementCues = parseArrangementCues(text);
 
   return {
     raw: instrumentText,
@@ -330,6 +326,10 @@ export function parseUserInput(
     genreNotes: [...blend.notes, ...(bpm != null ? bpmNotes(genres, bpm) : [])],
     bpm,
     key,
+    meter,
+    tempoMentions: tempoIntent.mentions,
+    exclusions: constraints.exclusions,
+    arrangementCues,
     moods,
     atmospheres,
     instruments,
@@ -631,7 +631,7 @@ function extractVocalDetails(text: string, lower: string, instrumental: boolean)
     /(?:(?:[a-z-]+\s+){0,2}(?:black\s+|white\s+|african\s+)?\b(?:male|female|lead)\s+(?:[a-z-]+\s+){0,2}vocal[^.!?\n;]*|(?:melodic\s+)?sung[- ]?rap[^.!?\n;]*|vocal[^.!?\n;]*|rap\s+vocal[^.!?\n;]*)/i;
   const match = text.match(vocalSegmentRegex);
   if (match && match[0].trim().length > 10) {
-    vocals.rawDescription = stripVocalLeadIn(dropNonVocalClauses(match[0].trim()));
+    vocals.rawDescription = stripVocalLeadIn(dropNonVocalClauses(match[0].trim()).split(/,\s*(?=(?:tuned )?808\b|(?:reese|bass|drums?|synths?|piano|rhodes|guitars?|pads?|strings?|sub\b))/i)[0]);
   } else if (hasVocalMention) {
     // Comma and "+" separate genres from the vocal in one-line briefs ("Melodic Trap, male rap"),
     // so only the part that names the vocal is quoted, never the genre list.
