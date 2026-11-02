@@ -26,7 +26,8 @@ export function validatePrompt(
   if (!characterRange) issues.push(`character_count:${n}`);
 
   const bpmRe = new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i");
-  const integerBpm = bpmRe.test(styles);
+  const bpmNumbers = [...styles.matchAll(/\b(\d{2,3})\s*BPM\b/gi)].map((m) => Number(m[1]));
+  const integerBpm = bpmRe.test(styles) && bpmNumbers.every((n) => n === plan.bpm);
   if (!integerBpm) issues.push("missing_or_wrong_bpm");
 
   const protectedReferences = !ARTIST_LEAK_RE.test(styles) && !/\bin the style of\b/i.test(styles);
@@ -37,6 +38,14 @@ export function validatePrompt(
 
   const stylesOnly = !LYRICS_RE.test(styles);
   if (!stylesOnly) issues.push("lyrics_content");
+
+  const exclusionLeakage = (plan.exclusions ?? []).filter((x) => {
+    const normalized = x.replace(/[.*+?^${}()|[\]\\]/g, "\\  let uniqueness = true;").trim();
+    return normalized.length >= 3 && new RegExp(`\\b${normalized}\\b`, "i").test(styles);
+  });
+  const instrumentalLeakage = !plan.vocals.present && /\b(?:for the vocal|female vocals|male vocals|lead vocal(?:s)?|vocal pocket)\b/i.test(styles);
+  const coherence = exclusionLeakage.length === 0 && !instrumentalLeakage;
+  if (!coherence) issues.push(exclusionLeakage.length ? "excluded_concept_in_styles" : "instrumental_vocal_leakage");
 
   let uniqueness = true;
   if (peerTexts.length > 0 || peerPlans.length > 0) {
@@ -51,6 +60,7 @@ export function validatePrompt(
     positivePrompting,
     stylesOnly,
     uniqueness,
+    coherence,
   });
 
   return {
@@ -61,6 +71,7 @@ export function validatePrompt(
       positivePrompting,
       stylesOnly,
       uniqueness,
+      coherence,
     },
     issues,
     score,
@@ -73,7 +84,8 @@ export function criticalGatesPass(gates: HardGates): boolean {
     gates.integerBpm &&
     gates.protectedReferences &&
     gates.positivePrompting &&
-    gates.stylesOnly
+    gates.stylesOnly &&
+    gates.coherence !== false
   );
 }
 
@@ -87,68 +99,57 @@ export function isStructurallyUnique(
   peerPlans: SonicPlan[],
   peerTexts: string[]
 ): boolean {
+  // Titles, arbitrary seed IDs and recipe IDs are never evidence of musical variation.
   for (const peer of peerPlans) {
-    if (planFingerprint(plan) === planFingerprint(peer)) {
-      return false;
-    }
+    if (majorAxisDistance(plan, peer) < 2) return false;
   }
-  if (peerPlans.length > 0) {
-    const minPlanDist = Math.min(...peerPlans.map((p) => planDistance(plan, p)));
-    if (minPlanDist >= 3) return true;
-  }
-  for (const p of peerTexts) {
-    if (structuredSimilarity(styles, p) > 0.88) return false;
+  for (const peer of peerTexts) {
+    if (structuredSimilarity(styles, peer) > 0.91) return false;
   }
   return true;
 }
 
 export function planFingerprint(p: SonicPlan): string {
-  return (
-    p.recipeId ||
-    [
-      p.primaryGenre,
-      p.secondaryGenre ?? "",
-      p.accentGenre ?? "",
-      p.metricFeel,
-      p.moodPrimary,
-      p.bass.slice(0, 2).join(","),
-      p.vocals.present ? `${p.vocals.presentation}-${p.vocals.style}` : "inst",
-      p.donors.rhythm ?? "",
-      p.donors.bass ?? "",
-      p.variantAxes.join("|"),
-    ].join("::")
-  );
+  return [
+    p.primaryGenre,
+    p.sonicIdentity ?? "",
+    p.metricFeel,
+    p.groove[0] ?? "",
+    p.bass[0] ?? "",
+    p.bassBehavior[0] ?? "",
+    p.harmony[0] ?? "",
+    p.arrangement[0] ?? "",
+    p.vocals.present ? p.vocals.style ?? "sung" : "instrumental",
+  ].join("::");
+}
+
+/** Distinct musical architectures, not generated text decorations. */
+export function majorAxisDistance(a: SonicPlan, b: SonicPlan): number {
+  const axes: [unknown, unknown][] = [
+    [a.sonicIdentity, b.sonicIdentity],
+    [a.metricFeel, b.metricFeel],
+    [a.groove[0], b.groove[0]],
+    [a.drums[0], b.drums[0]],
+    [a.bass[0], b.bass[0]],
+    [a.bassBehavior[0], b.bassBehavior[0]],
+    [a.harmony[0], b.harmony[0]],
+    [a.arrangement[0], b.arrangement[0]],
+    [a.soundDesign[0], b.soundDesign[0]],
+    [a.vocals.present ? a.vocals.style : "instrumental", b.vocals.present ? b.vocals.style : "instrumental"],
+    [a.mix[0], b.mix[0]],
+  ];
+  return axes.filter(([left, right]) => left !== right).length;
 }
 
 export function planDistance(a: SonicPlan, b: SonicPlan): number {
-  let d = 0;
-  if (a.recipeId && b.recipeId && a.recipeId !== b.recipeId) d += 4;
-  if (a.primaryGenre !== b.primaryGenre) d += 2;
-  if (a.secondaryGenre !== b.secondaryGenre) d += 1;
-  if (a.accentGenre !== b.accentGenre) d += 1;
-  if (a.metricFeel !== b.metricFeel) d += 2;
-  if (a.moodPrimary !== b.moodPrimary) d += 1;
-  if ((a.donors.rhythm ?? "") !== (b.donors.rhythm ?? "")) d += 1;
-  if ((a.donors.bass ?? "") !== (b.donors.bass ?? "")) d += 1;
-  if (a.bass[0] !== b.bass[0]) d += 1;
-  if (a.bass[1] !== b.bass[1]) d += 1;
-  if (a.drums[0] !== b.drums[0]) d += 1;
-  if (a.bassBehavior[0] !== b.bassBehavior[0]) d += 1;
-  if (a.vocals.present !== b.vocals.present) d += 2;
-  else if (a.vocals.presentation !== b.vocals.presentation) d += 1;
-  else if (a.vocals.style !== b.vocals.style) d += 1;
-  else if ((a.vocals.processing?.[0] ?? "") !== (b.vocals.processing?.[0] ?? "")) d += 1;
-  if (a.arrangement[0] !== b.arrangement[0]) d += 1;
-  if (a.mix[a.mix.length - 1] !== b.mix[b.mix.length - 1]) d += 1;
-  if (a.titlePhrase !== b.titlePhrase) d += 1;
-  return d;
+  return majorAxisDistance(a, b);
 }
 
 export function scorePrompt(styles: string, plan: SonicPlan, gates: HardGates): number {
   let score = 0;
   score += 12;
   if (plan.primaryGenre) score += 3;
-  score += plan.secondaryGenre ? 10 : 7;
+  score += 7; // Single-genre fidelity is not worse than gratuitous hybridization.
   score += Math.min(8, 2 + plan.soundDesign.length + plan.atmosphere.length);
   score += Math.min(8, 2 + plan.groove.length + plan.drums.length);
   score += Math.min(8, 2 + plan.bass.length + plan.bassBehavior.length);
@@ -161,6 +162,7 @@ export function scorePrompt(styles: string, plan: SonicPlan, gates: HardGates): 
   const sentences = styles.split(/(?<=\.)\s+/).filter(Boolean).length;
   score += sentences >= 4 && sentences <= 8 ? 5 : 2;
   score += gates.uniqueness ? 6 : 0;
+  score += gates.coherence !== false ? 4 : 0;
   score += gates.characterRange ? 5 : 0;
   score += gates.protectedReferences ? 5 : 0;
   score += gates.positivePrompting ? 5 : 0;
