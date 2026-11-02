@@ -99,6 +99,10 @@ export function isStructurallyUnique(
   peerPlans: SonicPlan[],
   peerTexts: string[]
 ): boolean {
+  // In A/B Lab, exactly one selected musical dimension changes; textual similarity is intentional.
+  if (plan.variationMode === "ab" && peerPlans.length) {
+    return peerPlans.every((peer) => majorAxisDistance(plan, peer) === 1);
+  }
   // Titles, arbitrary seed IDs and recipe IDs are never evidence of musical variation.
   for (const peer of peerPlans) {
     if (majorAxisDistance(plan, peer) < 2) return false;
