@@ -56,6 +56,7 @@ import { expandMood, GENRES, matchGenre } from "./ontology.ts";
 import { PROFILE } from "./profile.ts";
 import { mulberry32, pick } from "./rng.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
+import { applySonicIdentity } from "./sonic-identities.ts";
 
 export function buildPlans(
   parsed: ParsedInput,
@@ -228,6 +229,12 @@ export function buildOnePlan(
   const melody = scrub(selector, "melody", buildMelody(families, moodPrimary, parsed, rng, selector), parsed.explicitInstruments ?? []);
   const soundDesign = scrub(selector, "soundDesign", buildSoundDesign(families, moodPrimary, parsed, rng, selector), parsed.soundDesignHints);
   const arrangement = scrub(selector, "arrangement", buildArrangement(preset.energy, families, parsed, rng), parsed.arrangementHints);
+  // Archive-specific section transforms must be preserved before generic arrangement arcs.
+  for (const cue of [...(parsed.arrangementCues ?? [])].reverse()) {
+    if (/\b(?:drop\s*2|second drop|silence|fake.?out|motif|countermelody|counter-melody|octave|\d+\s*bars?)\b/i.test(cue.detail)) {
+      arrangement.unshift(cue.detail);
+    }
+  }
   const mix = scrub(selector, "mix", buildMix(families, parsed, rng), parsed.mixHints);
   const master = buildMaster(preset.energy, families, rng);
   const vocals = buildVocals(parsed, rank, rng, attempt, families);
@@ -271,9 +278,18 @@ export function buildOnePlan(
     titlePhrase,
   ].join("|");
 
-  return {
+  const identityMode = parsed.variationMode ?? "precision";
+  const excluded = (text: string) => (parsed.exclusions ?? []).some((x) => {
+    const term = x.toLowerCase().replace(/[^a-z0-9- ]/g, "").trim();
+    return term.length >= 3 && text.toLowerCase().includes(term);
+  });
+  const allow = (arr: string[]) => arr.filter((item) => !excluded(item));
+  const basePlan: SonicPlan = {
     bpm,
     key: parsed.key,
+    meter: parsed.meter,
+    exclusions: parsed.exclusions,
+    arrangementCues: parsed.arrangementCues,
     primaryGenre,
     secondaryGenre,
     accentGenre,
@@ -284,23 +300,31 @@ export function buildOnePlan(
     bpmNotes: bpmNotes([primaryGenre, secondaryGenre, accentGenre].filter((g): g is string => Boolean(g)), bpm),
     atmosphere: unique(atmosphere).slice(0, 3),
     metricFeel,
-    groove,
-    drums,
-    bass,
-    bassBehavior,
-    harmony,
-    melody,
-    instruments,
+    groove: allow(groove),
+    drums: allow(drums),
+    bass: allow(bass),
+    bassBehavior: allow(bassBehavior),
+    harmony: allow(harmony),
+    melody: allow(melody),
+    instruments: allow(instruments),
     vocals,
-    arrangement,
-    soundDesign,
-    mix,
+    arrangement: allow(arrangement),
+    soundDesign: allow(soundDesign),
+    mix: allow(mix),
     master,
     titlePhrase,
     anchors,
     recipeId,
     variantAxes: [...preset.axes, `seed:${seed % 1000}`, `recipe:${recipeId.slice(0, 48)}`],
     seed: rngSeed,
+  };
+  const adjusted = applySonicIdentity(basePlan, parsed, rank, identityMode);
+  // Never allow an identity to reintroduce a negative constraint.
+  return {
+    ...adjusted,
+    groove: allow(adjusted.groove), bass: allow(adjusted.bass),
+    soundDesign: allow(adjusted.soundDesign), arrangement: allow(adjusted.arrangement), mix: allow(adjusted.mix),
+    metricFeel: (parsed.exclusions ?? []).some((x) => /four[- ]on[- ]the[- ]floor|four[- ]to[- ]the[- ]floor/i.test(x)) && adjusted.metricFeel === "four-on-the-floor" ? "broken" : adjusted.metricFeel,
   };
 }
 
@@ -646,7 +670,7 @@ function buildHarmony(
     families.includes("drill");
 
   const h: string[] = [...parsed.harmonyHints];
-  if (parsed.key) h.push(`${parsed.key} tonal center`);
+  // Explicit key is rendered once in the lead, not repeated in the harmony sentence.
   // Rap harmony comes from rap, trap and drill banks only, so sung-chorus voicings stay out.
   const rapFamilies = ["rap", ...families.filter((f) => f === "trap" || f === "drill")];
   const harmFamilies = isRap ? rapFamilies : families;
@@ -877,7 +901,8 @@ function buildArrangement(energy: string, families: string[], parsed: ParsedInpu
 
 function buildMix(families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const m = [...parsed.mixHints];
-  m.push("centered mono low end", "wide harmonic upper field");
+  // Use production-family mix vocabulary, rather than enforcing the same tail on every record.
+  if (families.some((f) => ["bass", "riddim", "trap", "ukg", "drill"].includes(f)) && rng() > 0.35) m.push("mono sub focus with transient separation");
   const familyMix = families.flatMap((f) => FAMILY_MIX[f] ?? []);
   if (familyMix.length) m.push(...[...familyMix].sort(() => rng() - 0.5).slice(0, 2));
   const fits = (x: string) => fitsFamilies(x, families);
