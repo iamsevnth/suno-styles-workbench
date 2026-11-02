@@ -11,7 +11,7 @@ const HEADINGS: Record<StudioRouteId, { title: string; intro: string; chip: stri
     title: "Styles Compiler",
     intro:
       "Create a Styles prompt from a brief or switch to Fix Existing Prompt to rebuild a prompt that is vague, conflicted or hard for Suno to follow. Everything compiles locally in your browser.",
-    chip: "925–975 characters",
+    chip: "750–900 characters",
   },
   lyrics: {
     title: "Lyrics Studio",

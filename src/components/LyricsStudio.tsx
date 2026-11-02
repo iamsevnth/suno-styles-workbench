@@ -38,7 +38,7 @@ const GENRE_OPTIONS = [
 const DELIVERY_OPTIONS = [
   "Mumble SoundCloud Rapper (slurred cadence, distorted 808s, hype ad-libs)",
   "Autotuned Trap Flow (hard pitch snap, robotic slides, metallic tone)",
-  "Sung-Rap / Melodic Trap Hybrid (Drake/Juice WRLD cadence, pitched bounce, no choir)",
+  "Sung-Rap / Melodic Trap Hybrid (pitched bounce, melodic cadence, no choir)",
   "Lyrical Bars & Internal Rhymes (dense syllables, multi-rhymes, breath control)",
   "Talk-Rap / Conversational Spoken (deadpan West Coast / Detroit off-beat, zero singing)",
   "Fast Chopper / Double-Time Rap (rapid-fire consonants, breath-controlled sprint)",

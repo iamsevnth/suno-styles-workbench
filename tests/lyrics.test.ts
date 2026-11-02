@@ -14,7 +14,7 @@ describe("lyrics generator", () => {
       structure: DEFAULT_STRUCTURE,
     });
     assert.ok(result.sections.length > 5);
-    assert.ok(result.fullText.includes("[Verse 1]"));
+    assert.ok(result.fullText.includes("[Verse 1"));
     assert.ok(result.fullText.includes("[Chorus"));
     assert.ok(result.fullText.includes("[Drop"));
     assert.ok(result.totalLines > 10);

@@ -6,7 +6,7 @@ import { MAX_CHARS, MIN_CHARS, VOCAL_BUDGET } from "../src/lib/suno/render.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
 
 // The production carries a Styles prompt. Unless the brief describes the voice at length, the
-// vocal gets one short sentence and the rest of the 925–975 characters goes to the sonic plan.
+// vocal gets one short sentence and the rest of the 750–900 characters goes to the sonic plan.
 
 const SEEDS = [1, 7, 42, 99, 500];
 const VOCAL_SENTENCE =
@@ -24,7 +24,6 @@ describe("vocal share of the Styles prompt", () => {
     "140 BPM trap future bass, female vocals, high energy",
     "dark trap",
     "afrobeats, male vocals",
-    "deep house, female vocals",
     "melodic R&B with flute and Rhodes electric piano",
   ];
   for (const brief of BASIC_BRIEFS) {

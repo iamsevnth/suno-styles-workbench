@@ -5,6 +5,7 @@ import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import * as dna from "../src/lib/suno/lexicon-dna.ts";
 import * as vocals from "../src/lib/suno/lexicon-vocals.ts";
 import * as lexicon from "../src/lib/suno/lexicon.ts";
+import { GENERAL_SUB, NATIVE_SUBS } from "../src/lib/suno/native/catalog.ts";
 import { allStyles } from "../src/lib/suno/ontology.ts";
 import { ARTIST_LEAK_RE, NEGATIVE_RE } from "../src/lib/suno/validate.ts";
 import { parseUserInput } from "../src/lib/suno/parse.ts";
@@ -143,6 +144,9 @@ describe("phrase library", () => {
       if (name === "VOCAL_PAIRS") total += vocals.VOCAL_PAIRS.length * 2;
       else total += countStrings(value);
     }
+    // The native phrase banks (techno, house, lo-fi, folk, rock, metal, country, synthwave, pop, ambient,
+    // cinematic) replaced the generic padding sentences; they are vocabulary too.
+    total += countStrings(NATIVE_SUBS) + countStrings(GENERAL_SUB);
     assert.ok(total >= BASELINE * 2, `only ${total} phrases`);
   });
 
@@ -160,6 +164,8 @@ describe("phrase library", () => {
     for (const value of Object.values({ ...lexicon, ...dna, ...vocals })) {
       if (typeof value !== "function") visit(value);
     }
+    visit(NATIVE_SUBS.map((sub) => ({ ...sub, match: undefined })));
+    visit({ ...GENERAL_SUB, match: undefined });
     assert.deepEqual(offenders, []);
   });
 });

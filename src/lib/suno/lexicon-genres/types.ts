@@ -25,7 +25,6 @@ export interface FamilyLexicon {
   /** Three-stage song forms. */
   arrangement: string[][];
   /** Whole descriptive sentences used to fill the character window. */
-  padding: string[];
   /** Display titles for prompt cards (not part of the prompt text). */
   titles: string[];
 }

@@ -64,14 +64,6 @@ export const AMBIENT: FamilyLexicon = {
     ["single piano motif", "textures gradually bloom", "quiet resolution"],
     ["distant ambience", "warm harmonic peak", "long reverb decay"],
   ],
-  padding: [
-    "Layers of pads slowly swell and fade, giving the track a breathing motion.",
-    "Long reverb tails blur the edges of every note into a soft haze.",
-    "Field recordings and tape hiss add a quiet sense of place.",
-    "Sparse piano notes ring out and decay into the ambience.",
-    "Chords change slowly, leaving each harmony time to bloom.",
-    "The stereo field stays wide and immersive from start to finish.",
-  ],
   titles: ["Glacier Light", "Slow Tide Drift", "Morning Fog Hymn", "Weightless Rooms", "Ember Horizon"],
 };
 
@@ -136,14 +128,6 @@ export const CINEMATIC: FamilyLexicon = {
     ["quiet piano opening", "string-driven build", "full orchestra and choir climax"],
     ["tension bed with ticking pulse", "rising percussion", "massive final hits"],
     ["solo instrument theme", "orchestra joins in waves", "heroic finale"],
-  ],
-  padding: [
-    "Strings and brass build in waves toward a powerful climax.",
-    "Taiko and timpani drive the rhythm with heavy, booming hits.",
-    "A choir adds weight and grandeur to the biggest moments.",
-    "Quiet moments with solo piano or violin set up the larger sections.",
-    "Rising tension and release shape the music like a film scene.",
-    "Concert-hall reverb gives the orchestra a wide, natural space.",
   ],
   titles: ["Rise Of Empires", "Last Light Overture", "Iron Horizon", "Echoes Of Valor", "Starfall Requiem"],
 };

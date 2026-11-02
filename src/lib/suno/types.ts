@@ -22,9 +22,37 @@ export interface ParsedInput {
   references: string[];
   mandatory: string[];
   instrumental: boolean;
+  /** Scene words from the brief ("sunset rooftop"), carried into the prompt as written. */
+  scenes?: string[];
+  /** Textures the brief named ("vinyl crackle"). */
+  textures?: string[];
+  /** Instruments with their modifiers ("acoustic guitar"), never rewritten. */
+  instrumentPhrases?: string[];
+  /** Genre-like words found in neither the ontology nor the native catalog; passed through verbatim. */
+  unknownGenres?: string[];
+  /** Set when a native (non-bass) family handles the brief. */
+  native?: NativeRoute;
   profileEnabled: boolean;
   blendBand?: "tame" | "weird" | "unhinged";
   mode: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
+}
+
+export interface NativeRoute {
+  /** Catalog ids of the primary and (optional) secondary sub-genre; "general" for unknown genres. */
+  primary: string;
+  secondary?: string;
+  /** The user's own genre words when the library has no entry for them. */
+  verbatim?: string;
+  /** The user's own spelling of the matched sub-genres ("lo-fi jazz hop"), used for the opening clause. */
+  labels?: { primary?: string; secondary?: string };
+}
+
+/** The native pipeline's section banks, already rotated for this variant. */
+export interface NativeParts {
+  genreLabel: string;
+  sections: Record<string, string[]>;
+  scenes: string[];
+  textures: string[];
 }
 
 export interface VocalPreferences {
@@ -102,6 +130,14 @@ export interface SonicPlan {
   titlePhrase: string;
   anchors: string[];
   recipeId: string;
+  /** Present when the plan came from the native (non-bass) pipeline. */
+  native?: NativeParts;
+  /** The brief as typed, so the validator can tell which words the user asked for. */
+  briefText?: string;
+  /** Genre words the library does not know, carried verbatim into the opening clause. */
+  unknownGenres?: string[];
+  scenes?: string[];
+  textures?: string[];
   variantAxes: string[];
   seed: number;
 }
@@ -113,6 +149,8 @@ export interface HardGates {
   positivePrompting: boolean;
   stylesOnly: boolean;
   uniqueness: boolean;
+  /** No conflicting BPMs, vocal terms in instrumentals, mood clashes or bass-music phrasing in other genres. */
+  noContradictions?: boolean;
 }
 
 export interface PromptCandidate {

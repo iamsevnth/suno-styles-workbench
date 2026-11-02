@@ -2,7 +2,10 @@ import { dropMismatchedCompiled } from "./affinity.ts";
 import { inferBlendBand } from "./genre-atlas.ts";
 import { bpmNotes, resolveGenreBlend, stripTemplateBoilerplate, stripVocalLeadIn } from "./blend.ts";
 import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
-import { ParsedInput, VocalPreferences } from "./types.ts";
+import { extractBriefPhrases } from "./brief.ts";
+import { GENERAL_SUB, NATIVE_SUBS } from "./native/catalog.ts";
+import { nativeCovers, nativeHits } from "./native/compose.ts";
+import { NativeRoute, ParsedInput, VocalPreferences } from "./types.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
 const N_FLAG_RE = /(?:^|\s)(?:-n|--count)\s*(\d{1,2})\b/i;
@@ -107,7 +110,8 @@ export const ATMOSPHERE_WORDS = [
 ];
 
 export const INSTRUMENT_PATTERNS: [RegExp, string][] = [
-  [/\b(?:r&b|rnb|clean electric|melodic)?\s*guitars?\b/i, "clean electric guitar"],
+  [/\b(?:acoustic|nylon[- ]string|nylon|classical|steel[- ]string|fingerpicked|fingerstyle)\s+guitars?\b/i, "acoustic guitar"],
+  [/(?<!acoustic |nylon |nylon-string |classical |steel-string |steel string |fingerpicked |fingerstyle )\b(?:r&b|rnb|clean electric|melodic)?\s*guitars?\b/i, "clean electric guitar"],
   [/\b(?<!electric )piano\b/i, "sparse piano"],
   [/\brhodes\b/i, "Rhodes electric piano"],
   [/\bpads?\b/i, "atmospheric pads"],
@@ -156,7 +160,8 @@ export function parseUserInput(
       text
     );
 
-  const genres = extractGenresInOrder(text);
+  // "Garage band" is a kind of band, not UK garage.
+  const genres = extractGenresInOrder(text.replace(/\bgarage[- ]band\b/gi, "band"));
   // "UKG" on its own means UKG dubstep, never UK garage.
   if (/\bukg\b/i.test(text) && !genres.some((g) => /\bukg\b/i.test(g))) {
     genres.push("UKG Dubstep");
@@ -323,11 +328,66 @@ export function parseUserInput(
     key = qual.startsWith("min") ? `${tonic} minor` : `${tonic} major`;
   }
 
+  // Scenes, textures, described instruments and genre words the library lacks travel into the prompt as written.
+  const phrases = extractBriefPhrases(text, (chunk) => {
+    const c = chunk.toLowerCase();
+    return !!matchGenre(c) || nativeHits(c).length > 0 || MOOD_WORDS.some((m) => includesPhrase(c, m));
+  });
+  const nativeNotes: string[] = [];
+  const hits = nativeHits(text);
+  const uncovered = genres.filter((g) => {
+    const def = matchGenre(g);
+    return !(def && nativeCovers(hits, def));
+  });
+  let native: NativeRoute | undefined;
+  let finalGenres = genres.slice(0, 3);
+  const isDraftLike = mode === "rewrite" || mode === "reference" || looksLikeDraft || references.length > 0 || drafts.length > 0;
+  if (!isDraftLike && !wantsVariety) {
+    if (hits.length && uncovered.length === 0) {
+      native = {
+        primary: hits[0].sub.id,
+        secondary: hits[1] && hits[1].sub.id !== hits[0].sub.id ? hits[1].sub.id : undefined,
+        verbatim: phrases.unknownGenres[0],
+        labels: {
+          primary: hits[0].text.replace(/\s+/g, " ").trim().split(" ").length > 1 || /-/.test(hits[0].text) ? hits[0].text : undefined,
+          secondary: hits[1] && hits[1].sub.id !== hits[0].sub.id ? hits[1].text : undefined,
+        },
+      };
+    } else if (!hits.length && genres.length === 0) {
+      native = { primary: GENERAL_SUB.id, verbatim: phrases.unknownGenres[0] };
+    }
+  }
+  if (native) {
+    const primary = NATIVE_SUBS.find((sub) => sub.id === native.primary) ?? GENERAL_SUB;
+    finalGenres = native.verbatim ? [native.verbatim] : native.primary === "general" ? [] : [primary.name];
+    if (native.secondary) finalGenres.push(NATIVE_SUBS.find((sub) => sub.id === native.secondary)?.name ?? "");
+    finalGenres = finalGenres.filter(Boolean);
+    if (native.verbatim) {
+      nativeNotes.push(
+        `"${native.verbatim}" is not in the genre library, so it is used exactly as written${primary.id === "general" ? " with general-purpose sounds" : ` over ${primary.name.toLowerCase()} sounds`}.`
+      );
+    } else if (native.primary === "general") {
+      nativeNotes.push("No genre was named, so the prompt uses general-purpose sounds built from your mood, scene and instruments.");
+    }
+    if (bpm != null && primary.id !== "general" && (bpm < primary.bpm[0] - 8 || bpm > primary.bpm[1] + 8)) {
+      nativeNotes.push(`${bpm} BPM is outside the usual ${primary.bpm[0]}-${primary.bpm[1]} BPM for ${primary.name}; kept as requested.`);
+    }
+  } else if (phrases.unknownGenres.length) {
+    nativeNotes.push(
+      `"${phrases.unknownGenres[0]}" is not in the genre library; it is kept in the prompt as written and the closest known genres supply the sounds.`
+    );
+  }
+
   return {
     raw: instrumentText,
     count,
-    genres: genres.slice(0, 3),
-    genreNotes: [...blend.notes, ...(bpm != null ? bpmNotes(genres, bpm) : [])],
+    genres: finalGenres,
+    genreNotes: [...blend.notes, ...(bpm != null && !native ? bpmNotes(genres, bpm) : []), ...nativeNotes],
+    scenes: phrases.scenes,
+    textures: phrases.textures,
+    instrumentPhrases: phrases.instrumentPhrases,
+    unknownGenres: phrases.unknownGenres,
+    native,
     bpm,
     key,
     moods,

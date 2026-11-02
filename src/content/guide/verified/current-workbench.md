@@ -4,7 +4,7 @@
 
 Suno Workbench is a browser-only, deterministic Styles Compiler and Lyrics Studio. Compilation uses local parsing, genre families, planning, phrase libraries and validation. It does not call an AI service or send prompts to a backend. The downloadable offline file contains the same application.
 
-The Styles Compiler builds **925–975-character** prompts and tries to preserve recognized user intent. Suno still decides how to perform the music; a Workbench output is not a guarantee of a specific acoustic result.
+The Styles Compiler builds **750–900-character** prompts and tries to preserve recognized user intent. Suno still decides how to perform the music; a Workbench output is not a guarantee of a specific acoustic result.
 
 ## Practical six-step workflow
 
@@ -37,7 +37,7 @@ With no explicit key, the heading uses **Key: --**. Retain the original input, s
 
 ## Quality and iteration
 
-The core gates check 925–975 characters, one whole-number BPM, safe artist reference handling, positive Styles wording and the separation of Lyrics from Styles. Variants are also checked for meaningful distinction. A final genre safety pass prevents EDM-drop wording in non-drop families.
+The core gates check 750–900 characters (1,000 hard cap), one whole-number BPM, safe artist reference handling, positive Styles wording and the separation of Lyrics from Styles. Variants are also checked for meaningful distinction. A final genre safety pass prevents EDM-drop wording in non-drop families.
 
 Use positive phrasing: `dry close-mic vocal` communicates a desired result more clearly than `no autotune`. Keep one or two primary genre identities prominent, then describe the supporting donor roles.
 
