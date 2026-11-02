@@ -62,3 +62,44 @@ describe("VNext semantic intent regressions", () => {
     assert.equal(p[0].plan.primaryGenre, p[1].plan.primaryGenre);
   });
 });
+
+describe("VNext archive-derived release guardrails", () => {
+  it("keeps comma-separated forbidden concepts together in Exclude", () => {
+    const c = extractConstraintIntent("142 BPM brostep; no cinematic, orchestral, strings, brass, choir, soundtrack, or trailer elements.");
+    assert.deepEqual(c.exclusions, ["cinematic", "orchestral", "strings", "brass", "choir", "soundtrack", "trailer elements"]);
+    assert.doesNotMatch(c.positiveText, /cinematic|orchestral|trailer/i);
+  });
+
+  it("preserves positive musical instructions after a negated colon", () => {
+    const c = extractConstraintIntent("Keep the snare dry. Avoid random sound spam: every new texture should answer the main motif or mark a structural change.");
+    assert.deepEqual(c.exclusions, ["random sound spam"]);
+    assert.match(c.positiveText, /main motif/i);
+  });
+
+  it("distinguishes instrumental arrangements from instrumental pockets supporting a singer", () => {
+    const singer = parseUserInput("108 BPM future bass, solo low male rapper, alternate vocal bars with instrumental answers", { mode: "rewrite" });
+    const instrumental = parseUserInput("Original minimalist future-house instrumental at 124 BPM in F minor", { mode: "rewrite" });
+    assert.equal(singer.instrumental, false);
+    assert.equal(singer.vocals?.presentation, "male");
+    assert.equal(instrumental.instrumental, true);
+  });
+
+  it("does not interpret wild as a genre-randomization instruction in Fix mode", () => {
+    const p = parseUserInput("145 BPM brostep track with wild bass modulation and dry drum hits", { mode: "rewrite" });
+    assert.ok(!p.mandatory.includes("__variety__"));
+  });
+
+  it("keeps brostep and riddim clear of unrequested cinematic language", () => {
+    for (const genre of ["brostep", "riddim"]) {
+      for (const lead of ["male tenor singing", "female alto singing", "strictly instrumental"]) {
+        const { prompts } = generateStylesPrompts(`142 BPM ${genre}, punchy bass and precise groove, ${lead}`, {
+          count: 3, seed: 42, profileEnabled: false, variationMode: "precision",
+        });
+        for (const prompt of prompts) {
+          assert.doesNotMatch(prompt.styles, /\b(?:cinematic|orchestral|trailer|film score)\b/i, prompt.styles);
+          assert.ok(Object.values(prompt.hardGates).every(Boolean), prompt.issues.join(", "));
+        }
+      }
+    }
+  });
+});
