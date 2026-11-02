@@ -192,7 +192,10 @@ export function parseUserInput(
   // A descriptive "future-house instrumental" is a production type, but a named singer
   // alongside "instrumental answers" keeps the lead. Resolve this at the sentence level.
   const namesVocalist = /\b(?:male|female)\b[^.!?\n]{0,55}\b(?:rapper|singer|vocal|voice|lead|singing)\b|\b(?:rapper|singer|vocalist|singing|rapping)\b/i.test(text);
+  // Fix mode preserves the source's vocal scope; vocal-chop effects alone are not a new sung lead.
+  const namedVoiceInFix = /\b(?:vocals?(?![- ]?chops?)|voices?|vocalist|singer|sung|singing|sings?|rapper|rapping|rap\s+(?:verse|vocal|flow)|male|female|tenor|alto|soprano|baritone|falsetto|spoken[- ]?word|spoken\s+vocals?|chant|choir)\b/i.test(text);
   const instrumental = explicitlyInstrumental || (!namesVocalist && /\binstrumental\b/i.test(text)) ||
+    (options?.mode === "rewrite" && !namedVoiceInFix) ||
     constraints.exclusions.some((x) => /^(?:lyrical |lead )?vocals?$|^singing$|^rap(?:ping)?$/i.test(x));
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 

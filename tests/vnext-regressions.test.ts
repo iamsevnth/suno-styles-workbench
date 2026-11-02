@@ -103,3 +103,15 @@ describe("VNext archive-derived release guardrails", () => {
     }
   });
 });
+
+describe("VNext source vocal-scope fidelity", () => {
+  it("does not invent a female singer from vocal-chop-style glitch edits", () => {
+    const source = "Aggressive maximalist brostep and electro-house crossover, 140-146 BPM, minor key, talking FM basses, vocal-chop-style glitch edits, no cinematic, orchestral, strings, brass, choir, soundtrack, or trailer elements.";
+    const parsed = parseUserInput(source, { mode: "rewrite", profileEnabled: false });
+    assert.equal(parsed.instrumental, true);
+    const result = generateStylesPrompts(source, { count: 1, seed: 123, mode: "rewrite", profileEnabled: false });
+    assert.equal(result.prompts[0].plan.vocals.present, false);
+    assert.doesNotMatch(result.prompts[0].styles, /\b(?:female|male) singer\b/i);
+    assert.ok(Object.values(result.prompts[0].hardGates).every(Boolean));
+  });
+});
