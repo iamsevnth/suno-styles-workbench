@@ -233,7 +233,7 @@ function compose(plan: SonicPlan): string {
   const choices: Choices = {
     feel: feelPhrase(plan.metricFeel, families, rng),
     prod: oneFamily(rng, PRODUCTION, families),
-    harmVerb: pick2(rng, PRODUCTION_VERBS.harm.filter(fits)).replace(/\bfor the vocal\b/gi, "for the instrumental motif"),
+    harmVerb: (() => { const phrase = pick2(rng, PRODUCTION_VERBS.harm.filter(fits)); return plan.vocals.present ? phrase : phrase.replace(/\bfor the vocal\b/gi, "for the instrumental motif"); })(),
     melTemplate: pick2(rng, MELODY_TEMPLATES),
     textureTemplate: pick2(rng, [...PRODUCTION_VERBS.texture]).trim(),
     drumForm: Math.floor(rng() * DRUM_FORMS.length),
@@ -367,7 +367,7 @@ function assemble(
   const claim = (items: string[]) => dedupeByConcept(items, seen);
 
   // 1. Primary genre, tempo and feel; the supporting genres carry explicit roles.
-  const prod = d.prod > 0 ? `, delivered as ${c.prod}` : "";
+  const prod = d.prod > 0 && [plan.secondaryGenre, plan.accentGenre].filter(Boolean).length < 2 ? `, delivered as ${c.prod}` : "";
   const musicalHeader = plan.key ? `${plan.bpm} BPM, ${plan.meter ? `${plan.meter}, ` : ""}${plan.key}. ` : `${plan.bpm} BPM `;
   sentences.push(`${musicalHeader}${c.genreText}, ${c.moodPhrase}${prod}.`);
 
