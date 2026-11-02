@@ -151,6 +151,26 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
         </label>
       </div>
 
+      {!fixing && (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="variation-mode" className="text-sm font-semibold text-[var(--fg)]">Variation Strategy</label>
+          <select
+            id="variation-mode"
+            value={wb.variationMode}
+            onChange={(event) => wb.setVariationMode(event.target.value as "precision" | "exploration" | "ab")}
+            className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] text-[var(--fg)] px-3 py-2.5 text-sm"
+          >
+            <option value="precision">Precision — Preserve the Brief</option>
+            <option value="exploration">Exploration — Broader Sonic Identities</option>
+            <option value="ab">A/B Lab — Isolate One Production Axis</option>
+          </select>
+          <p className="text-xs text-[var(--fg-muted)]">
+            Precision preserves named constraints. Exploration favors contrasting production identities.
+            A/B Lab generates a controlled two-prompt comparison with one major production change.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 pt-1">
         <button
           type="button"
@@ -193,6 +213,9 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
             <div>
               BPM: <span className="text-[var(--fg)]">{wb.parsed?.bpm ?? "—"}</span> · Moods:{" "}
               <span className="text-[var(--fg)]">{(wb.parsed?.moods || []).slice(0, 4).join(", ") || "—"}</span>
+            </div>
+            <div>
+              Key / Meter: <span className="text-[var(--fg)]">{[wb.parsed?.key, wb.parsed?.meter].filter(Boolean).join(" · ") || "—"}</span> · Exclusions: <span className="text-[var(--fg)]">{wb.parsed?.exclusions?.join(", ") || "None"}</span>
             </div>
             <div>
               Mode: <span className="text-[var(--fg)]">{wb.parsed?.mode || "—"}</span> · Profile:{" "}
