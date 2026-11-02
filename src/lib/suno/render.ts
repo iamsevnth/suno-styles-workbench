@@ -19,7 +19,7 @@ export const MIN_CHARS = 925;
 export const MAX_CHARS = 975;
 
 /** Last-resort pad, worded so it fits any genre. */
-export const FINAL_PAD = "Translation stays clear on every playback system.";
+export const FINAL_PAD = "Clear tonal focus supports every transition.";
 
 const RAP_STYLES = new Set([
   "rap",
@@ -149,6 +149,7 @@ export function renderStyles(plan: SonicPlan): string {
   let text = compose(plan);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   if (!hasDrops(families)) text = sanitizeNonDropWording(text);
+  if (!plan.vocals.present) text = text.replace(/for the vocal\b/gi, "for the instrumental motif").replace(/\bvocal pocket\b/gi, "motif pocket");
   return text;
 }
 
@@ -232,7 +233,7 @@ function compose(plan: SonicPlan): string {
   const choices: Choices = {
     feel: feelPhrase(plan.metricFeel, families, rng),
     prod: oneFamily(rng, PRODUCTION, families),
-    harmVerb: pick2(rng, PRODUCTION_VERBS.harm.filter(fits)),
+    harmVerb: pick2(rng, PRODUCTION_VERBS.harm.filter(fits)).replace(/\bfor the vocal\b/gi, "for the instrumental motif"),
     melTemplate: pick2(rng, MELODY_TEMPLATES),
     textureTemplate: pick2(rng, [...PRODUCTION_VERBS.texture]).trim(),
     drumForm: Math.floor(rng() * DRUM_FORMS.length),
@@ -367,12 +368,13 @@ function assemble(
 
   // 1. Primary genre, tempo and feel; the supporting genres carry explicit roles.
   const prod = d.prod > 0 ? `, delivered as ${c.prod}` : "";
-  sentences.push(`${plan.bpm} BPM ${c.genreText}, ${c.moodPhrase}${prod}.`);
+  const musicalHeader = plan.key ? `${plan.bpm} BPM, ${plan.meter ? `${plan.meter}, ` : ""}${plan.key}. ` : `${plan.bpm} BPM `;
+  sentences.push(`${musicalHeader}${c.genreText}, ${c.moodPhrase}${prod}.`);
 
   // 2. Drums and groove.
   const drums = claim(take(plan.drums, d.drums));
   const groove = claim(take(plan.groove, d.groove));
-  const tail = c.isBassMusic && drums.length ? ", leaving space before each bass answer" : "";
+  const tail = c.isBassMusic && drums.length && plan.seed % 5 === 0 ? ", with rhythmic space between bass responses" : "";
   if (drums.length) sentences.push(DRUM_FORMS[c.drumForm % DRUM_FORMS.length](c.feel, joinList(drums), joinList(groove), tail));
   else sentences.push(`The rhythm settles into ${article(c.feel)} ${c.feel}${groove.length ? ` with ${joinList(groove)}` : ""}.`);
 
@@ -406,7 +408,8 @@ function assemble(
 
   // 7. Arrangement arc.
   // A stage that only restates a sound already described ("heavier 808") adds nothing to the arc; the arc keeps two stages at least.
-  const stages = take(plan.arrangement, d.arr);
+  const explicit = plan.arrangementCues?.filter((cue) => /drop2|silence|motif/.test(cue.kind)) ?? [];
+  const stages = take(plan.arrangement, Math.max(d.arr, explicit.length ? 1 : 0));
   const fresh = dedupeByConcept(stages, new Set(seen));
   const keep = new Set(fresh);
   for (const stage of stages) if (keep.size < Math.min(2, stages.length)) keep.add(stage);
