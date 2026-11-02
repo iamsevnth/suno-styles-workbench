@@ -1,4 +1,5 @@
 import { parseUserInput } from "./parse.ts";
+import { repairExistingPrompt } from "./fix.ts";
 import { buildPlans } from "./plan.ts";
 import {
   FINAL_PAD,
@@ -21,12 +22,14 @@ export function generateStylesPrompts(
     seed?: number;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
     avoidFingerprints?: string[];
+    variationMode?: "precision" | "exploration" | "ab";
   } = {}
 ): GenerateResult {
   const parsed = parseUserInput(input, {
     count: options.count,
     profileEnabled: options.profileEnabled ?? true,
     mode: options.mode,
+    variationMode: options.variationMode,
   });
 
   const count = Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
@@ -42,6 +45,28 @@ export function generateStylesPrompts(
 
   for (let i = 0; i < count; i++) {
     let best: PromptCandidate | null = null;
+    if (options.mode === "rewrite" && i === 0) {
+      const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
+      const preserved = repairExistingPrompt(input, parsed, sourcePlan);
+      if (preserved) {
+        const validated = validatePrompt(preserved, sourcePlan, peerTexts, peerPlans);
+        if (criticalGatesPass(validated.hardGates)) {
+          const original: PromptCandidate = {
+            title: formatTitle(sourcePlan.seed, sourcePlan.bpm, sourcePlan.key, preserved.length),
+            seed: sourcePlan.seed, key: sourcePlan.key, exclude: (parsed.exclusions ?? []).join(", "),
+            identity: sourcePlan.sonicIdentity,
+            phrase: sourcePlan.titlePhrase, bpm: sourcePlan.bpm, characters: preserved.length,
+            styles: preserved, plan: sourcePlan, score: validated.score, hardGates: validated.hardGates,
+            issues: validated.issues,
+          };
+          prompts.push(original);
+          peerTexts.push(original.styles);
+          peerPlans.push(original.plan);
+          usedRecipes.add(original.plan.recipeId);
+          continue;
+        }
+      }
+    }
 
     for (let attempt = 0; attempt < 14; attempt++) {
       const planSeed = seed + i * 9973 + attempt * 10007 + attempt * attempt * 17;
@@ -64,11 +89,8 @@ export function generateStylesPrompts(
         if (!validation.hardGates.characterRange) {
           styles = forceCharacterWindow(styles, plan.bpm);
         }
-        if (!validation.hardGates.positivePrompting) {
-          styles = styles
-            .replace(/\b(avoid|exclude|excluding|don't|do not|never use)\b/gi, "favor")
-            .replace(/\bwithout\b/gi, "using only");
-        }
+        // Do not invert forbidden instructions by replacing "exclude" with "favor".
+        // Unresolved negatives remain a validation issue rather than silently reversing intent.
         if (!validation.hardGates.protectedReferences) {
           styles = styles.replace(
             /\bin the style of\b[^.]*/gi,
@@ -90,6 +112,8 @@ export function generateStylesPrompts(
         title: formatTitle(plan.seed, plan.bpm, plan.key, characters),
         seed: plan.seed,
         key: plan.key,
+        exclude: (parsed.exclusions ?? []).join(", "),
+        identity: plan.sonicIdentity,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters,
@@ -120,6 +144,8 @@ export function generateStylesPrompts(
         title: formatTitle(plan.seed, plan.bpm, plan.key, styles.length),
         seed: plan.seed,
         key: plan.key,
+        exclude: (parsed.exclusions ?? []).join(", "),
+        identity: plan.sonicIdentity,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters: styles.length,
