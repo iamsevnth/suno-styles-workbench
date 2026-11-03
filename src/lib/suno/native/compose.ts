@@ -1,14 +1,15 @@
 import { conceptsOf, reconcileMoods } from "../blend.ts";
+import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
 import { moodClash } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./catalog.ts";
 import { NativeSub } from "./types.ts";
 
-export const NATIVE_MIN = 750;
-export const NATIVE_MAX = 900;
-/** The renderer stops adding detail once the prompt is this long. */
-const NATIVE_FILL = 790;
+export const NATIVE_MIN = MIN_CHARS;
+export const NATIVE_MAX = MAX_CHARS;
+/** A production-detail target comfortably inside the 800–975-character window. */
+const NATIVE_FILL = 875;
 
 const subById = (id: string): NativeSub => NATIVE_SUBS.find((s) => s.id === id) ?? GENERAL_SUB;
 

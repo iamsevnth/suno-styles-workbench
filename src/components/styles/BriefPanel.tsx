@@ -3,7 +3,7 @@ import Icon from "../icons/Icon.tsx";
 
 const TRUST_NOTES = [
   "Only Generate Styles or Fix Prompt compiles prompts — examples, profile changes and the variation slider never run by themselves",
-  "Every prompt targets 750 to 900 characters (never over 1,000), with an integer BPM and no artist names",
+  "Every prompt targets 800 to 975 characters (never over 1,000), with an integer BPM and no artist names",
   "Export History downloads a uniquely dated JSON file to your computer",
 ];
 

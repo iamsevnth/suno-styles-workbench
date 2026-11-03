@@ -6,7 +6,7 @@ import { MAX_CHARS, MIN_CHARS, VOCAL_BUDGET } from "../src/lib/suno/render.ts";
 import { PromptCandidate } from "../src/lib/suno/types.ts";
 
 // The production carries a Styles prompt. Unless the brief describes the voice at length, the
-// vocal gets one short sentence and the rest of the 750–900 characters goes to the sonic plan.
+// vocal gets one short sentence and the rest of the 800–975 characters goes to the sonic plan.
 
 const SEEDS = [1, 7, 42, 99, 500];
 const VOCAL_SENTENCE =

@@ -24,7 +24,7 @@ export function validatePrompt(
 ): ValidationResult {
   const issues: string[] = [];
   const n = styles.length;
-  // Hard gate: 750..1000. 750..900 is the target the renderer aims for and the score rewards.
+  // Hard gate: 800..1000. The renderer aims for 800..975; the score rewards that target window.
   const characterRange = n >= MIN_CHARS && n <= HARD_MAX_CHARS;
   if (!characterRange) issues.push(`character_count:${n}`);
 

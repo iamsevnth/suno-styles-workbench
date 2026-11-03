@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { bassMusicLeaks, hasConflictingBpm, moodClash, statedBpms, vocalInInstrumental } from "../src/lib/suno/consistency.ts";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import { HARD_MAX_CHARS, MAX_CHARS, MIN_CHARS } from "../src/lib/suno/render.ts";
+import { NATIVE_MIN, NATIVE_MAX } from "../src/lib/suno/native/compose.ts";
 import { ARTIST_LEAK_RE, findContradictions, validatePrompt } from "../src/lib/suno/validate.ts";
 import { generateLyrics, themeKeywords } from "../src/lib/lyrics/generator.ts";
 import { pickSuggestions } from "../src/lib/suno/suggestions.ts";
@@ -60,7 +61,7 @@ describe("genre families", () => {
     });
   }
 
-  it("keeps every family prompt inside 750-900 characters and under the 1,000 cap", () => {
+  it("keeps every family prompt inside 800-975 characters and under the 1,000 cap", () => {
     for (const f of FAMILIES) {
       for (const p of promptsFor(f.brief)) {
         assert.ok(p.styles.length >= MIN_CHARS && p.styles.length <= MAX_CHARS, `${f.brief}: ${p.styles.length}`);
@@ -301,4 +302,13 @@ describe("suggestion chips", () => {
       }
     }
   });
+});
+
+
+it("v5.1 shares the 800–975 target across native and legacy renderers", () => {
+  assert.equal(MIN_CHARS, 800);
+  assert.equal(MAX_CHARS, 975);
+  assert.equal(HARD_MAX_CHARS, 1000);
+  assert.equal(NATIVE_MIN, MIN_CHARS);
+  assert.equal(NATIVE_MAX, MAX_CHARS);
 });
