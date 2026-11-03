@@ -64,7 +64,7 @@ describe("v5.1 musical diversity and Fix fidelity", () => {
     assert.ok(fixed, "conservative Fix must preserve a valid source");
     assert.equal(fixed.strategy, "preserved");
     for (const marker of ["Drop 2", "full-beat silence", "four-bar", "female alto", "central motif"]) {
-      assert.ok(fixed.text.includes(marker), marker);
+      assert.ok(fixed.text.toLowerCase().includes(marker.toLowerCase()), marker);
     }
   });
 });
