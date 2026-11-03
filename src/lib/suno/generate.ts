@@ -1,5 +1,5 @@
 import { parseUserInput } from "./parse.ts";
-import { repairExistingPrompt } from "./fix.ts";
+import { fixSourceOmissions, repairExistingPrompt } from "./fix.ts";
 import { NATIVE_SUBS } from "./native/catalog.ts";
 import { phraseExcluded } from "./intent.ts";
 import { changedMusicalAxes } from "./semantic.ts";
@@ -39,6 +39,16 @@ export function generateStylesPrompts(
   const peerTexts: string[] = [];
   const peerPlans: SonicPlan[] = [];
   const usedRecipes = new Set<string>(options.avoidFingerprints ?? []);
+  // Fix candidate ranking must favor surviving source instructions over a generic
+  // internal prompt score; the latter is not a measure of audible quality.
+  const omittedSourceDetails = (styles: string) => options.mode === "rewrite"
+    ? fixSourceOmissions(input, styles) : [];
+  const omittedCount = (candidate: PromptCandidate) => candidate.issues.filter(x => x.startsWith("Check source retention:")).length;
+  const preferFix = (a: PromptCandidate, b: PromptCandidate) => {
+    if (criticalGatesPass(a.hardGates) !== criticalGatesPass(b.hardGates)) return criticalGatesPass(a.hardGates);
+    return omittedCount(a) < omittedCount(b) ||
+      (omittedCount(a) === omittedCount(b) && a.score > b.score);
+  };
 
   for (let i = 0; i < count; i++) {
     let best: PromptCandidate | null = null;
@@ -110,7 +120,7 @@ export function generateStylesPrompts(
             plan: sourcePlan,
             score: verified.score,
             hardGates: verified.hardGates,
-            issues: verified.issues,
+            issues: [...verified.issues, ...omittedSourceDetails(sourceEdit.text)],
           };
           prompts.push(original);
           peerTexts.push(original.styles);
@@ -179,9 +189,16 @@ export function generateStylesPrompts(
         plan,
         score: validation.score,
         hardGates: validation.hardGates,
-        issues: validation.issues,
+        issues: [...validation.issues, ...omittedSourceDetails(styles)],
       };
 
+      if (options.mode === "rewrite") {
+        if (!best || preferFix(candidate, best)) best = candidate;
+        // A fallback is acceptable immediately only if hard gates pass and no
+        // supported source markers were omitted. Otherwise search remaining seeds.
+        if (allHardGatesPass(candidate.hardGates) && omittedCount(candidate) === 0) break;
+        continue;
+      }
       if (allHardGatesPass(candidate.hardGates)) {
         best = candidate;
         break;
@@ -211,7 +228,7 @@ export function generateStylesPrompts(
         plan,
         score: validation.score,
         hardGates: validation.hardGates,
-        issues: validation.issues,
+        issues: [...validation.issues, ...omittedSourceDetails(styles)],
       };
     }
 
