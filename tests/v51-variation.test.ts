@@ -4,6 +4,7 @@ import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
 import { repairExistingPrompt } from "../src/lib/suno/fix.ts";
 import { changedMusicalAxes, semanticDistance, semanticFingerprint } from "../src/lib/suno/semantic.ts";
 import { MIN_CHARS, MAX_CHARS } from "../src/lib/suno/limits.ts";
+import { EDM_SUBS } from "../src/lib/suno/native/catalog-edm.ts";
 
 describe("v5.1 musical diversity and Fix fidelity", () => {
   it("ignores changes in the seed, recipe ID and title when computing semantic distance", () => {
@@ -67,4 +68,40 @@ describe("v5.1 musical diversity and Fix fidelity", () => {
       assert.ok(fixed.text.toLowerCase().includes(marker.toLowerCase()), marker);
     }
   });
+});
+
+describe("v5.1 complete native-bank A/B contract", () => {
+  it("retains all 29 existing native bass, club and rap banks", () => {
+    assert.equal(EDM_SUBS.length, 29);
+  });
+
+  for (const [index, sub] of EDM_SUBS.entries()) {
+    it(`${sub.id}: two valid variants differ only in bass articulation`, () => {
+      const input = `${sub.name}, ${sub.bpm[2]} BPM, instrumental`;
+      const generated = generateStylesPrompts(input, {
+        count: 2,
+        seed: 400 + index,
+        variationMode: "ab",
+        profileEnabled: false,
+      });
+      assert.equal(generated.parsed.native?.primary, sub.id);
+      assert.equal(generated.prompts.length, 2);
+      const [a, b] = generated.prompts;
+      assert.deepEqual(changedMusicalAxes(a.plan, b.plan), ["bass"]);
+      assert.equal(a.plan.primaryGenre, b.plan.primaryGenre);
+      assert.equal(a.plan.bpm, b.plan.bpm);
+      const bassBefore = a.plan.native?.sections.bass[0];
+      const bassAfter = b.plan.native?.sections.bass[0];
+      assert.ok(bassBefore && bassAfter && bassBefore !== bassAfter);
+      assert.ok(a.styles.includes(bassBefore), "original bass phrase should occur in Styles");
+      assert.equal(b.styles, a.styles.replace(bassBefore, bassAfter),
+        "A/B must change exactly one rendered musical phrase");
+      for (const prompt of generated.prompts) {
+        assert.ok(prompt.characters >= MIN_CHARS && prompt.characters <= MAX_CHARS,
+          `${sub.id}: ${prompt.characters} characters`);
+        assert.ok(Object.values(prompt.hardGates).every(Boolean),
+          `${sub.id}: ${prompt.issues.join(", ")}`);
+      }
+    });
+  }
 });
