@@ -1,0 +1,57 @@
+name: Publish Suno Workbench v5.0
+
+on:
+  workflow_run:
+    workflows: ["Test and deploy"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-suno-workbench-v5
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == 'iamsevnth/suno-styles-workbench'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Verify Release Package
+        run: |
+          set -euo pipefail
+          jq -e '.version == "5.0.0"' package.json > /dev/null
+          jq -e '.version == "5.0.0" and .packages[""].version == "5.0.0"' package-lock.json > /dev/null
+          test -s docs/releases/v5.0.md
+
+      - name: Publish v5.0 Tag And GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          current="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')"
+          if [ "$current" != "$VALIDATED_SHA" ]; then
+            echo "Validated commit is no longer main; refuse to publish a stale release."
+            exit 1
+          fi
+          if gh release view v5.0 >/dev/null 2>&1; then
+            echo "Release v5.0 already exists; not overwriting."
+            exit 0
+          fi
+          gh release create v5.0 \
+            --target "$VALIDATED_SHA" \
+            --title "Suno Workbench v5 — Native Genre Precision, Cleaner Hybrids, and a Searchable Guide" \
+            --notes-file docs/releases/v5.0.md \
+            --latest
