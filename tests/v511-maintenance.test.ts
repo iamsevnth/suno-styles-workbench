@@ -45,7 +45,7 @@ describe("v5.1.1 source-preserving Fix fallback", () => {
   });
 
   it("exposes omissions on fallback results instead of silently asserting fidelity", () => {
-    const source = [
+    let source = [
       "145 BPM, C# minor, 4/4. Brostep begins with a female alto singer and prominent autotune.",
       "The original four-bar motif returns during Drop 2 after a complete beat of silence.",
       "Rhodes and flute serve as a contrasting atmospheric counterphrase in the bridge.",
@@ -56,6 +56,9 @@ describe("v5.1.1 source-preserving Fix fallback", () => {
       "A deliberate transition moves from narrow mono bass to stereo textures while conserving dynamic range and avoiding fatigue.",
       "Percussive fills and precise stops separate sections rather than flattening the entire arrangement into a single level.",
     ].join(" ");
+    // Keep this test unambiguously beyond the conservative source-edit window,
+    // even after exclusion extraction and small wording compression.
+    while (source.length <= 1150) source += " The final arrangement reserves space for each bass response, repeated melodic motif, dynamic transition, and carefully controlled percussion accent.";
     assert.ok(source.length > 975, "fixture must force a fallback");
     const prompt = generateStylesPrompts(source, {
       mode: "rewrite", count: 1, seed: 8, profileEnabled: false,
