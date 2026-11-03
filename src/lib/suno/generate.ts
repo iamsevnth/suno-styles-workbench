@@ -1,4 +1,8 @@
 import { parseUserInput } from "./parse.ts";
+import { repairExistingPrompt } from "./fix.ts";
+import { NATIVE_SUBS } from "./native/catalog.ts";
+import { phraseExcluded } from "./intent.ts";
+import { changedMusicalAxes } from "./semantic.ts";
 import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
 import { formatTitle, HARD_MAX_CHARS, renderStyles, trimKeepingInstruments } from "./render.ts";
@@ -14,15 +18,18 @@ export function generateStylesPrompts(
     seed?: number;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
     avoidFingerprints?: string[];
+    variationMode?: "precision" | "exploration" | "ab";
   } = {}
 ): GenerateResult {
   const parsed = parseUserInput(input, {
     count: options.count,
     profileEnabled: options.profileEnabled ?? true,
     mode: options.mode,
+    variationMode: options.variationMode,
   });
 
-  const count = Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
+  const abMode = options.variationMode === "ab" && options.mode !== "rewrite";
+  const count = abMode ? 2 : Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
   const seed =
     options.seed !== undefined
       ? options.seed
@@ -35,6 +42,84 @@ export function generateStylesPrompts(
 
   for (let i = 0; i < count; i++) {
     let best: PromptCandidate | null = null;
+    if (abMode && i === 1) {
+      const first = prompts[0];
+      if (!first) throw new Error("A/B requires a validated first variant.");
+      const original = first.plan;
+      const nativeBank = NATIVE_SUBS.find(x => x.id === parsed.native?.primary);
+      const current = original.native?.sections.bass?.[0] ?? original.bass[0] ?? "";
+      // A/B may swap only the bass articulation. Test each option against the
+      // existing character, exclusion, bleed and semantic gates before using it.
+      const alternatives = nativeBank
+        ? nativeBank.bass.filter(x => x !== current && !phraseExcluded(x, parsed.exclusions))
+        : original.bass.filter(x => x !== current && !phraseExcluded(x, parsed.exclusions));
+      let second: PromptCandidate | null = null;
+      for (const replacement of alternatives) {
+        const modifiedBass = [replacement, ...(original.native?.sections.bass ?? original.bass).filter(x => x !== replacement && x !== current)];
+        const abPlan: SonicPlan = {
+          ...original,
+          bass: modifiedBass,
+          native: original.native ? { ...original.native, sections: { ...original.native.sections, bass: modifiedBass } } : undefined,
+          recipeId: original.recipeId + "|ab:bass:" + replacement,
+          variationMode: "ab",
+          abAxis: "bass",
+          variantAxes: ["A/B: bass articulation only"],
+        };
+        if (changedMusicalAxes(original, abPlan).join(",") !== "bass") continue;
+        // Change exactly the bass phrase in the rendered first output. Re-rendering
+        // could add unrelated clauses when the length budget shifts.
+        if (!first.styles.includes(current)) continue;
+        const styles = first.styles.replace(current, replacement);
+        const check = validatePrompt(styles, abPlan, peerTexts, peerPlans);
+        if (!allHardGatesPass(check.hardGates)) continue;
+        second = {
+          title: formatTitle(abPlan.seed, abPlan.bpm, abPlan.key, styles.length),
+          seed: abPlan.seed, key: abPlan.key,
+          exclude: (abPlan.exclusions ?? []).join(", "),
+          phrase: abPlan.titlePhrase, bpm: abPlan.bpm, characters: styles.length,
+          styles, plan: abPlan, score: check.score,
+          hardGates: check.hardGates, issues: check.issues,
+        };
+        break;
+      }
+      if (!second) {
+        throw new Error("A/B cannot find a genre-safe alternate bass articulation within the length limit.");
+      }
+      prompts.push(second);
+      peerTexts.push(second.styles);
+      peerPlans.push(second.plan);
+      usedRecipes.add(second.plan.recipeId);
+      continue;
+    }
+    if (options.mode === "rewrite" && i === 0) {
+      const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
+      const sourceEdit = repairExistingPrompt(input, sourcePlan);
+      if (sourceEdit) {
+        const verified = validatePrompt(sourceEdit.text, sourcePlan);
+        if (allHardGatesPass(verified.hardGates)) {
+          const original: PromptCandidate = {
+            title: formatTitle(sourcePlan.seed, sourcePlan.bpm, sourcePlan.key, sourceEdit.text.length),
+            seed: sourcePlan.seed,
+            key: sourcePlan.key,
+            exclude: (sourcePlan.exclusions ?? []).join(", "),
+            fixStrategy: sourceEdit.strategy,
+            phrase: sourcePlan.titlePhrase,
+            bpm: sourcePlan.bpm,
+            characters: sourceEdit.text.length,
+            styles: sourceEdit.text,
+            plan: sourcePlan,
+            score: verified.score,
+            hardGates: verified.hardGates,
+            issues: verified.issues,
+          };
+          prompts.push(original);
+          peerTexts.push(original.styles);
+          peerPlans.push(original.plan);
+          usedRecipes.add(original.plan.recipeId);
+          continue;
+        }
+      }
+    }
 
     for (let attempt = 0; attempt < 14; attempt++) {
       const planSeed = seed + i * 9973 + attempt * 10007 + attempt * attempt * 17;
@@ -58,11 +143,7 @@ export function generateStylesPrompts(
         if (!validation.hardGates.characterRange) {
           styles = forceCharacterWindow(styles, plan.bpm);
         }
-        if (!validation.hardGates.positivePrompting) {
-          styles = styles
-            .replace(/\b(avoid|exclude|excluding|don't|do not|never use)\b/gi, "favor")
-            .replace(/\bwithout\b/gi, "using only");
-        }
+        // Never invert a forbidden concept into a positive prompt; recompile on failure.
         if (!validation.hardGates.protectedReferences) {
           styles = styles.replace(
             /\bin the style of\b[^.]*/gi,
@@ -89,6 +170,8 @@ export function generateStylesPrompts(
         title: formatTitle(plan.seed, plan.bpm, plan.key, characters),
         seed: plan.seed,
         key: plan.key,
+        exclude: (plan.exclusions ?? []).join(", "),
+        fixStrategy: options.mode === "rewrite" ? "recompiled" : undefined,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters,
@@ -119,6 +202,8 @@ export function generateStylesPrompts(
         title: formatTitle(plan.seed, plan.bpm, plan.key, styles.length),
         seed: plan.seed,
         key: plan.key,
+        exclude: (plan.exclusions ?? []).join(", "),
+        fixStrategy: options.mode === "rewrite" ? "recompiled" : undefined,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters: styles.length,

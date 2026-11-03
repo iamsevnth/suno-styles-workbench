@@ -2,6 +2,8 @@ import { bassMusicLeaks, hasConflictingBpm, isBassWorld, moodClash, nonEdmBleed,
 import { familyKeys, hasDrops } from "./families.ts";
 import { HARD_MAX_CHARS, MAX_CHARS, MIN_CHARS } from "./render.ts";
 import { HardGates, SonicPlan } from "./types.ts";
+import { phraseExcluded } from "./intent.ts";
+import { changedMusicalAxes, semanticDistance, semanticFingerprint } from "./semantic.ts";
 
 export const ARTIST_LEAK_RE =
   /\b(taylor swift|drake|kanye|the weeknd|billie eilish|travis scott|metro boomin|skrillex|illenium|flume|deadmau5|fred again|calvin harris|beyonc[eé]|weeknd|playboi carti|future\s+hendrix|juice wrld|kendrick(?: lamar)?|j\. ?cole|griselda|earl sweatshirt|lil (?:uzi|baby|wayne)|21 savage|young thug|post malone|bad bunny|burna boy|wizkid|tory lanez|lil (?:tecca|durk|yachty|keed|peep|nas x|pump|skies)|nba youngboy|youngboy never broke again|doja cat|dua lipa|ariana grande|olivia rodrigo|sza|frank ocean|childish gambino|tyler,? the creator|a\$ap(?: rocky)?|migos|cardi b|nicki minaj|megan thee stallion|jay-?z|eminem|50 cent|snoop dogg|dr\.? dre|lana del rey|ed sheeran|adele|rihanna|bruno mars|justin bieber|selena gomez|harry styles|lorde|radiohead|nirvana|coldplay|metallica|the beatles|arctic monkeys|foo fighters|green day|linkin park|daft punk|aphex twin|boards of canada|bon iver|phoebe bridgers|noah kahan|zach bryan|morgan wallen|luke combs|chris stapleton|johnny cash|dolly parton|nujabes|j dilla|tycho|odesza|porter robinson|zedd|avicii|martin garrix|david guetta|swedish house mafia|jamie xx|four tet|chris lake|john summit|peggy gou|charlotte de witte|amelie lens|adam beyer|nina kraviz|hans zimmer|ludovico einaudi|brian eno|enya)\b/i;
@@ -24,7 +26,7 @@ export function validatePrompt(
 ): ValidationResult {
   const issues: string[] = [];
   const n = styles.length;
-  // Hard gate: 750..1000. 750..900 is the target the renderer aims for and the score rewards.
+  // Hard gate: 800..1000. The renderer aims for 800..975; the score rewards that target window.
   const characterRange = n >= MIN_CHARS && n <= HARD_MAX_CHARS;
   if (!characterRange) issues.push(`character_count:${n}`);
 
@@ -50,6 +52,8 @@ export function validatePrompt(
   const contradictions = findContradictions(styles, plan);
   const noContradictions = contradictions.length === 0;
   const noGenreBleed = !contradictions.includes("non_edm_bleed");
+  const noExcludedConcepts = !phraseExcluded(styles, plan.exclusions);
+  if (!noExcludedConcepts) issues.push("excluded_concept_in_styles");
   for (const c of contradictions) issues.push(`contradiction:${c}`);
 
   const score = scorePrompt(styles, plan, {
@@ -72,6 +76,7 @@ export function validatePrompt(
       uniqueness,
       noContradictions,
       noGenreBleed,
+      noExcludedConcepts,
     },
     issues,
     score,
@@ -114,7 +119,8 @@ export function criticalGatesPass(gates: HardGates): boolean {
     gates.positivePrompting &&
     gates.stylesOnly &&
     gates.noContradictions !== false &&
-    gates.noGenreBleed !== false
+    gates.noGenreBleed !== false &&
+    gates.noExcludedConcepts !== false
   );
 }
 
@@ -126,63 +132,31 @@ export function isStructurallyUnique(
   plan: SonicPlan,
   styles: string,
   peerPlans: SonicPlan[],
-  peerTexts: string[]
+  peerTexts: string[],
 ): boolean {
-  for (const peer of peerPlans) {
-    if (planFingerprint(plan) === planFingerprint(peer)) {
-      return false;
-    }
+  // A/B experiments intentionally differ in exactly one named production axis.
+  if (plan.variationMode === "ab" && peerPlans.length) {
+    return peerPlans.every(peer => {
+      const changed = changedMusicalAxes(plan, peer);
+      return changed.length === 1 && changed[0] === "bass";
+    });
   }
-  if (peerPlans.length > 0) {
-    const minPlanDist = Math.min(...peerPlans.map((p) => planDistance(plan, p)));
-    if (minPlanDist >= 3) return true;
+  // Recipe ids, title phrases and random seeds NEVER count as musical novelty.
+  for (const peer of peerPlans) {
+    if (semanticDistance(plan, peer) < 2) return false;
   }
   for (const p of peerTexts) {
-    if (structuredSimilarity(styles, p) > 0.88) return false;
+    if (structuredSimilarity(styles, p) > 0.94) return false;
   }
   return true;
 }
 
-export function planFingerprint(p: SonicPlan): string {
-  return (
-    p.recipeId ||
-    [
-      p.primaryGenre,
-      p.secondaryGenre ?? "",
-      p.accentGenre ?? "",
-      p.metricFeel,
-      p.moodPrimary,
-      p.bass.slice(0, 2).join(","),
-      p.vocals.present ? `${p.vocals.presentation}-${p.vocals.style}` : "inst",
-      p.donors.rhythm ?? "",
-      p.donors.bass ?? "",
-      p.variantAxes.join("|"),
-    ].join("::")
-  );
+export function planFingerprint(plan: SonicPlan): string {
+  return semanticFingerprint(plan);
 }
 
 export function planDistance(a: SonicPlan, b: SonicPlan): number {
-  let d = 0;
-  if (a.recipeId && b.recipeId && a.recipeId !== b.recipeId) d += 4;
-  if (a.primaryGenre !== b.primaryGenre) d += 2;
-  if (a.secondaryGenre !== b.secondaryGenre) d += 1;
-  if (a.accentGenre !== b.accentGenre) d += 1;
-  if (a.metricFeel !== b.metricFeel) d += 2;
-  if (a.moodPrimary !== b.moodPrimary) d += 1;
-  if ((a.donors.rhythm ?? "") !== (b.donors.rhythm ?? "")) d += 1;
-  if ((a.donors.bass ?? "") !== (b.donors.bass ?? "")) d += 1;
-  if (a.bass[0] !== b.bass[0]) d += 1;
-  if (a.bass[1] !== b.bass[1]) d += 1;
-  if (a.drums[0] !== b.drums[0]) d += 1;
-  if (a.bassBehavior[0] !== b.bassBehavior[0]) d += 1;
-  if (a.vocals.present !== b.vocals.present) d += 2;
-  else if (a.vocals.presentation !== b.vocals.presentation) d += 1;
-  else if (a.vocals.style !== b.vocals.style) d += 1;
-  else if ((a.vocals.processing?.[0] ?? "") !== (b.vocals.processing?.[0] ?? "")) d += 1;
-  if (a.arrangement[0] !== b.arrangement[0]) d += 1;
-  if (a.mix[a.mix.length - 1] !== b.mix[b.mix.length - 1]) d += 1;
-  if (a.titlePhrase !== b.titlePhrase) d += 1;
-  return d;
+  return semanticDistance(a, b);
 }
 
 export function scorePrompt(styles: string, plan: SonicPlan, gates: HardGates): number {

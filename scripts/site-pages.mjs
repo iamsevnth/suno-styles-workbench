@@ -15,7 +15,7 @@ export const PAGES = [
     path: "/compiler",
     title: "Styles Compiler | Suno Workbench",
     description:
-      "Create or fix Suno v6 Styles prompts of 750–900 characters with clear tempo, genres, groove, bass, harmony, vocals, mix and instruments.",
+      "Create or fix Suno v6 Styles prompts of 800–975 characters with clear tempo, genres, groove, bass, harmony, vocals, mix and instruments.",
   },
   {
     id: "lyrics",

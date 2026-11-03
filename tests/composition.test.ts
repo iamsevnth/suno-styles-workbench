@@ -85,7 +85,7 @@ describe("trap + trap + UKG Dubstep brief", () => {
     }
   });
 
-  it("keeps the 750–900 character window", () => {
+  it("keeps the 800–975 character window", () => {
     for (const p of prompts) assert.ok(p.styles.length >= MIN_CHARS && p.styles.length <= MAX_CHARS, `${p.styles.length}`);
   });
 

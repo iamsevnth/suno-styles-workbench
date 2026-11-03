@@ -1,3 +1,6 @@
+import type { ArrangementCue, TempoMention } from "./intent.ts";
+import type { VariationMode } from "./native/identity.ts";
+
 export interface ParsedInput {
   raw: string;
   count: number;
@@ -6,6 +9,11 @@ export interface ParsedInput {
   genreNotes?: string[];
   bpm?: number;
   key?: string;
+  meter?: string;
+  tempoMentions?: TempoMention[];
+  exclusions?: string[];
+  arrangementCues?: ArrangementCue[];
+  variationMode?: VariationMode;
   moods: string[];
   atmospheres: string[];
   instruments: string[];
@@ -103,6 +111,12 @@ export interface VocalPreferences {
 export interface SonicPlan {
   bpm: number;
   key?: string;
+  meter?: string;
+  exclusions?: string[];
+  arrangementCues?: ArrangementCue[];
+  variationMode?: VariationMode;
+  sonicIdentity?: string;
+  abAxis?: "bass";
   primaryGenre: string;
   secondaryGenre?: string;
   accentGenre?: string;
@@ -160,10 +174,13 @@ export interface HardGates {
   noContradictions?: boolean;
   /** Non-EDM wording (acoustic guitar, vinyl crackle...) in a bass/rap prompt that the brief did not ask for. */
   noGenreBleed?: boolean;
+  noExcludedConcepts?: boolean;
 }
 
 export interface PromptCandidate {
   title: string;
+  exclude?: string;
+  fixStrategy?: "preserved" | "compressed" | "expanded" | "recompiled";
   seed: number;
   key?: string;
   phrase: string;

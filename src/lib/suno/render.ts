@@ -10,16 +10,14 @@ import {
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
 import { renderNative } from "./native/compose.ts";
+import { MIN_CHARS, MAX_CHARS } from "./limits.ts";
+export { MIN_CHARS, MAX_CHARS, HARD_MAX_CHARS } from "./limits.ts";
 import { SonicPlan } from "./types.ts";
 
 /**
- * Suno's Styles field takes 1,000 characters, and 750-900 is where prompts stay specific without
- * diluting. The renderers aim inside this window; nothing is ever padded to reach it.
+ * The Styles target is 800–975 characters with an independent hard cap of 1,000.
+ * Renderers expand with meaningful production detail; never pad with arbitrary text.
  */
-export const MIN_CHARS = 750;
-export const MAX_CHARS = 900;
-/** The hard cap of the Styles field. */
-export const HARD_MAX_CHARS = 1000;
 
 const RAP_STYLES = new Set([
   "rap",
@@ -130,7 +128,7 @@ export function renderStyles(plan: SonicPlan): string {
 /**
  * Final semantic guardrail for song/world/ambient families. Phrase banks already filter drop language,
  * but this protects against a future renderer or padding phrase reintroducing it. The replacements
- * preserve length, so the 750–900 character window remains unchanged.
+ * preserve length, so the 800–975 character window remains unchanged.
  */
 function sanitizeNonDropWording(text: string): string {
   return text
@@ -145,7 +143,7 @@ function sanitizeNonDropWording(text: string): string {
 /*   1 genre blend + BPM + mood   2 drums & groove   3 bass   4 harmony / melody / texture         */
 /*   5 instrumentation   6 vocals   7 arrangement   8 mix                                         */
 /* The plan decides WHAT is said; this file decides the order, the connective wording and how     */
-/* much of each section fits in the 750–900 character window.                                    */
+/* much of each section fits in the 800–975 character window.                                    */
 /* -------------------------------------------------------------------------------------------- */
 
 /** How many items each section may list. The renderer starts at FULL and shrinks or grows from there. */
@@ -335,7 +333,7 @@ function assemble(
   const genreWords = new Set(c.genreText.toLowerCase().match(/[a-z]+/g) ?? []);
   const moodWords = c.moodPhrase.toLowerCase().match(/[a-z]+/g) ?? [];
   const mood = moodWords.length && moodWords.every((w) => genreWords.has(w)) ? "" : `, ${c.moodPhrase}`;
-  sentences.push(`${plan.bpm} BPM ${c.genreText}${mood}${prod}.`);
+  sentences.push(`${plan.bpm} BPM${plan.meter ? `, ${plan.meter},` : ""} ${c.genreText}${mood}${prod}.`);
 
   // 2. Drums and groove.
   const drums = claim(take(plan.drums, d.drums));

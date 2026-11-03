@@ -30,7 +30,7 @@ export const V6_MODELS: V6ModelOption[] = [
     label: "v6 (Pro / Premier)",
     plan: "Pro and Premier",
     picker: "Powerful. Versatile. Refined. Our best model yet.",
-    use: "Flagship. Reliable, precise, polished across genres. Use when you know the record you want — including these compiled 750–900 character Styles blocks.",
+    use: "Flagship. Reliable, precise, polished across genres. Use when you know the record you want — including these compiled 800–975 character Styles blocks.",
   },
   {
     id: "v6-wild",
@@ -116,7 +116,7 @@ export function v6Advice(settings: V6CreateSettings): string {
     }. Official: costs more credits; best for songs longer than two minutes, covers that should stay close to the source, style transfer, and keeping vocals/style consistent through the track. Standard (Off) is enough for short drafts.`,
     `Variety: ${
       variety?.label ?? settings.variety
-    }. Official: introduces variety by adjusting and updating your style prompts. Reduce to Off (0) to retain full control of style tags. This compiler's 750–900 character Styles only stay verbatim at Variety Off.`,
+    }. Official: introduces variety by adjusting and updating your style prompts. Reduce to Off (0) to retain full control of style tags. This compiler's 800–975 character Styles only stay verbatim at Variety Off.`,
     `Personalize (My Taste): ${
       settings.personalize ? "On" : "Off"
     }. When On, v6 can steer toward your Taste profile and, with Variety above Off, use it to branch style directions. Leave Off when the compiled Styles should dominate.`,

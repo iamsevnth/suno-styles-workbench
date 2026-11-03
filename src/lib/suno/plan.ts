@@ -58,6 +58,7 @@ import { mulberry32, pick } from "./rng.ts";
 import { buildNativePlan } from "./native/compose.ts";
 import { isBassWorld, nonEdmBleed } from "./consistency.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
+import { phraseExcluded } from "./intent.ts";
 
 export function buildPlans(
   parsed: ParsedInput,
@@ -288,12 +289,17 @@ export function buildOnePlan(
   const allowed = [parsed.raw, primaryGenre, secondaryGenre, accentGenre].filter(Boolean).join(" ");
   const noElectric = (list: string[]) => {
     const kept = noElectricOnly(list);
-    return bassWorld ? kept.filter((x) => nonEdmBleed(x, allowed).length === 0) : kept;
+    const notExcluded = kept.filter((x) => !phraseExcluded(x, parsed.exclusions));
+    return bassWorld ? notExcluded.filter((x) => nonEdmBleed(x, allowed).length === 0) : notExcluded;
   };
 
   return {
     bpm,
     key: parsed.key,
+    meter: parsed.meter,
+    exclusions: parsed.exclusions,
+    arrangementCues: parsed.arrangementCues,
+    variationMode: parsed.variationMode,
     primaryGenre,
     secondaryGenre,
     accentGenre,
@@ -312,7 +318,9 @@ export function buildOnePlan(
     melody: noElectric(melody),
     instruments: noElectric(instruments),
     vocals,
-    arrangement: noElectric(arrangement),
+    // Vocal-chop FX are legitimate in instrumentals, but a sung lead is not.
+    arrangement: noElectric(arrangement).filter(x => vocals.present !== false ||
+      !/\b(?:with vocal|for (?:the )?vocal|lead vocals?|sung|rapper)\b/i.test(x)),
     // The brief's own textures and scenes come first, in its own words.
     soundDesign: noElectric(unique([...(parsed.textures ?? []), ...(parsed.scenes ?? []).map((sc) => `${sc} ambience`), ...soundDesign])),
     mix: noElectric(mix),

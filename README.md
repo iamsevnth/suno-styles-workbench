@@ -18,7 +18,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 | Tool | What It Does |
 | --- | --- |
-| **Styles Compiler** | Creates one to six 750–900 character Styles prompts from a short brief, or rebuilds an existing Suno Styles prompt in **Fix Existing Prompt** mode. |
+| **Styles Compiler** | Creates one to six 800–975 character Styles prompts from a short brief, or rebuilds an existing Suno Styles prompt in **Fix Existing Prompt** mode. |
 | **Lyrics Studio** | Builds a song section by section with exact line counts, custom section ordering, Suno section tags, and American-English phonetic respelling. |
 | **Guide** | Provides a complete, locally searchable reference manual with chapter navigation, the 59-section sonic encyclopedia, recipes, genre and lexicon appendices, verified guidance, and official Suno v6 controls. |
 | **Offline Build** | Produces a self-contained <code>dist/suno-workbench.html</code> file that runs directly from disk without a server. |
@@ -110,7 +110,7 @@ The compiler parses a brief into musical intent, maps recognized genres to sound
 
 Every generated Styles prompt is designed to:
 
-- target 750–900 characters and never exceed 1,000;
+- target 800–975 characters and never exceed 1,000;
 - contain one whole-number BPM;
 - preserve recognized genres, named instruments, and important vocal details;
 - use genre-family vocabulary instead of a generic production pool;

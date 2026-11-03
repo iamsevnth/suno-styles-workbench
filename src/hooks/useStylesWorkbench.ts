@@ -30,6 +30,7 @@ interface SessionSnapshot {
   compilerMode: CompilerMode;
   count: number;
   profileEnabled: boolean;
+  variationMode: "precision" | "exploration" | "ab";
   generation: number;
   seedUsed: number;
   lastAction: string;
@@ -66,6 +67,7 @@ function readSession(): StoredSession {
     compilerMode: r.compilerMode === "fix" ? "fix" : "create",
     count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
     profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
+    variationMode: r.variationMode === "exploration" || r.variationMode === "ab" ? r.variationMode : "precision",
     generation: num(r.generation),
     seedUsed: num(r.seedUsed),
     lastAction: str(r.lastAction),
@@ -79,6 +81,7 @@ interface StoredSession {
   compilerMode?: CompilerMode;
   count?: number;
   profileEnabled?: boolean;
+  variationMode?: "precision" | "exploration" | "ab";
   generation?: number;
   seedUsed?: number;
   lastAction?: string;
@@ -92,6 +95,7 @@ function saveSession(s: SessionSnapshot): void {
     compilerMode: s.compilerMode,
     count: s.count,
     profileEnabled: s.profileEnabled,
+    variationMode: s.variationMode,
     generation: s.generation,
     seedUsed: s.seedUsed,
     lastAction: s.lastAction,
@@ -144,6 +148,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [compilerMode, setCompilerMode] = useState<CompilerMode>(stored.compilerMode ?? "create");
   const [count, setCount] = useState(stored.count ?? DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState(stored.profileEnabled ?? true);
+  const [variationMode, setVariationMode] = useState<"precision" | "exploration" | "ab">(stored.variationMode ?? "precision");
   const [generation, setGeneration] = useState(stored.generation ?? 0);
   const [seedUsed, setSeedUsed] = useState(stored.seedUsed ?? 0);
   const [prompts, setPrompts] = useState<PromptCandidate[]>(restored?.prompts ?? []);
@@ -156,8 +161,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, compilerMode, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, compilerMode, count, profileEnabled, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, variationMode, generation, seedUsed, lastAction, prompts, parsed });
+  }, [input, compilerMode, count, profileEnabled, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
 
   const generate = () => {
     const brief = input.trim();
@@ -183,6 +188,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
         seed,
         avoidFingerprints,
         mode: compilerMode === "fix" ? "rewrite" : undefined,
+        variationMode: compilerMode === "fix" ? "precision" : variationMode,
       });
       const nextGeneration = generation + 1;
 
@@ -225,6 +231,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     setCompilerMode("create");
     setCount(DEFAULT_COUNT);
     setProfileEnabled(true);
+    setVariationMode("precision");
     setGeneration(0);
     setSeedUsed(0);
     setPrompts([]);
@@ -313,6 +320,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     setCount,
     profileEnabled,
     toggleProfile,
+    variationMode,
+    setVariationMode,
     generation,
     seedUsed,
     prompts,

@@ -25,6 +25,11 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
       <div className="flex flex-wrap items-start justify-between gap-3 p-4 border-b border-[var(--border)]">
         <div>
           <h3 className="text-base font-semibold text-[var(--fg)]">{prompt.title}</h3>
+          {prompt.fixStrategy ? (
+            <span className="inline-block mt-1 mr-2 text-xs font-semibold text-[var(--fg-muted)]">
+              Fix: {prompt.fixStrategy === "recompiled" ? "recompiled from brief" : prompt.fixStrategy + " source instructions"}
+            </span>
+          ) : null}
           <span className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
             {prompt.characters} total characters
           </span>
@@ -41,6 +46,18 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
         </button>
       </div>
 
+      {prompt.exclude ? (
+        <div className="mx-4 mt-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3">
+          <div className="flex-1 min-w-0">
+            <div className="label-caps-sm">Separate Suno Exclude Field</div>
+            <div className="mt-1 text-sm break-words text-[var(--fg)]">{prompt.exclude}</div>
+          </div>
+          <button type="button" onClick={() => onCopy(prompt.exclude ?? "")}
+            className="px-3 h-8 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
+            Copy Exclude
+          </button>
+        </div>
+      ) : null}
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
 
       <button
@@ -58,6 +75,8 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
           <PlanCell label="BPM" value={plan.bpm} />
           <PlanCell label="Mood" value={plan.moodPrimary} />
           <PlanCell label="Metric Feel" value={plan.metricFeel} />
+          <PlanCell label="Sonic Identity" value={plan.sonicIdentity} />
+          <PlanCell label="A/B Changed Axis" value={plan.abAxis} />
           <PlanCell label="Rhythm Donor" value={plan.donors?.rhythm} />
           <PlanCell label="Bass Donor" value={plan.donors?.bass} />
           <PlanCell label="Bass Stack" value={(plan.bass || []).slice(0, 3).join(", ")} />

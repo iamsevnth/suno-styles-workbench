@@ -23,7 +23,7 @@ export const ROUTE_META: Record<RouteId, { title: string; description: string }>
   styles: {
     title: "Styles Compiler | Suno Workbench",
     description:
-      "Create or fix Suno v6 Styles prompts of 750–900 characters with clear tempo, genres, groove, bass, harmony, vocals, mix and instruments.",
+      "Create or fix Suno v6 Styles prompts of 800–975 characters with clear tempo, genres, groove, bass, harmony, vocals, mix and instruments.",
   },
   lyrics: {
     title: "Lyrics Studio | Suno Workbench",

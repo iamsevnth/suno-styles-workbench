@@ -6,6 +6,7 @@ import { extractBriefPhrases } from "./brief.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./native/catalog.ts";
 import { labelOf, nativeCovers, nativeHits } from "./native/compose.ts";
 import { NativeRoute, ParsedInput, VocalPreferences } from "./types.ts";
+import { extractConstraintIntent, parseTempoIntent, parseKeyIntent, parseMeterIntent, parseArrangementCues } from "./intent.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
 const N_FLAG_RE = /(?:^|\s)(?:-n|--count)\s*(\d{1,2})\b/i;
@@ -134,10 +135,12 @@ export function parseUserInput(
     count?: number;
     profileEnabled?: boolean;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
+    variationMode?: "precision" | "exploration" | "ab";
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
-  const text = stripTemplateBoilerplate(raw.trim());
+  const constraintIntent = extractConstraintIntent(stripTemplateBoilerplate(raw.trim()));
+  const text = constraintIntent.positiveText;
   const lower = text.toLowerCase();
   const looksLikeDraft =
     text.length > 400 ||
@@ -149,11 +152,8 @@ export function parseUserInput(
   const countMatch = text.match(COUNT_RE) || text.match(N_FLAG_RE);
   if (countMatch) count = Math.min(12, Math.max(1, parseInt(countMatch[1], 10)));
 
-  let bpm: number | undefined;
-  const bpmAll = [...text.matchAll(/\b(\d{2,3})\s*bpm\b/gi)];
-  if (bpmAll.length) {
-    bpm = clampBpm(parseInt(bpmAll[bpmAll.length - 1][1], 10));
-  }
+  const tempoIntent = parseTempoIntent(text);
+  const bpm = tempoIntent.bpm;
 
   const wantsVariety =
     /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(
@@ -188,7 +188,15 @@ export function parseUserInput(
   }
   const explicitInstruments = extractExplicitInstruments(instrumentText);
 
-  const instrumental = /\binstrumental\b/i.test(text);
+  const namedVoice = /\b(?:male|female)\b[^.!?\n]{0,55}\b(?:singer|vocal|voice|rapper|rapping|singing)\b|\b(?:singer|vocalist|rapper|rapping|sung[- ]?rap)\b/i.test(text);
+  const explicitInstrumental = /^\s*(?:an?\s+)?instrumental\b/i.test(text) ||
+    /\b(?:strictly|purely|fully|mostly)\s+instrumental\b|\binstrumental[- ]only\b|\binstrumental\s+(?:track|song|piece|cut|version|remix)\b/i.test(text);
+  // In source-prompt rewrites, vocal chops are an effect, not consent to
+  // invent a lead singer. An explicitly named singer still takes precedence.
+  const vocalFxOnly = /\bvocal[- ]chops?(?:[- ]style)?\b|\bchopped vocal samples?\b/i.test(text) && !namedVoice &&
+    !/\b(?:lead vocals?|sung vocals?|melodic rap|singing voice)\b/i.test(text);
+  const instrumental = explicitInstrumental || (options?.mode === "rewrite" && vocalFxOnly) || (!namedVoice && /\binstrumental\b/i.test(text)) ||
+    constraintIntent.exclusions.some((x) => /^(?:lead\s+)?vocals?$|^singing$|^rapping$/i.test(x));
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
   // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres
@@ -281,7 +289,7 @@ export function parseUserInput(
   if (/\bwide\b/i.test(text)) mixHints.push("wide harmonic field");
   if (/\bmono\b/i.test(text)) mixHints.push("centered mono low end");
   if (/\bcrisp\b/i.test(text)) mixHints.push("crisp drum transients");
-  if (/\breverb\b/i.test(text)) mixHints.push("cinematic reverb tails");
+  if (/\breverb\b/i.test(text)) mixHints.push(/\b(?:short|dry|tight)\b[^.\n,;]{0,35}\breverb\b|\breverb\b[^.\n,;]{0,35}\b(?:short|dry|tight)\b/i.test(text) ? "short dry reverb" : "reverb space that fits the arrangement");
   if (/\bsidechain|side[- ]chained\b/i.test(text)) mixHints.push("sidechain pump with transient space");
   if (/\bheadroom\b/i.test(text)) mixHints.push("limiter loudness with stable headroom");
   if (/\blow[- ]?mids?\b/i.test(text)) mixHints.push("controlled low mids");
@@ -328,14 +336,9 @@ export function parseUserInput(
     mode = detail >= 3 ? "advanced" : genres.length || bpm ? "standard" : "minimal";
   }
 
-  let key: string | undefined;
-  const keyMatch = text.match(/\b([A-G](?:#|b)?)\s*(minor|major|min|maj)\b/i);
-  if (keyMatch) {
-    const rawTonic = keyMatch[1];
-    const tonic = rawTonic.charAt(0).toUpperCase() + rawTonic.slice(1);
-    const qual = keyMatch[2].toLowerCase();
-    key = qual.startsWith("min") ? `${tonic} minor` : `${tonic} major`;
-  }
+  const key = parseKeyIntent(text);
+  const meter = parseMeterIntent(text);
+  const arrangementCues = parseArrangementCues(text);
 
   // Scenes, textures, described instruments and genre words the library lacks travel into the prompt as written.
   const phrases = extractBriefPhrases(text, (chunk) => {
@@ -403,6 +406,11 @@ export function parseUserInput(
     native,
     bpm,
     key,
+    meter,
+    tempoMentions: tempoIntent.mentions,
+    exclusions: constraintIntent.exclusions,
+    arrangementCues,
+    variationMode: options?.variationMode ?? "precision",
     moods,
     atmospheres,
     instruments,

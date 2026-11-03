@@ -16,7 +16,7 @@ export const STUDIO_TABS: StudioTab[] = [
   {
     route: "styles",
     title: "Styles Compiler",
-    subtitle: "750–900 character Styles prompts",
+    subtitle: "800–975 character Styles prompts",
     badge: `${LIBRARY_STATS.genres} Genres`,
     icon: "audio",
     tile: "blue",

@@ -62,7 +62,7 @@ const CASES: Case[] = [
 
 describe("priority genres run on the native generator", () => {
   for (const c of CASES) {
-    it(`"${c.brief}": own opening, in-range BPM, 750–900 characters, every gate green`, () => {
+    it(`"${c.brief}": own opening, in-range BPM, 800–975 characters, every gate green`, () => {
       const prompts = promptsFor(c.brief);
       assert.ok(prompts.length > 0);
       for (const p of prompts) {
