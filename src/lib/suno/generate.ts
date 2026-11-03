@@ -66,7 +66,10 @@ export function generateStylesPrompts(
           variantAxes: ["A/B: bass articulation only"],
         };
         if (changedMusicalAxes(original, abPlan).join(",") !== "bass") continue;
-        const styles = renderStyles(abPlan);
+        // Change exactly the bass phrase in the rendered first output. Re-rendering
+        // could add unrelated clauses when the length budget shifts.
+        if (!first.styles.includes(current)) continue;
+        const styles = first.styles.replace(current, replacement);
         const check = validatePrompt(styles, abPlan, peerTexts, peerPlans);
         if (!allHardGatesPass(check.hardGates)) continue;
         second = {
