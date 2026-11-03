@@ -35,7 +35,7 @@ export function extractConstraintIntent(raw: string): ConstraintIntent {
     const phrase = remaining.slice(0, length).trim();
     if (!phrase) continue;
     const items = phrase.split(/,\s*|\s+(?:and|or)\s+/i).map(x => x.trim())
-      .map(x => x.replace(/^(?:any|the|a)\s+/i, "")).filter(Boolean);
+      .map(x => x.replace(/^(?:and|or)\s+/i, "").replace(/^(?:any|the|a)\s+/i, "")).filter(Boolean);
     if (!items.length) continue;
     exclusions.push(...items);
     positive += raw.slice(cursor, match.index);
@@ -116,6 +116,8 @@ export function phraseExcluded(phrase: string, exclusions: string[] | undefined)
     if (/^four on the floor$|^four to the floor$/.test(term)) {
       return /\bfour (?:on|to) the floor\b/.test(normalized);
     }
-    return (" " + normalized + " ").includes(" " + term + " ");
+    const words = term.replace(/[^a-z0-9]+/g, " ").trim();
+    const haystack = normalized.replace(/[^a-z0-9]+/g, " ").trim();
+    return (" " + haystack + " ").includes(" " + words + " ");
   });
 }
