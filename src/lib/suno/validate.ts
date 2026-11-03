@@ -93,7 +93,7 @@ export function findContradictions(styles: string, plan: SonicPlan): string[] {
   if (sentences.some((x) => moodClash(x))) found.push("mood_clash");
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   // Native families never use bass-music wording. Hip-hop and R&B on the older path legitimately use 808s and hat rolls.
-  const leaks = bassMusicLeaks(styles, plan.briefText ?? "").filter((w) => plan.native || !/^(?:808s?|hi-hat rolls?|trap hats?)$/.test(w));
+  const leaks = bassMusicLeaks(styles, plan.briefText ?? "", families.includes("dancehall")).filter((w) => plan.native || !/^(?:808s?|hi-hat rolls?|trap hats?)$/.test(w));
   if (((plan.native && !plan.native.edm) || (!plan.native && !hasDrops(families))) && leaks.length) found.push("bass_music_phrasing");
   if (isBassWorld(families, plan.native?.edm, !!plan.native) && nonEdmBleed(styles, [plan.briefText, plan.primaryGenre, plan.secondaryGenre, plan.accentGenre, plan.native?.allow].filter(Boolean).join(" ")).length) found.push("non_edm_bleed");
   return found;
@@ -159,6 +159,8 @@ export function planDistance(a: SonicPlan, b: SonicPlan): number {
   return semanticDistance(a, b);
 }
 
+/** Internal relative candidate-selection heuristic. The 0–100 value is not an
+ * empirically validated Suno prompt-quality or audio-outcome measurement. */
 export function scorePrompt(styles: string, plan: SonicPlan, gates: HardGates): number {
   let score = 0;
   score += 12;

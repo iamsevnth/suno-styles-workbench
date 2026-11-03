@@ -1,7 +1,7 @@
 {
   "name": "suno-styles-workbench",
   "private": true,
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Browser-only Suno v6 toolkit: a Styles prompt compiler, Lyrics Studio with American phonetics, and production playbooks.",
   "type": "module",
   "repository": {

@@ -77,3 +77,43 @@ export function repairExistingPrompt(source: string, plan: SonicPlan): FixResult
   }
   return text.length >= MIN_CHARS && text.length <= MAX_CHARS ? { text, strategy: "expanded" } : null;
 }
+
+
+/**
+ * Conservative, text-only warnings for source details a Fix fallback may omit.
+ * These are review flags, not proof of semantic equivalence or musical quality.
+ * Exclusions are checked separately and never counted as required positive text.
+ */
+export function fixSourceOmissions(source: string, styles: string): string[] {
+  const positive = extractConstraintIntent(source).positiveText;
+  const warnings = new Set<string>();
+  const markers: Array<[string, RegExp]> = [
+    ["Drop 2", /\b(?:drop\s*2|second[- ]drop)\b/i],
+    ["silence/fakeout", /\b(?:silenc\w*|silent|fake[- ]?out|blackout|reload)\b/i],
+    ["motif", /\bmotifs?\b/i],
+    ["alto register", /\balto\b/i],
+    ["soprano register", /\bsoprano\b/i],
+    ["tenor register", /\btenor\b/i],
+    ["baritone register", /\bbaritone\b/i],
+    ["autotune", /\bauto[- ]?tun(?:e|ed|ing)\b/i],
+    ["Rhodes", /\brhodes\b/i],
+    ["flute", /\bflutes?\b/i],
+    ["acoustic guitar", /\bacoustic[- ]guitars?\b/i],
+    ["electric guitar", /\belectric[- ]guitars?\b/i],
+  ];
+  for (const [label, pattern] of markers) {
+    if (pattern.test(positive) && !pattern.test(styles)) {
+      warnings.add("Check source retention: " + label);
+    }
+  }
+
+  const words: Record<string, number> = { one: 1, two: 2, four: 4, eight: 8, sixteen: 16 };
+  for (const m of positive.matchAll(/\b(\d{1,2}|one|two|four|eight|sixteen)[- ]bars?\b/gi)) {
+    const number = Number(m[1]) || words[m[1].toLowerCase()];
+    if (!number) continue;
+    const equivalents = [String(number), ...Object.keys(words).filter(w => words[w] === number)];
+    const retained = equivalents.some(w => new RegExp("\\b" + w + "[- ]bars?\\b", "i").test(styles));
+    if (!retained) warnings.add("Check source retention: " + number + "-bar timing");
+  }
+  return [...warnings];
+}

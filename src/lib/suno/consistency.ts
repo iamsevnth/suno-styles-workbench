@@ -50,11 +50,15 @@ export const BASS_MUSIC_RE =
   /\b(?:808s?|wobble bass|bass wobbles?|wobbling (?:bass|sub)|wubs?|wubby|growls?|reese|neuro\w*|drops?|half-time stomp|riddim|dubstep|sub[- ]?bass drops?|bass (?:slides?|glides?)|portamento|tearout|trap hats?|hi-hat rolls?)\b/gi;
 
 /** Bass-music phrases in the text that the brief did not ask for. */
-export function bassMusicLeaks(text: string, briefWords: string): string[] {
+export function bassMusicLeaks(text: string, briefWords: string, dancehall = false): string[] {
   const brief = briefWords.toLowerCase();
   const leaks: string[] = [];
   for (const m of text.matchAll(BASS_MUSIC_RE)) {
     const word = m[0].toLowerCase();
+    // In Dancehall and reggae, "riddim" is the backing groove and "one-drop"
+    // is a reggae drum pattern. Keep unrelated EDM drops and bass sounds gated.
+    if (dancehall && word === "riddim") continue;
+    if (dancehall && word === "drop" && /\bone[- ]$/i.test(text.slice(0, m.index ?? 0))) continue;
     const stem = word.replace(/s$/, "");
     if (!brief.includes(stem)) leaks.push(word);
   }
