@@ -1,5 +1,8 @@
 import { parseUserInput } from "./parse.ts";
 import { repairExistingPrompt } from "./fix.ts";
+import { NATIVE_SUBS } from "./native/catalog.ts";
+import { alternateNativeBass } from "./native/identity.ts";
+import { changedMusicalAxes } from "./semantic.ts";
 import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
 import { formatTitle, HARD_MAX_CHARS, renderStyles, trimKeepingInstruments } from "./render.ts";
@@ -15,15 +18,18 @@ export function generateStylesPrompts(
     seed?: number;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
     avoidFingerprints?: string[];
+    variationMode?: "precision" | "exploration" | "ab";
   } = {}
 ): GenerateResult {
   const parsed = parseUserInput(input, {
     count: options.count,
     profileEnabled: options.profileEnabled ?? true,
     mode: options.mode,
+    variationMode: options.variationMode,
   });
 
-  const count = Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
+  const abMode = options.variationMode === "ab" && options.mode !== "rewrite";
+  const count = abMode ? 2 : Math.min(12, Math.max(1, options.count ?? parsed.count ?? 3));
   const seed =
     options.seed !== undefined
       ? options.seed
@@ -36,6 +42,54 @@ export function generateStylesPrompts(
 
   for (let i = 0; i < count; i++) {
     let best: PromptCandidate | null = null;
+    if (abMode && i === 1) {
+      const first = prompts[0];
+      if (!first) throw new Error("A/B requires a validated first variant.");
+      const original = first.plan;
+      const nativeBank = NATIVE_SUBS.find(x => x.id === parsed.native?.primary);
+      const current = original.native?.sections.bass?.[0] ?? original.bass[0] ?? "";
+      const replacement = nativeBank
+        ? alternateNativeBass(nativeBank, current, parsed.exclusions)
+        : original.bass.find(x => x !== current);
+      if (!replacement) throw new Error("This genre has no compatible alternative bass articulation for A/B.");
+      const modifiedBass = [replacement, ...(original.native?.sections.bass ?? original.bass).filter(x => x !== replacement && x !== current)];
+      const abPlan: SonicPlan = {
+        ...original,
+        bass: modifiedBass,
+        native: original.native ? { ...original.native, sections: { ...original.native.sections, bass: modifiedBass } } : undefined,
+        recipeId: original.recipeId + "|ab:bass:" + replacement,
+        variationMode: "ab",
+        abAxis: "bass",
+        variantAxes: ["A/B: bass articulation only"],
+      };
+      if (changedMusicalAxes(original, abPlan).join(",") !== "bass") {
+        throw new Error("A/B safety gate: more than one production axis changed.");
+      }
+      const styles = renderStyles(abPlan);
+      const check = validatePrompt(styles, abPlan, peerTexts, peerPlans);
+      if (!allHardGatesPass(check.hardGates)) {
+        throw new Error("A/B validation failed: " + check.issues.join(", "));
+      }
+      const second: PromptCandidate = {
+        title: formatTitle(abPlan.seed, abPlan.bpm, abPlan.key, styles.length),
+        seed: abPlan.seed,
+        key: abPlan.key,
+        exclude: (abPlan.exclusions ?? []).join(", "),
+        phrase: abPlan.titlePhrase,
+        bpm: abPlan.bpm,
+        characters: styles.length,
+        styles,
+        plan: abPlan,
+        score: check.score,
+        hardGates: check.hardGates,
+        issues: check.issues,
+      };
+      prompts.push(second);
+      peerTexts.push(second.styles);
+      peerPlans.push(second.plan);
+      usedRecipes.add(second.plan.recipeId);
+      continue;
+    }
     if (options.mode === "rewrite" && i === 0) {
       const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
       const sourceEdit = repairExistingPrompt(input, sourcePlan);
