@@ -725,6 +725,9 @@ const EDM_LIST: NativeSub[] = [
       "vocal forward and dry with a short delay, 808 centered and mono, hats crisp and wide",
       "808 loud and clean, snare snapping, ad-libs panned wide",
       "tight low end, vocal compressed and upfront, loud master",
+      "kick and 808 stay centered, dry snare transients stay crisp, hi-hat accents sit wide",
+      "sub bass holds a mono lane while the clipped kick punches cleanly through the drum pocket",
+      "808 glides remain distinct from snare hits with controlled low-mid buildup and dry percussion",
     ],
     endings: ["Ends on a final ad-lib and an 808 tail.", "Closes on a beat drop-out and a last bar.", "Outro strips to 808 and hats."],
   }),
@@ -987,7 +990,7 @@ const EDM_LIST: NativeSub[] = [
     // Phonk is cowbell, chopped Memphis-style vocal samples and a distorted, saturated 808. Cassette-style grit is
     // part of the genre, so those words are allowed for it.
     claims: ["phonk", "memphis phonk", "memphis phonk drift", "phonk-infused trap", "phonk trap", "phonk dubstep", "phonk riddim"],
-    allow: "cassette tape saturation lo-fi",
+    allow: "cassette tape saturation tape-saturated lo-fi",
     bpm: [130, 145, 138],
     feel: "half-time",
     moods: ["dark", "gritty"],
@@ -1029,7 +1032,7 @@ const EDM_LIST: NativeSub[] = [
   edm("drift-phonk", "Drift phonk", /\bdrift[- ]phonk\b|\bphonk drift\b/, {
     // Drift phonk is the fast, aggressive, car-culture side of phonk: a loud cowbell riff and a heavily clipped kick.
     claims: ["drift phonk"],
-    allow: "cassette tape saturation lo-fi",
+    allow: "cassette tape saturation tape-saturated lo-fi",
     bpm: [135, 160, 145],
     feel: "half-time",
     moods: ["aggressive", "high-speed"],
@@ -1067,7 +1070,7 @@ const EDM_LIST: NativeSub[] = [
   edm("brazilian-phonk", "Brazilian phonk", /\b(?:brazilian|br) phonk\b|\bphonk (?:brasileiro|brazil)\b/, {
     // Brazilian phonk puts phonk's cowbell and distortion on a funk-carioca tamborzão groove with chanted hooks.
     claims: ["brazilian phonk", "br phonk"],
-    allow: "cassette tape saturation lo-fi",
+    allow: "cassette tape saturation tape-saturated lo-fi",
     bpm: [130, 150, 140],
     feel: "half-time",
     moods: ["aggressive", "swaggering"],
