@@ -195,6 +195,12 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
               <span className="text-[var(--fg)]">{(wb.parsed?.moods || []).slice(0, 4).join(", ") || "—"}</span>
             </div>
             <div>
+              Meter: <span className="text-[var(--fg)]">{wb.parsed?.meter || "—"}</span> · Key: <span className="text-[var(--fg)]">{wb.parsed?.key || "—"}</span>
+            </div>
+            <div>
+              Exclude: <span className="text-[var(--fg)]">{wb.parsed?.exclusions?.join(", ") || "None"}</span>
+            </div>
+            <div>
               Mode: <span className="text-[var(--fg)]">{wb.parsed?.mode || "—"}</span> · Profile:{" "}
               <span className="text-[var(--fg)]">{wb.profileEnabled ? "on" : "off"}</span> · Seed:{" "}
               <span className="text-[var(--fg)]">{wb.seedUsed || "—"}</span>

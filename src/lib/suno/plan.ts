@@ -58,6 +58,7 @@ import { mulberry32, pick } from "./rng.ts";
 import { buildNativePlan } from "./native/compose.ts";
 import { isBassWorld, nonEdmBleed } from "./consistency.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
+import { phraseExcluded } from "./intent.ts";
 
 export function buildPlans(
   parsed: ParsedInput,
@@ -288,12 +289,16 @@ export function buildOnePlan(
   const allowed = [parsed.raw, primaryGenre, secondaryGenre, accentGenre].filter(Boolean).join(" ");
   const noElectric = (list: string[]) => {
     const kept = noElectricOnly(list);
-    return bassWorld ? kept.filter((x) => nonEdmBleed(x, allowed).length === 0) : kept;
+    const notExcluded = kept.filter((x) => !phraseExcluded(x, parsed.exclusions));
+    return bassWorld ? notExcluded.filter((x) => nonEdmBleed(x, allowed).length === 0) : notExcluded;
   };
 
   return {
     bpm,
     key: parsed.key,
+    meter: parsed.meter,
+    exclusions: parsed.exclusions,
+    arrangementCues: parsed.arrangementCues,
     primaryGenre,
     secondaryGenre,
     accentGenre,

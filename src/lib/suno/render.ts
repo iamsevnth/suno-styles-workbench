@@ -333,7 +333,7 @@ function assemble(
   const genreWords = new Set(c.genreText.toLowerCase().match(/[a-z]+/g) ?? []);
   const moodWords = c.moodPhrase.toLowerCase().match(/[a-z]+/g) ?? [];
   const mood = moodWords.length && moodWords.every((w) => genreWords.has(w)) ? "" : `, ${c.moodPhrase}`;
-  sentences.push(`${plan.bpm} BPM ${c.genreText}${mood}${prod}.`);
+  sentences.push(`${plan.bpm} BPM${plan.meter ? `, ${plan.meter},` : ""} ${c.genreText}${mood}${prod}.`);
 
   // 2. Drums and groove.
   const drums = claim(take(plan.drums, d.drums));

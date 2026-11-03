@@ -2,6 +2,7 @@ import { bassMusicLeaks, hasConflictingBpm, isBassWorld, moodClash, nonEdmBleed,
 import { familyKeys, hasDrops } from "./families.ts";
 import { HARD_MAX_CHARS, MAX_CHARS, MIN_CHARS } from "./render.ts";
 import { HardGates, SonicPlan } from "./types.ts";
+import { phraseExcluded } from "./intent.ts";
 
 export const ARTIST_LEAK_RE =
   /\b(taylor swift|drake|kanye|the weeknd|billie eilish|travis scott|metro boomin|skrillex|illenium|flume|deadmau5|fred again|calvin harris|beyonc[eé]|weeknd|playboi carti|future\s+hendrix|juice wrld|kendrick(?: lamar)?|j\. ?cole|griselda|earl sweatshirt|lil (?:uzi|baby|wayne)|21 savage|young thug|post malone|bad bunny|burna boy|wizkid|tory lanez|lil (?:tecca|durk|yachty|keed|peep|nas x|pump|skies)|nba youngboy|youngboy never broke again|doja cat|dua lipa|ariana grande|olivia rodrigo|sza|frank ocean|childish gambino|tyler,? the creator|a\$ap(?: rocky)?|migos|cardi b|nicki minaj|megan thee stallion|jay-?z|eminem|50 cent|snoop dogg|dr\.? dre|lana del rey|ed sheeran|adele|rihanna|bruno mars|justin bieber|selena gomez|harry styles|lorde|radiohead|nirvana|coldplay|metallica|the beatles|arctic monkeys|foo fighters|green day|linkin park|daft punk|aphex twin|boards of canada|bon iver|phoebe bridgers|noah kahan|zach bryan|morgan wallen|luke combs|chris stapleton|johnny cash|dolly parton|nujabes|j dilla|tycho|odesza|porter robinson|zedd|avicii|martin garrix|david guetta|swedish house mafia|jamie xx|four tet|chris lake|john summit|peggy gou|charlotte de witte|amelie lens|adam beyer|nina kraviz|hans zimmer|ludovico einaudi|brian eno|enya)\b/i;
@@ -50,6 +51,8 @@ export function validatePrompt(
   const contradictions = findContradictions(styles, plan);
   const noContradictions = contradictions.length === 0;
   const noGenreBleed = !contradictions.includes("non_edm_bleed");
+  const noExcludedConcepts = !phraseExcluded(styles, plan.exclusions);
+  if (!noExcludedConcepts) issues.push("excluded_concept_in_styles");
   for (const c of contradictions) issues.push(`contradiction:${c}`);
 
   const score = scorePrompt(styles, plan, {
@@ -72,6 +75,7 @@ export function validatePrompt(
       uniqueness,
       noContradictions,
       noGenreBleed,
+      noExcludedConcepts,
     },
     issues,
     score,
@@ -114,7 +118,8 @@ export function criticalGatesPass(gates: HardGates): boolean {
     gates.positivePrompting &&
     gates.stylesOnly &&
     gates.noContradictions !== false &&
-    gates.noGenreBleed !== false
+    gates.noGenreBleed !== false &&
+    gates.noExcludedConcepts !== false
   );
 }
 

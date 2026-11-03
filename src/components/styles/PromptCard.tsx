@@ -41,6 +41,18 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
         </button>
       </div>
 
+      {prompt.exclude ? (
+        <div className="mx-4 mt-3 flex flex-wrap items-center gap-2 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-3">
+          <div className="flex-1 min-w-0">
+            <div className="label-caps-sm">Separate Suno Exclude Field</div>
+            <div className="mt-1 text-sm break-words text-[var(--fg)]">{prompt.exclude}</div>
+          </div>
+          <button type="button" onClick={() => onCopy(prompt.exclude ?? "")}
+            className="px-3 h-8 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
+            Copy Exclude
+          </button>
+        </div>
+      ) : null}
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
 
       <button

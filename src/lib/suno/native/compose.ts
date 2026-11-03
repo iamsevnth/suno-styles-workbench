@@ -1,5 +1,6 @@
 import { conceptsOf, reconcileMoods } from "../blend.ts";
 import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
+import { phraseExcluded } from "../intent.ts";
 import { moodClash } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
@@ -317,7 +318,8 @@ export function buildNativePlan(
     // A bass or rap blend weaves the second genre in from the second phrase on, so both worlds are audible.
     const woven = primary.edm && ss.length ? [sp[0], ss[0], tt[0], sp[1], ss[1], ...sp.slice(2)].filter((x): x is string => !!x) : [...sp, ...ss];
     const pool = uniq(woven);
-    const allowed = instrumental ? pool.filter((x) => !VOCAL_WORD.test(x)) : pool;
+    const withoutExclusions = pool.filter((x) => !phraseExcluded(x, parsed.exclusions));
+    const allowed = instrumental ? withoutExclusions.filter((x) => !VOCAL_WORD.test(x)) : withoutExclusions;
     // Rotate so sibling variants lead with different phrases even when the shuffles collide.
     const rot = allowed.length ? rankOffset % Math.min(allowed.length, p.length || allowed.length) : 0;
     return [...allowed.slice(rot), ...allowed.slice(0, rot)];
@@ -434,6 +436,9 @@ export function buildNativePlan(
   return {
     bpm,
     key,
+    meter: parsed.meter,
+    exclusions: parsed.exclusions,
+    arrangementCues: parsed.arrangementCues,
     primaryGenre: genreLabel || "Original",
     secondaryGenre: secondary?.name,
     accentGenre: tertiary?.name,
@@ -510,7 +515,8 @@ function compose(plan: SonicPlan, d: Detail): string {
   const mood = plan.moodPhrase ? ` with ${article(plan.moodPhrase)} ${plan.moodPhrase} mood` : "";
   const scene = n.scenes.length ? `, evoking ${article(n.scenes[0])} ${listOf(n.scenes)} atmosphere` : "";
   const key = plan.key ? ` in ${plan.key}` : "";
-  const head = n.genreLabel ? `${n.genreLabel} at ${plan.bpm} BPM${key}` : `${plan.bpm} BPM${key}`;
+  const meter = plan.meter ? `, ${plan.meter}` : "";
+  const head = n.genreLabel ? `${n.genreLabel} at ${plan.bpm} BPM${meter}${key}` : `${plan.bpm} BPM${meter}${key}`;
   out.push(sentence(`${head}${mood}${scene}`));
 
   const leads = listOf(take(s.leads, d.leads));
