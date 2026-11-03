@@ -1,4 +1,5 @@
 import type { ArrangementCue, TempoMention } from "./intent.ts";
+import type { VariationMode } from "./native/identity.ts";
 
 export interface ParsedInput {
   raw: string;
@@ -12,6 +13,7 @@ export interface ParsedInput {
   tempoMentions?: TempoMention[];
   exclusions?: string[];
   arrangementCues?: ArrangementCue[];
+  variationMode?: VariationMode;
   moods: string[];
   atmospheres: string[];
   instruments: string[];
@@ -112,6 +114,9 @@ export interface SonicPlan {
   meter?: string;
   exclusions?: string[];
   arrangementCues?: ArrangementCue[];
+  variationMode?: VariationMode;
+  sonicIdentity?: string;
+  abAxis?: "bass";
   primaryGenre: string;
   secondaryGenre?: string;
   accentGenre?: string;

@@ -135,6 +135,7 @@ export function parseUserInput(
     count?: number;
     profileEnabled?: boolean;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
+    variationMode?: "precision" | "exploration" | "ab";
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
@@ -405,6 +406,7 @@ export function parseUserInput(
     tempoMentions: tempoIntent.mentions,
     exclusions: constraintIntent.exclusions,
     arrangementCues,
+    variationMode: options?.variationMode ?? "precision",
     moods,
     atmospheres,
     instruments,

@@ -299,6 +299,7 @@ export function buildOnePlan(
     meter: parsed.meter,
     exclusions: parsed.exclusions,
     arrangementCues: parsed.arrangementCues,
+    variationMode: parsed.variationMode,
     primaryGenre,
     secondaryGenre,
     accentGenre,

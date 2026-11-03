@@ -1,6 +1,7 @@
 import { conceptsOf, reconcileMoods } from "../blend.ts";
 import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
+import { applyNativeIdentity } from "./identity.ts";
 import { moodClash } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
@@ -398,6 +399,9 @@ export function buildNativePlan(
     ending: noRepeatChops(bank("endings")),
   };
 
+  const identity = applyNativeIdentity(primary, sections, parsed, opts.diversityRank ?? opts.variantIndex ?? 0, parsed.variationMode ?? "precision");
+  Object.assign(sections, identity.sections);
+
   const parts: NativeParts = {
     genreLabel,
     sections,
@@ -439,6 +443,8 @@ export function buildNativePlan(
     meter: parsed.meter,
     exclusions: parsed.exclusions,
     arrangementCues: parsed.arrangementCues,
+    variationMode: parsed.variationMode,
+    sonicIdentity: identity.identity.label,
     primaryGenre: genreLabel || "Original",
     secondaryGenre: secondary?.name,
     accentGenre: tertiary?.name,
