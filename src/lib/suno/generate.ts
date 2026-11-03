@@ -1,4 +1,5 @@
 import { parseUserInput } from "./parse.ts";
+import { repairExistingPrompt } from "./fix.ts";
 import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
 import { formatTitle, HARD_MAX_CHARS, renderStyles, trimKeepingInstruments } from "./render.ts";
@@ -35,6 +36,35 @@ export function generateStylesPrompts(
 
   for (let i = 0; i < count; i++) {
     let best: PromptCandidate | null = null;
+    if (options.mode === "rewrite" && i === 0) {
+      const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
+      const sourceEdit = repairExistingPrompt(input, sourcePlan);
+      if (sourceEdit) {
+        const verified = validatePrompt(sourceEdit.text, sourcePlan);
+        if (allHardGatesPass(verified.hardGates)) {
+          const original: PromptCandidate = {
+            title: formatTitle(sourcePlan.seed, sourcePlan.bpm, sourcePlan.key, sourceEdit.text.length),
+            seed: sourcePlan.seed,
+            key: sourcePlan.key,
+            exclude: (sourcePlan.exclusions ?? []).join(", "),
+            fixStrategy: sourceEdit.strategy,
+            phrase: sourcePlan.titlePhrase,
+            bpm: sourcePlan.bpm,
+            characters: sourceEdit.text.length,
+            styles: sourceEdit.text,
+            plan: sourcePlan,
+            score: verified.score,
+            hardGates: verified.hardGates,
+            issues: verified.issues,
+          };
+          prompts.push(original);
+          peerTexts.push(original.styles);
+          peerPlans.push(original.plan);
+          usedRecipes.add(original.plan.recipeId);
+          continue;
+        }
+      }
+    }
 
     for (let attempt = 0; attempt < 14; attempt++) {
       const planSeed = seed + i * 9973 + attempt * 10007 + attempt * attempt * 17;
@@ -58,11 +88,7 @@ export function generateStylesPrompts(
         if (!validation.hardGates.characterRange) {
           styles = forceCharacterWindow(styles, plan.bpm);
         }
-        if (!validation.hardGates.positivePrompting) {
-          styles = styles
-            .replace(/\b(avoid|exclude|excluding|don't|do not|never use)\b/gi, "favor")
-            .replace(/\bwithout\b/gi, "using only");
-        }
+        // Never invert a forbidden concept into a positive prompt; recompile on failure.
         if (!validation.hardGates.protectedReferences) {
           styles = styles.replace(
             /\bin the style of\b[^.]*/gi,
@@ -90,6 +116,7 @@ export function generateStylesPrompts(
         seed: plan.seed,
         key: plan.key,
         exclude: (plan.exclusions ?? []).join(", "),
+        fixStrategy: options.mode === "rewrite" ? "recompiled" : undefined,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters,
@@ -121,6 +148,7 @@ export function generateStylesPrompts(
         seed: plan.seed,
         key: plan.key,
         exclude: (plan.exclusions ?? []).join(", "),
+        fixStrategy: options.mode === "rewrite" ? "recompiled" : undefined,
         phrase: plan.titlePhrase,
         bpm: plan.bpm,
         characters: styles.length,

@@ -25,6 +25,11 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
       <div className="flex flex-wrap items-start justify-between gap-3 p-4 border-b border-[var(--border)]">
         <div>
           <h3 className="text-base font-semibold text-[var(--fg)]">{prompt.title}</h3>
+          {prompt.fixStrategy ? (
+            <span className="inline-block mt-1 mr-2 text-xs font-semibold text-[var(--fg-muted)]">
+              Fix: {prompt.fixStrategy === "recompiled" ? "recompiled from brief" : prompt.fixStrategy + " source instructions"}
+            </span>
+          ) : null}
           <span className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
             {prompt.characters} total characters
           </span>

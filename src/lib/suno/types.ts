@@ -175,6 +175,7 @@ export interface HardGates {
 export interface PromptCandidate {
   title: string;
   exclude?: string;
+  fixStrategy?: "preserved" | "compressed" | "expanded" | "recompiled";
   seed: number;
   key?: string;
   phrase: string;
