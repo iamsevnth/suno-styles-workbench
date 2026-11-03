@@ -70,6 +70,9 @@ const ACRONYMS: [RegExp, string][] = [
   [/\bukg\b/g, "UKG"],
   [/\buk\b/g, "UK"],
   [/\bedm\b/g, "EDM"],
+  [/\bnyc\b/g, "NYC"],
+  [/\bny\b/g, "NY"],
+  [/\bbr\b/g, "BR"],
   [/\bdnb\b/g, "DnB"],
   [/\bd&b\b/g, "D&B"],
   [/\br&b\b/g, "R&B"],
@@ -226,6 +229,30 @@ const PROPER: [RegExp, string][] = [[/\brhodes\b/gi, "Rhodes"], [/\bwurlitzer\b/
 const proper = (s: string) => PROPER.reduce((t, [re, to]) => t.replace(re, to), s);
 
 /** Drops phrases that name a sound already named earlier ("Rhodes" lead then "Rhodes electric piano" extra). */
+/** Only one mix phrase may talk about the master: "loud limited master; loud glossy master" says the same thing twice. */
+function oneMaster(list: string[]): string[] {
+  let seen = false;
+  return list.filter((x) => {
+    if (!/\bmaster(?:ing)?\b/i.test(x)) return true;
+    if (seen) return false;
+    seen = true;
+    return true;
+  });
+}
+
+/** Drops a phrase whose words are all inside an earlier phrase ("pitched vocal ad-libs" then "pitched vocal ad-lib layers"). */
+function nearDistinct(items: string[]): string[] {
+  const FILLER = new Set(["layer", "hit", "fx", "effect", "and", "with", "the", "of"]);
+  const stems = (x: string) => new Set(x.toLowerCase().split(/[^a-z0-9]+/).map((w) => w.replace(/s$/, "")).filter((w) => w.length > 1 && !FILLER.has(w)));
+  const kept: { text: string; words: Set<string> }[] = [];
+  for (const item of items) {
+    const words = stems(item);
+    const dup = kept.some((k) => [...words].every((w) => k.words.has(w)) || [...k.words].every((w) => words.has(w)));
+    if (!dup) kept.push({ text: item, words });
+  }
+  return kept.map((k) => k.text);
+}
+
 function distinct(lists: string[][]): string[][] {
   const seen = new Set<string>();
   return lists.map((list) => {
@@ -335,13 +362,16 @@ export function buildNativePlan(
 
   const vocalStyle = styleOf(parsed.vocals, primary.vocalStyle);
   const approaches = vocalStyle && RAP_KIND[vocalStyle] && (primary.rapVocals?.length || secondary?.rapVocals?.length) ? bank("rapVocals") : bank("vocals");
+  const vocalSentence = proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle));
+  // A bass-music brief that already has "vocal chops" in its vocal line does not get them again as sound design.
+  const noRepeatChops = (list: string[]) => (primary.edm && /\bchop/i.test(vocalSentence) ? list.filter((x) => !/\bchop/i.test(x)) : list);
   const [dLeads, dDrums, dBass, dHarmony, dTextures, dExtras] = distinct([
     leads,
     uniq([...userDrums, ...bank("drums")]),
     uniq([...userBass, ...bank("bass")]),
     uniq([...userHarmony, ...bank("harmony")]),
-    uniq([...briefTextures, ...userDesign, ...bank("textures")]),
-    uniq(bank("extras")),
+    uniq([...briefTextures, ...userDesign, ...noRepeatChops(bank("textures"))]),
+    uniq(noRepeatChops(bank("extras"))),
   ]);
   // A supporting bass or rap genre's signature rhythm joins the primary's first drum phrase, so the blend is audible
   // even when the drum line only has room for one phrase.
@@ -353,7 +383,7 @@ export function buildNativePlan(
   };
   const sections: Record<string, string[]> = {
     leads: dLeads.map(proper),
-    vocal: [proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle))].filter(Boolean),
+    vocal: [vocalSentence].filter(Boolean),
     drums: withSignatures(dDrums),
     bass: dBass,
     harmony: dHarmony,
@@ -361,8 +391,8 @@ export function buildNativePlan(
     extras: dExtras,
     era: bank("eras"),
     arrangement: uniq([...userArr, ...bank("arrangement")]),
-    mix: uniq([...userMix, ...bank("mix")]),
-    ending: bank("endings"),
+    mix: oneMaster(uniq([...userMix, ...noRepeatChops(bank("mix"))])),
+    ending: noRepeatChops(bank("endings")),
   };
 
   const parts: NativeParts = {
@@ -371,6 +401,7 @@ export function buildNativePlan(
     scenes,
     textures: briefTextures,
     edm: !!primary.edm,
+    allow: [primary.allow, secondary?.allow, tertiary?.allow].filter(Boolean).join(" ") || undefined,
     headings: primary.headings ?? (primary.edm ? { bass: "Bass design and chords", textures: "Sound design" } : undefined),
   };
   const key = parsed.key;
@@ -489,7 +520,7 @@ function compose(plan: SonicPlan, d: Detail): string {
   const low = [...take(s.bass, d.bass), ...take(s.harmony, d.harmony)];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
-  const tex = [...take(s.textures, d.textures), ...take(s.extras, d.extras)];
+  const tex = nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]);
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
   const prod = [...take(s.era, d.era), ...take(s.mix, d.mix)];

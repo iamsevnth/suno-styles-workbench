@@ -139,8 +139,8 @@ const EDM_LIST: NativeSub[] = [
     ],
     endings: ["Ends on a long dub delay tail over a fading sub.", "Closes on a lone snare echo.", "Fades into low rumble and spring reverb."],
   }),
-  edm("wobble", "Wobble bass", /\b(?:(?:cyber|heavy|melodic|future|cinematic|trap) )?riddim\b|\bbriddim\b|(?<!tape |pitch |vibrato |filter )\b(?:wobble|wubby|wubz)(?: dub ?step| bass| 140)?\b|\bwubs?\b/, {
-    claims: ["riddim", "cyber riddim", "heavy riddim", "melodic riddim", "future riddim", "cinematic riddim", "briddim", "trap riddim", "wobble dubstep", "deep-wobble dubstep", "wubby 140", "wobble 140"],
+  edm("wobble", "Wobble bass", /(?<!tape |pitch |vibrato |filter )\b(?:wobble|wubby|wubz)(?: dub ?step| bass| 140)?\b|\bwubs?\b/, {
+    claims: ["wobble dubstep", "deep-wobble dubstep", "wubby 140", "wobble 140"],
     bpm: [140, 150, 146],
     feel: "half-time",
     moods: ["bouncy", "heavy"],
@@ -861,6 +861,349 @@ const EDM_LIST: NativeSub[] = [
     ],
     endings: ["Ends on a skipping hat pattern and a fading sub.", "Closes on a pitched vocal snippet echoing out.", "Outro strips to shuffled drums and sub."],
   }),
+  /* ---------------------------------------------------------------------------------------- */
+  /* Riddim, tearout and deathstep: the heavy half of the dubstep family                       */
+  /* ---------------------------------------------------------------------------------------- */
+  edm("riddim", "Riddim", /\b(?:(?:cyber|heavy|melodic|future|cinematic|trap) )?riddim(?: dub ?step)?\b|\bbriddim\b/, {
+    // Riddim is minimal and repetitive: one tiny bass motif, hard stomping triplets and a lot of silence. It is not
+    // a wobble record, so nothing here talks about LFO movement.
+    claims: ["riddim", "riddim dubstep", "cyber riddim", "heavy riddim", "melodic riddim", "future riddim", "cinematic riddim", "briddim", "trap riddim", "phonk riddim"],
+    bpm: [140, 150, 146],
+    feel: "half-time",
+    moods: ["menacing", "repetitive"],
+    vocalStyle: "chops",
+    leads: ["two-note square-wave stab riff", "short robotic lead stab", "eerie one-note synth pluck", "pitched metallic hit loop"],
+    drums: [
+      "machine-tight half-time kick and snare with a snare hit that lands hard on the third beat",
+      "clipped punchy snare and a short tight kick with triplet kick stutters",
+      "sparse stomping kick pattern with silent gaps before every bass hit",
+      "dry hat ticks and a heavy clap pattern repeated every bar",
+    ],
+    bass: [
+      "minimal two-note bass motif repeated in a stomping triplet pattern",
+      "clipped heavyweight bass hits with hard silent gaps between them",
+      "squelchy gated bass stabs that answer the snare",
+      "tonal growl bass chopped into short repeating bursts",
+    ],
+    harmony: ["one-note dark stabs", "bare minor drone under the stomp", "single detuned stab chord"],
+    textures: ["tight impact hits", "gated stutter cuts", "short pitch-down drops", "dry noise snaps between the hits"],
+    extras: ["bar-end bass rests", "kick-and-bass stutter edits", "variation drop with a new bass tone", "hard stop and restart"],
+    vocals: ["a single pitched shout used as a rhythmic stab", "short chopped one-shot phrases", "low robotic vocal tag between the hits"],
+    rapVocals: RAP_ON_BEAT,
+    eras: ["modern minimal riddim production", "repetitive heavyweight stomp sound", "dark underground riddim energy"],
+    arrangement: [
+      "minimal intro, repetitive first drop on one bass motif, short breakdown, variation drop with a new bass tone",
+      "bare intro, build with a single riser, riddim drop, silent break, heavier second drop",
+      "intro with stabs only, drop on a repeating two-note pattern, switch to a second pattern for the last drop",
+    ],
+    mix: [
+      "bass mono and clipped hard, kick tight, long silences kept clean for impact",
+      "dry mid-bass bursts, snare cracking, hats and impacts kept bone dry",
+      "loud limited master with every hit punching out of silence",
+    ],
+    endings: ["Ends on one last bass stab and silence.", "Closes on the stomp pattern cut mid-bar.", "Finishes with a bare kick and a final snare hit."],
+  }),
+  edm("tearout", "Tearout", /\btear ?out(?: dub ?step)?\b|\bdeep tear ?out\b/, {
+    // Tearout is relentless, raw and fast: rapid-fire distorted growls and metallic grind with almost no melody.
+    claims: ["tearout", "deep tearout", "tearout trap", "tearout dubstep"],
+    bpm: [145, 155, 150],
+    feel: "half-time",
+    moods: ["relentless", "abrasive"],
+    vocalStyle: "chops",
+    leads: ["raw distorted growl riff", "grinding metallic mid-range stab", "pitch-diving saw scream", "chopped formant growl loop"],
+    drums: [
+      "hard kick and snare slam with fast double-time fills at the end of every phrase",
+      "punishing half-time kick and a cracking layered snare with rapid-fire roll fills",
+      "tight stomping kick with a distorted snare and metallic hat ticks",
+      "heavy kick drops that hit on every phrase change",
+    ],
+    bass: [
+      "rapid-fire distorted growls chopped into stuttering bursts",
+      "gritty grinding mid-bass that tears through the drop",
+      "metallic saw-edge bass with hard pitch drops",
+      "bitcrushed growl bass with abrasive upper harmonics",
+    ],
+    harmony: ["bare detuned minor stabs", "sparse dark drone before each drop", "dissonant saw stabs"],
+    textures: ["metallic grind hits", "distorted impact slams", "white-noise tears into the drop", "pitch-bent glitch cuts", "tight silent gaps before each hit"],
+    extras: ["double-time fills", "growl-and-sub switch-ups", "build-and-cut edits", "pitch-dive impacts"],
+    vocals: ["distorted shout chops on the drop edges", "pitched-down growl vocal hits", "short aggressive vocal fragments between bass bursts"],
+    rapVocals: RAP_ON_BEAT,
+    eras: ["raw modern festival-heavy tearout sound", "relentless underground bass sound", "abrasive high-energy sound design"],
+    arrangement: [
+      "short intro, fast build, first drop of rapid-fire growls, breakdown, harder second drop with switch-ups",
+      "intro, pitch-rising build, drop of grinding bass, half-bar cut, final drop with new growl patterns",
+      "minimal intro, build, drop, silent break, back-to-back drops with constant momentum",
+    ],
+    mix: [
+      "bass mid-range forward and distorted, sub tight and centered, snare slamming",
+      "hard-clipped transients, crisp metallic highs, very little reverb",
+      "bass dense but controlled in the low mids, impacts huge",
+    ],
+    endings: ["Ends on a final distorted growl and a hard cut.", "Closes on a pitch-dive and a heavy impact.", "Finishes on the last drop slammed straight into silence."],
+  }),
+  edm("deathstep", "Deathstep", /\bdeath ?step\b/, {
+    // Deathstep is dark and slow-crushing: ominous, horror-flavoured sound design under a heavy half-time grind.
+    claims: ["deathstep"],
+    bpm: [138, 150, 142],
+    feel: "half-time",
+    moods: ["ominous", "crushing"],
+    vocalStyle: "chops",
+    leads: ["dissonant detuned drone lead", "slow ominous bass-growl motif", "dark glassy bell hit", "low distorted synth moan"],
+    drums: [
+      "slow crushing half-time kick and a deep cavernous snare",
+      "heavy kick, wide dark snare and sparse ticking hats",
+      "huge slow snare slams with long reverb tails and space between hits",
+      "thudding half-time pattern with echoing tom hits",
+    ],
+    bass: [
+      "down-tuned grinding bass that crawls through the drop",
+      "dark neuro-style growl with slow heavy movement",
+      "ominous low-mid snarl layered over a deep sub",
+      "brutal gritty bass with dissonant harmonics and a slow, menacing groove",
+    ],
+    harmony: ["dissonant minor drones", "cold sustained dark pads", "ominous low-register cluster stabs"],
+    textures: ["horror-style risers", "dark cinematic hits", "whispered distorted noise", "distant metallic scrapes", "deep rumbling impacts"],
+    extras: ["slow heavy build-ups", "ominous reverse swells", "pitch-dropped growl hits", "dark silence before the drop"],
+    vocals: ["low pitched-down whispers", "distorted demonic-sounding vocal fragments", "dark chopped chants buried in reverb"],
+    rapVocals: RAP_ON_BEAT,
+    eras: ["dark underground deathstep sound", "horror-tinged heavy bass production", "slow-crushing late-night bass energy"],
+    arrangement: [
+      "eerie intro, slow ominous build, first drop of crawling bass, dark breakdown, heavier final drop",
+      "atmospheric dark intro, long tension build, drop, sparse break with drones, brutal second drop",
+      "intro with drones, build, grinding drop, switch to a darker bass tone, outro fading into noise",
+    ],
+    mix: [
+      "sub deep and centered, grinding mids dark and dense, snare huge and cavernous",
+      "wide dark reverb on the hits, bass tight and distorted, highs rolled back",
+      "heavily limited master with enormous low-end weight",
+    ],
+    endings: ["Ends on a dark drone and one last heavy hit.", "Closes on a slow growl fading into rumble.", "Finishes with a distorted sub tail swallowed by noise."],
+  }),
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Phonk                                                                                     */
+  /* ---------------------------------------------------------------------------------------- */
+  edm("phonk", "Phonk", /\b(?:memphis )?phonk\b/, {
+    // Phonk is cowbell, chopped Memphis-style vocal samples and a distorted, saturated 808. Cassette-style grit is
+    // part of the genre, so those words are allowed for it.
+    claims: ["phonk", "memphis phonk", "memphis phonk drift", "phonk-infused trap", "phonk trap", "phonk dubstep", "phonk riddim"],
+    allow: "cassette tape saturation lo-fi",
+    bpm: [130, 145, 138],
+    feel: "half-time",
+    moods: ["dark", "gritty"],
+    vocalStyle: "chops",
+    leads: ["distorted cowbell melody", "chopped Memphis-style vocal sample hook", "eerie minor bell loop", "detuned dark synth stab"],
+    drums: [
+      "hard kick with a cowbell pattern riding over rapid hats",
+      "distorted kick, snappy snare and triplet hat rolls with open-hat accents",
+      "heavy clap layer on the backbeat with cowbell hits in the gaps",
+      "gritty sample-style drums with a cowbell and a saturated snare",
+    ],
+    bass: [
+      "overdriven sliding 808 with a long distorted tail",
+      "clipping 808 bass with a gritty saturated top end",
+      "heavily distorted 808 glides under the cowbell",
+    ],
+    harmony: ["dark minor-key sample loop", "sparse eerie chords", "detuned minor stabs"],
+    textures: ["cassette-style tape saturation", "crushed lo-fi top end", "reverb-soaked sample echoes", "bit-crushed hits", "dark reverb tails"],
+    extras: ["cowbell fills", "808 slides", "chopped sample stutters", "distorted bass hits on the downbeat"],
+    vocals: ["chopped and pitched-down Memphis-style vocal samples", "low raspy chant buried in reverb", "short repeated vocal sample phrases"],
+    rapVocals: [
+      "low raspy rap flow buried in reverb, short ad-libs in the gaps",
+      "slow menacing bars over the cowbell with echoing ad-libs",
+      "chanted hook with stacked shouts and pitched-down ad-libs",
+    ],
+    eras: ["dark Memphis-rooted phonk sound", "gritty underground phonk production", "aggressive night-drive phonk energy"],
+    arrangement: [
+      "short sample-loop intro, hard drop with cowbell, breakdown on the vocal sample, final drop",
+      "intro, cowbell build, drop, stripped break with the sample alone, second heavier drop",
+      "sample intro, drop, switch-up with a new cowbell pattern, outro on the sample",
+    ],
+    mix: [
+      "808 loud and saturated, cowbell cutting through, hats crisp",
+      "vocal samples washed in reverb, kick and 808 distorted together",
+      "gritty clipped low end with a dark, narrow top",
+    ],
+    endings: ["Ends on a distorted 808 tail and a last cowbell hit.", "Fades on a reverb-soaked vocal sample.", "Closes on a hard cut and a ringing cowbell."],
+  }),
+  edm("drift-phonk", "Drift phonk", /\bdrift[- ]phonk\b|\bphonk drift\b/, {
+    // Drift phonk is the fast, aggressive, car-culture side of phonk: a loud cowbell riff and a heavily clipped kick.
+    claims: ["drift phonk"],
+    allow: "cassette tape saturation lo-fi",
+    bpm: [135, 160, 145],
+    feel: "half-time",
+    moods: ["aggressive", "high-speed"],
+    vocalStyle: "chops",
+    leads: ["loud repeating cowbell riff", "pitched-up vocal sample hook", "distorted detuned saw stab", "dark synth bell loop"],
+    drums: [
+      "fast hard-clipped kick with rapid double-time hats",
+      "driving kick and snare with a nonstop cowbell pattern",
+      "tight distorted kick, rim ticks and triplet hat bursts",
+      "heavy clap with a fast cowbell accent on every beat",
+    ],
+    bass: [
+      "heavily distorted sliding 808 with a fast pitch drop",
+      "overdriven bass hits that pump with the kick",
+      "clipped 808 glides racing under the cowbell",
+    ],
+    harmony: ["fast minor-key riff", "cold detuned stabs", "sparse dark chord hits"],
+    textures: ["engine-style riser sweeps", "tape-saturated noise", "aggressive reverse hits", "bit-crushed impacts", "pitched siren swells"],
+    extras: ["cowbell fills", "pitch-drop slams", "rapid hat rolls", "sample stutters on the downbeat"],
+    vocals: ["pitched-up chopped vocal samples", "aggressive shouted chant phrases", "short distorted vocal stabs"],
+    rapVocals: RAP_ON_BEAT,
+    eras: ["aggressive night-drive drift phonk sound", "fast high-energy underground phonk", "street-racing phonk intensity"],
+    arrangement: [
+      "short intro with the cowbell riff, fast drop, breakdown on the sample, relentless final drop",
+      "intro, riser build, drop, switch-up with a new cowbell rhythm, second drop",
+      "cowbell intro, hard drop, half-bar cut, final drop with extra hats",
+    ],
+    mix: [
+      "kick and 808 clipped and loud, cowbell piercing, hats sharp",
+      "distorted low end, vocal samples pitched and bright, wide noise sweeps",
+      "dense saturated master with the riff upfront",
+    ],
+    endings: ["Ends on a final cowbell hit and a distorted 808 slide.", "Closes on a riser cut to silence.", "Finishes with the riff looping into a hard stop."],
+  }),
+  edm("brazilian-phonk", "Brazilian phonk", /\b(?:brazilian|br) phonk\b|\bphonk (?:brasileiro|brazil)\b/, {
+    // Brazilian phonk puts phonk's cowbell and distortion on a funk-carioca tamborzão groove with chanted hooks.
+    claims: ["brazilian phonk", "br phonk"],
+    allow: "cassette tape saturation lo-fi",
+    bpm: [130, 150, 140],
+    feel: "half-time",
+    moods: ["aggressive", "swaggering"],
+    vocalStyle: "chops",
+    leads: ["bright cowbell loop", "chopped funk-style vocal sample", "short detuned synth stab", "metallic bell riff"],
+    drums: [
+      "tamborzão-style kick and percussion pattern with a loud cowbell",
+      "syncopated funk drum pattern with sharp snares and rapid hat ticks",
+      "hard kick with layered percussion hits and a cowbell on the offbeats",
+      "stuttering funk-style snare fills",
+    ],
+    bass: [
+      "distorted booming 808 with a sharp slide",
+      "overdriven low end that bounces with the tamborzão kick",
+      "clipped sub bass pumping against the percussion",
+    ],
+    harmony: ["dark minor loop", "sparse detuned stabs", "cold bell chords"],
+    textures: ["crowd-style shouts", "bit-crushed percussion hits", "reverb-soaked chant echoes", "dark noise sweeps", "tape-saturated impacts"],
+    extras: ["percussion rolls", "bass drops on the downbeat", "chanted shout breaks", "cowbell fills"],
+    vocals: ["chanted funk-style hook phrases", "pitched-up chopped vocal samples", "aggressive group shouts between the beats"],
+    rapVocals: [
+      "fast funk-style flow with chanted ad-libs between bars",
+      "swaggering rhythmic bars locked to the tamborzão pocket",
+      "shouted call-and-response hook with stacked ad-libs",
+    ],
+    eras: ["modern Brazilian phonk sound", "aggressive street-party phonk energy", "funk-driven underground phonk production"],
+    arrangement: [
+      "intro on the cowbell, percussion build, hard drop, chant break, second drop with extra percussion",
+      "sample intro, drop on the tamborzão groove, stripped break, final drop",
+      "short intro, build, drop, switch-up with a new percussion pattern, outro",
+    ],
+    mix: [
+      "808 and kick distorted and loud, percussion sharp, vocal chants upfront",
+      "cowbell bright and cutting, low end saturated, wide percussion",
+      "gritty clipped low end with crisp highs",
+    ],
+    endings: ["Ends on a chanted shout and a distorted 808 tail.", "Closes on a percussion roll and a hard stop.", "Finishes on a final cowbell and a bass hit."],
+  }),
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Drill                                                                                     */
+  /* ---------------------------------------------------------------------------------------- */
+  edm("uk-drill", "UK drill", /\buk drill\b|\bdrill(?: trap| music)?\b|\btrap drill\b|\bmelodic drill\b|\bcinematic (?:street )?(?:trap )?drill(?: trap)?\b/, {
+    // UK drill: a cold, minimal record. Sliding 808s, skippy stop-start hats and a flat, menacing flow.
+    claims: [
+      "drill", "uk drill", "drill trap", "trap drill", "melodic drill", "cinematic drill trap", "cinematic drill", "dark late-night drill trap", "cinematic street trap drill",
+    ],
+    bpm: [138, 146, 142],
+    feel: "half-time",
+    vocal: "sung",
+    vocalStyle: "rap",
+    moods: ["cold", "menacing"],
+    leads: ["dark minimal piano motif", "cold plucked bell loop", "eerie detuned synth line", "sparse pitched pad stab"],
+    drums: [
+      "skippy syncopated hi-hats with triplet stutters and a stop-start kick",
+      "sharp snare on the third beat with rim ticks and skippy syncopated hat bursts",
+      "tight clap and a syncopated hat bounce with silent gaps",
+      "minimal kick pattern with hat rolls that skip off the beat",
+    ],
+    bass: [
+      "long sliding 808 glides that bend between notes",
+      "deep gliding 808 with a short punchy decay and sudden stops",
+      "sub-heavy sliding bass that answers the snare",
+    ],
+    harmony: ["cold minor-key loop", "sparse dark chords", "eerie minimal pad"],
+    textures: ["cold reverb tails", "dark atmosphere pads", "reverse ad-lib swells", "tight vocal echo throws"],
+    extras: ["808 slides", "hat-roll bursts", "stop-start beat cut-outs", "pitched ad-lib layers"],
+    vocals: [
+      "flat deadpan bars with a cold menacing delivery and sparse ad-libs",
+      "staccato rhythmic flow riding the skippy hats",
+      "low menacing chant hook with echoing ad-libs",
+    ],
+    rapVocals: [
+      "flat deadpan bars with a cold menacing delivery and sparse ad-libs",
+      "staccato rhythmic flow riding the skippy hats with short ad-libs",
+      "low menacing chant hook with echoing ad-libs",
+    ],
+    eras: ["dark UK-style drill production", "cold minimal late-night drill sound", "menacing street drill energy"],
+    arrangement: [
+      "short intro with the piano motif, verse over the sliding 808, chant hook, second verse, final hook",
+      "intro, verse, hook, verse with a beat switch, outro on the motif",
+      "motif intro, verse, short hook, verse, stripped bridge, last hook",
+    ],
+    mix: [
+      "vocal dry and upfront with a short echo, 808 centered, hats crisp and wide",
+      "sliding 808 loud and clean, snare sharp, ad-libs panned wide",
+      "cold narrow midrange with a deep controlled low end",
+    ],
+    endings: ["Ends on a sliding 808 and a last flat bar.", "Closes on the piano motif and a hat tick.", "Outro strips to 808 and ticking hats."],
+  }),
+  edm("ny-drill", "NY drill", /\b(?:nyc|ny|new york|brooklyn|bronx) drill\b|\bsample drill\b/, {
+    // NY drill: harder and more energetic than UK drill, with a heavy kick, bouncing sliding 808 and sample loops.
+    claims: ["nyc drill", "new york drill", "brooklyn drill", "sample drill"],
+    bpm: [140, 148, 144],
+    feel: "half-time",
+    vocal: "sung",
+    vocalStyle: "rap",
+    moods: ["gritty", "hard-hitting"],
+    leads: ["chopped sample loop", "dark piano riff", "bright bell sample", "short melodic synth hook"],
+    drums: [
+      "hard-hitting kick with a bouncing snare and rolling hat triplets",
+      "heavy kick pattern with crisp clap hits and fast hat runs",
+      "punchy snare on the third beat with a bouncing hat swing",
+      "sampled-style drums with a loud kick and rim ticks",
+    ],
+    bass: [
+      "booming sliding 808 that bounces with the kick",
+      "heavy 808 glides with a longer ring on the hook",
+      "distorted gliding sub that hits hard on the downbeat",
+    ],
+    harmony: ["looped minor sample chords", "dark melodic loop", "sparse piano chords"],
+    textures: ["crowd-style ad-lib shouts", "vocal chants", "dark sample echoes", "tight riser into the hook"],
+    extras: ["808 slides", "chopped sample stutters", "hat-roll fills", "gang-style ad-libs"],
+    vocals: [
+      "hard aggressive bars with a bouncy swagger and punchy ad-libs",
+      "gritty energetic flow with shouted ad-libs",
+      "chanted hook with stacked gang vocals",
+    ],
+    rapVocals: [
+      "hard aggressive bars with a bouncy swagger and punchy ad-libs",
+      "gritty energetic flow with shouted ad-libs between lines",
+      "chanted hook with stacked gang vocals",
+    ],
+    eras: ["gritty New York-style drill production", "hard-hitting sample-driven drill sound", "raw street drill energy"],
+    arrangement: [
+      "intro with the sample loop, verse, chant hook, second verse, final hook with gang ad-libs",
+      "short intro, verse, hook, verse with extra hats, outro on the loop",
+      "intro, verse over a bouncing beat, big hook, verse, final hook",
+    ],
+    mix: [
+      "kick and 808 loud and tight, vocal upfront and gritty, ad-libs wide",
+      "sample loop sitting back, snare snapping, 808 centered",
+      "punchy compressed master with a heavy low end",
+    ],
+    endings: ["Ends on a gang shout and an 808 slide.", "Closes on the sample loop and a last bar.", "Outro strips to kick and 808."],
+  }),
 ];
 
 /**
@@ -889,6 +1232,14 @@ const SIGNATURES: Record<string, string> = {
   "modern-rap": "a hard-hitting kick with a swung hat pattern",
   "sung-rap": "a soft kick and snappy snare under melodic hats",
   "uk-garage": "a shuffled 2-step kick pattern with swung hats",
+  riddim: "a stomping triplet kick pattern with hard silent gaps",
+  tearout: "rapid-fire double-time snare fills with metallic hat ticks",
+  deathstep: "a slow crushing half-time kick under a cavernous snare",
+  phonk: "a cowbell pattern over distorted kick and rapid hats",
+  "drift-phonk": "a relentless cowbell riff over a clipped fast kick",
+  "brazilian-phonk": "a tamborzão kick pattern with a loud cowbell",
+  "uk-drill": "skippy stop-start hats with sliding 808 glides",
+  "ny-drill": "a hard bouncing kick with rolling hat triplets and sliding 808s",
 };
 
 export const EDM_SUBS: NativeSub[] = EDM_LIST.map((sub) => ({ ...sub, signature: SIGNATURES[sub.id] }));

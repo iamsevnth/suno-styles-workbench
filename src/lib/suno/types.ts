@@ -57,6 +57,8 @@ export interface NativeParts {
   textures: string[];
   /** The primary or secondary sub-genre belongs to the bass/rap world. */
   edm?: boolean;
+  /** Words the genre makes legitimate for the bleed gate. */
+  allow?: string;
   headings?: { bass?: string; textures?: string };
 }
 

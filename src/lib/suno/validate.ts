@@ -90,7 +90,7 @@ export function findContradictions(styles: string, plan: SonicPlan): string[] {
   // Native families never use bass-music wording. Hip-hop and R&B on the older path legitimately use 808s and hat rolls.
   const leaks = bassMusicLeaks(styles, plan.briefText ?? "").filter((w) => plan.native || !/^(?:808s?|hi-hat rolls?|trap hats?)$/.test(w));
   if (((plan.native && !plan.native.edm) || (!plan.native && !hasDrops(families))) && leaks.length) found.push("bass_music_phrasing");
-  if (isBassWorld(families, plan.native?.edm, !!plan.native) && nonEdmBleed(styles, [plan.briefText, plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(" ")).length) found.push("non_edm_bleed");
+  if (isBassWorld(families, plan.native?.edm, !!plan.native) && nonEdmBleed(styles, [plan.briefText, plan.primaryGenre, plan.secondaryGenre, plan.accentGenre, plan.native?.allow].filter(Boolean).join(" ")).length) found.push("non_edm_bleed");
   return found;
 }
 

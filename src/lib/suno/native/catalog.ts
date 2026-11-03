@@ -6,7 +6,7 @@ function make(
   id: string,
   name: string,
   match: RegExp,
-  base: Required<Omit<Pick<NativeSub, keyof SubBanks & keyof NativeSub>, "vocalStyle" | "rapVocals" | "edm" | "keepWords" | "keepName" | "signature" | "context" | "headings">> & SubBanks,
+  base: Required<Omit<Pick<NativeSub, keyof SubBanks & keyof NativeSub>, "vocalStyle" | "rapVocals" | "edm" | "keepWords" | "keepName" | "signature" | "allow" | "context" | "headings">> & SubBanks,
   own: SubBanks & { bpm: [number, number, number] }
 ): NativeSub {
   return { id, name, match, ...(base as object), ...own } as NativeSub;

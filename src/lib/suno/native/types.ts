@@ -31,6 +31,8 @@ export interface NativeSub {
   keepName?: boolean;
   /** A short rhythm phrase that joins the drums when this genre is a supporting genre in a blend. */
   signature?: string;
+  /** Wording the bleed gate accepts for this genre (phonk is cassette-saturated and lo-fi by nature). */
+  allow?: string;
   /** Extra check on the whole brief before a match counts (plain "trap" is EDM trap unless the brief raps). */
   context?: (lowerText: string) => boolean;
   /** Section headings for genres that read better with their own words ("Bass design and chords"). */

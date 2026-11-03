@@ -24,6 +24,8 @@ interface Case {
   bpm: [number, number];
   /** Wording this genre must carry somewhere in its prompt (at least once across the seeds). */
   signature: RegExp;
+  /** Wording the genre itself makes legitimate for the bleed gate (phonk is cassette-saturated). */
+  allow?: string;
 }
 
 const CASES: Case[] = [
@@ -48,6 +50,14 @@ const CASES: Case[] = [
   { brief: "modern rap", opens: /^Modern rap at/, bpm: [80, 150], signature: /bars|flow|rap vocal|808/i },
   { brief: "trap rap", opens: /^Trap rap at/, bpm: [130, 160], signature: /hi-hat|808|rap vocal/i },
   { brief: "autotuned sung-rap", opens: /^Autotuned sung-rap at/, bpm: [120, 160], signature: /autotun|sung-rap|melodic/i },
+  { brief: "riddim", opens: /^Riddim at/, bpm: [140, 150], signature: /stomp|two-note|motif|silent|repeat/i },
+  { brief: "tearout", opens: /^Tearout at/, bpm: [145, 155], signature: /rapid-fire|grind|metallic|tear|relentless/i },
+  { brief: "deathstep", opens: /^Deathstep at/, bpm: [138, 150], signature: /ominous|dark|horror|crawl|crushing|dissonant/i },
+  { brief: "phonk", opens: /^Phonk at/, bpm: [130, 145], signature: /cowbell/i, allow: "cassette tape saturation lo-fi" },
+  { brief: "drift phonk", opens: /^Drift phonk at/, bpm: [135, 160], signature: /cowbell/i, allow: "cassette tape saturation lo-fi" },
+  { brief: "Brazilian phonk", opens: /^Brazilian phonk at/, bpm: [130, 150], signature: /tamborz|funk/i, allow: "cassette tape saturation lo-fi" },
+  { brief: "UK drill", opens: /^UK drill at/, bpm: [138, 146], signature: /slid|gliding|skippy|stop-start/i },
+  { brief: "NYC drill", opens: /^NYC drill at/, bpm: [140, 148], signature: /slid|gliding|sample|bouncing/i },
 ];
 
 describe("priority genres run on the native generator", () => {
@@ -74,7 +84,7 @@ describe("priority genres run on the native generator", () => {
     });
 
     it(`"${c.brief}": no acoustic, band, orchestral or lo-fi wording`, () => {
-      for (const p of promptsFor(c.brief)) assert.deepEqual(nonEdmBleed(p.styles, c.brief), [], p.styles);
+      for (const p of promptsFor(c.brief)) assert.deepEqual(nonEdmBleed(p.styles, `${c.brief} ${c.allow ?? ""}`), [], p.styles);
     });
 
     it(`"${c.brief}": the same seed gives the same prompt`, () => {
@@ -196,6 +206,133 @@ describe("sibling genres stay genuinely distinct", () => {
   });
 });
 
+describe("the heavy dubstep siblings, phonk and drill stay genuinely distinct", () => {
+  it("riddim is minimal stomping repetition and wobble bass is LFO movement", () => {
+    const riddim = dist("riddim");
+    const wobble = dist("wobble bass");
+    assert.match(riddim, /stomp|two-note|motif|silent|repeat/i);
+    assert.doesNotMatch(riddim, /wobble|LFO|\bwubs?\b/i);
+    assert.match(wobble, /wobble|LFO/i);
+    assert.doesNotMatch(wobble, /two-note|stomp|silent gaps|riddim/i);
+    assert.equal(parseUserInput("riddim").native?.primary, "riddim");
+    assert.equal(parseUserInput("wobble bass").native?.primary, "wobble");
+  });
+
+  it("tearout is raw rapid-fire grind and brostep is screech and fry with gang shouts", () => {
+    const tear = dist("tearout");
+    const bro = dist("brostep");
+    assert.match(tear, /rapid-fire|grind|metallic|abrasive|relentless/i);
+    assert.doesNotMatch(tear, /screech|fry|gang shout|talking bass|siren/i);
+    assert.match(bro, /screech|fry|growl/i);
+    assert.doesNotMatch(bro, /rapid-fire|grinding|abrasive|relentless/i);
+  });
+
+  it("deathstep is dark, ominous and horror-flavoured and brostep is not", () => {
+    const death = dist("deathstep");
+    const bro = dist("brostep");
+    assert.match(death, /ominous|dissonant|horror|crawl|crushing|demonic/i);
+    assert.doesNotMatch(death, /screech|fry|gang shout|snare-roll|siren/i);
+    assert.doesNotMatch(bro, /ominous|horror|demonic|dissonant|crushing/i);
+    for (const p of promptsFor("deathstep")) assert.ok(p.bpm >= 138 && p.bpm <= 150);
+  });
+
+  it("tearout, deathstep and brostep never share an opening or a drum line", () => {
+    const first = (g: string) => generateStylesPrompts(g, { count: 1, seed: 777 }).prompts[0].styles;
+    const [a, b, c] = [first("tearout"), first("deathstep"), first("brostep")];
+    assert.notEqual(a.split(" at ")[0], b.split(" at ")[0]);
+    assert.notEqual(b.split(" at ")[0], c.split(" at ")[0]);
+    const drums = (t: string) => t.match(/Drums: ([^.]+)\./)?.[1];
+    assert.notEqual(drums(a), drums(b));
+    assert.notEqual(drums(b), drums(c));
+  });
+
+  it("phonk carries cowbell and distortion; trap EDM and trap rap do not", () => {
+    for (const p of promptsFor("phonk")) assert.match(p.styles, /cowbell/i, p.styles);
+    const phonk = dist("phonk");
+    assert.match(phonk, /distort|saturat|overdriven|clipp/i);
+    assert.match(phonk, /sample|chop|Memphis/i);
+    assert.doesNotMatch(dist("EDM trap"), /cowbell|Memphis/i);
+    assert.doesNotMatch(dist("trap rap"), /cowbell|Memphis/i);
+  });
+
+  it("drift phonk is fast and aggressive and Brazilian phonk rides a funk tamborzão groove", () => {
+    const drift = dist("drift phonk");
+    const br = dist("Brazilian phonk");
+    assert.match(drift, /cowbell/i);
+    assert.match(drift, /aggressive|high-speed|racing|fast/i);
+    assert.doesNotMatch(drift, /tamborz|funk/i);
+    assert.match(br, /tamborz|funk/i);
+    assert.match(br, /cowbell/i);
+    assert.doesNotMatch(dist("phonk"), /tamborz/i);
+    for (const p of promptsFor("Brazilian phonk")) assert.match(p.styles, /^Brazilian phonk at/, p.styles);
+    for (const p of promptsFor("drift phonk")) assert.ok(p.bpm >= 135 && p.bpm <= 160);
+  });
+
+  it("drill is a cold rap record with sliding 808s and skippy hats, not trap rap", () => {
+    for (const p of promptsFor("UK drill")) {
+      assert.match(p.styles, /rap|bars|flow|ad-libs/i, p.styles);
+      assert.doesNotMatch(p.styles, /drop|riser build|supersaw|cowbell/i, p.styles);
+    }
+    const drill = dist("UK drill");
+    assert.match(drill, /slid|gliding/i);
+    assert.match(drill, /skippy|stop-start|syncopated/i);
+    assert.match(drill, /deadpan|cold|menacing/i);
+    const trap = dist("trap rap");
+    assert.doesNotMatch(trap, /skippy|stop-start|deadpan/i);
+    assert.doesNotMatch(drill, /rolling hi-hats|hi-hat rolls|triplet flow/i);
+  });
+
+  it("UK drill and NY drill differ", () => {
+    const uk = dist("UK drill");
+    const ny = dist("NYC drill");
+    assert.match(uk, /deadpan|cold|menacing|skippy/i);
+    assert.doesNotMatch(uk, /gang|sample loop|bouncing/i);
+    assert.match(ny, /gang|sample|bouncing|hard/i);
+    assert.doesNotMatch(ny, /deadpan|skippy/i);
+    assert.equal(parseUserInput("brooklyn drill").native?.primary, "ny-drill");
+    assert.equal(parseUserInput("drill rap, dark").native?.primary, "uk-drill");
+  });
+
+  it("claims every library name it can read natively and leaves the rest on the old path", () => {
+    for (const [brief, id] of [["Cyber Riddim", "riddim"], ["Briddim", "riddim"], ["Deep Tearout", "tearout"], ["Memphis Phonk", "phonk"], ["Melodic Drill", "uk-drill"], ["Sample Drill", "ny-drill"]] as const) {
+      assert.equal(parseUserInput(brief).native?.primary, id, brief);
+    }
+    for (const brief of ["UKG-Swung Drill", "Phonk House", "UKG Riddim"]) assert.equal(parseUserInput(brief).native, undefined, brief);
+  });
+
+  it("phonk may use cassette and lo-fi grit; no other bass genre may", () => {
+    for (const p of promptsFor("phonk")) assert.equal(p.hardGates.noGenreBleed, true, p.styles);
+    for (const p of promptsFor("tearout")) assert.doesNotMatch(p.styles, /cassette|lo-?fi|tape/i, p.styles);
+  });
+
+  it("phonk blends keep both genres: phonk + trap, phonk + riddim, tearout + brostep", () => {
+    for (const [brief, opens] of [
+      ["phonk-infused trap", /^Phonk with trap influences at/],
+      ["phonk riddim", /^Phonk with riddim influences at/],
+      ["tearout + brostep", /^Tearout with brostep influences at/],
+    ] as const) {
+      for (const p of promptsFor(brief, [1, 7])) {
+        assert.match(p.styles, opens, p.styles);
+        assert.equal(p.hardGates.noGenreBleed, true, p.styles);
+        assert.ok(criticalGatesPass(p.hardGates));
+        assert.ok(p.characters >= MIN_CHARS && p.characters <= MAX_CHARS);
+      }
+    }
+  });
+});
+
+describe("repeated phrases", () => {
+  it("never states the master twice and never repeats vocal chops as sound design", () => {
+    for (const brief of [...CASES.map((c) => c.brief), "dubstep + baile funk", "trap + autotuned sung-rap"]) {
+      for (const p of promptsFor(brief)) {
+        const mix = p.styles.match(/Production: ([^.]+)\./)?.[1] ?? "";
+        assert.ok((mix.match(/\bmaster\b/gi) ?? []).length <= 1, mix);
+        assert.ok((p.styles.match(/\bvocal[- ]chops?\b|\bchopped vocal/gi) ?? []).length <= 1, p.styles);
+      }
+    }
+  });
+});
+
 describe("rap wording", () => {
   it("modern rap carries rap flow, ad-libs and 808s", () => {
     const text = dist("modern rap");
@@ -279,7 +416,7 @@ describe("genre bleed guard", () => {
   });
 
   it("holds across the old path too: unclaimed bass and rap genres never pick up band wording", () => {
-    for (const brief of ["phonk", "tearout dubstep", "UK drill", "deathstep", "riddim", "hybrid trap"]) {
+    for (const brief of ["Phonk House", "UKG-Swung Drill", "UKG Riddim", "EDM Drill", "hybrid trap"]) {
       for (const p of promptsFor(brief, [1, 2, 3])) {
         assert.equal(p.hardGates.noGenreBleed, true, `${brief}: ${p.styles}`);
         assert.deepEqual(nonEdmBleed(p.styles, brief), [], p.styles);
