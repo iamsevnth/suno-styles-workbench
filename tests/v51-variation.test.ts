@@ -110,3 +110,27 @@ describe("v5.1 complete native-bank A/B contract", () => {
     });
   }
 });
+
+describe("v5.1 conservative short-source Fix expansion", () => {
+  it("preserves the original musical structure instead of recompiling a coherent 757-character source", () => {
+    const source = [
+      "140 BPM, E minor, 4/4. An instrumental future bass composition builds from a carefully shaped four-note bell motif over a steady sub pulse.",
+      "The first section uses filtered pads, sparse syncopated kick and snare, and quiet reverse-pickup transitions that leave melodic space.",
+      "The build gradually widens suspended chords and gathers snare momentum before a deliberate full-beat silence.",
+      "Drop 1 uses bright stacked chords and a controlled low-end counterphrase, with the four-note motif echoed by a tuned bass lead.",
+      "Drop 2 rearranges the motif an octave higher, adds triplet drum fills, and gives the bass an answering phrase rather than repeating the first drop.",
+      "The final breakdown returns to dry bell notes and centered mono sub before a focused final lift.",
+    ].join(" ");
+    const base = generateStylesPrompts(
+      "140 BPM E minor instrumental future bass, 4/4, deep 808 and bright bell motif",
+      { count: 1, seed: 168, profileEnabled: false },
+    ).prompts[0].plan;
+    const fixed = repairExistingPrompt(source, base);
+    assert.ok(fixed, "a coherent short source must remain eligible for conservative expansion");
+    assert.equal(fixed.strategy, "expanded");
+    assert.ok(fixed.text.length >= MIN_CHARS && fixed.text.length <= MAX_CHARS);
+    for (const phrase of ["four-note motif", "full-beat silence", "Drop 2", "E minor", "filtered pads"]) {
+      assert.ok(fixed.text.includes(phrase), phrase);
+    }
+  });
+});
