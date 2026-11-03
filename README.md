@@ -86,7 +86,7 @@ Workbench maps recognized genres to sound families, plans the sonic hierarchy, a
 
 ### Fix Existing Prompt
 
-Use **Fix Existing Prompt** when a prompt already produces something useful but contains conflicting instructions, an unclear genre hierarchy, negative wording, or multiple competing tempos. The rebuild preserves detected genres, BPM, named instruments, groove/bass cues, and vocal traits while attempting to make the prompt more coherent.
+Use **Fix Existing Prompt** when a prompt already produces something useful but contains conflicting instructions, an unclear genre hierarchy, negative wording, or multiple competing tempos. The rebuild attempts to preserve detected genres, BPM, named instruments, groove/bass cues, and vocal traits while making the prompt more coherent. When long or conflicting source prompts require recompilation, results may show **Check source retention** warnings for recognizable instructions that did not survive. These warnings are text-level review indicators, not a guarantee of complete semantic fidelity or audible quality.
 
 ### Lyrics Studio
 
@@ -107,6 +107,8 @@ Open https://sunoworkbench.com/guide for the searchable production reference. Se
 ## Styles Compiler
 
 The compiler parses a brief into musical intent, maps recognized genres to sound families, plans a sonic arrangement, renders the result into the Styles character window, and validates it before returning a prompt.
+
+The compiler's internal numerical candidate score is a heuristic for choosing between generated texts, not an empirically validated Suno prompt-quality score or prediction of the resulting audio. The 800–975-character target is a Workbench design choice, not a Suno-certified optimum.
 
 Every generated Styles prompt is designed to:
 
@@ -276,7 +278,7 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **1.0.0**. Repository history is maintained in Git and can be reviewed in the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
+The current package version is **5.1.1**. This patch corrects Dancehall/Reggae genre validation, improves preservation of supported source details during Fix Mode recompilation, and reports possible omissions for review. See [v5.1.1 release notes](docs/releases/v5.1.1.md) and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
 
 There is not currently a standalone <code>CHANGELOG.md</code>. Future release notes should be recorded in GitHub Releases or a dedicated changelog when the project begins maintaining formal release milestones.
 
