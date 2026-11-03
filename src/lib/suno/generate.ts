@@ -1,7 +1,7 @@
 import { parseUserInput } from "./parse.ts";
 import { repairExistingPrompt } from "./fix.ts";
 import { NATIVE_SUBS } from "./native/catalog.ts";
-import { alternateNativeBass } from "./native/identity.ts";
+import { phraseExcluded } from "./intent.ts";
 import { changedMusicalAxes } from "./semantic.ts";
 import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
@@ -48,42 +48,40 @@ export function generateStylesPrompts(
       const original = first.plan;
       const nativeBank = NATIVE_SUBS.find(x => x.id === parsed.native?.primary);
       const current = original.native?.sections.bass?.[0] ?? original.bass[0] ?? "";
-      const replacement = nativeBank
-        ? alternateNativeBass(nativeBank, current, parsed.exclusions)
-        : original.bass.find(x => x !== current);
-      if (!replacement) throw new Error("This genre has no compatible alternative bass articulation for A/B.");
-      const modifiedBass = [replacement, ...(original.native?.sections.bass ?? original.bass).filter(x => x !== replacement && x !== current)];
-      const abPlan: SonicPlan = {
-        ...original,
-        bass: modifiedBass,
-        native: original.native ? { ...original.native, sections: { ...original.native.sections, bass: modifiedBass } } : undefined,
-        recipeId: original.recipeId + "|ab:bass:" + replacement,
-        variationMode: "ab",
-        abAxis: "bass",
-        variantAxes: ["A/B: bass articulation only"],
-      };
-      if (changedMusicalAxes(original, abPlan).join(",") !== "bass") {
-        throw new Error("A/B safety gate: more than one production axis changed.");
+      // A/B may swap only the bass articulation. Test each option against the
+      // existing character, exclusion, bleed and semantic gates before using it.
+      const alternatives = nativeBank
+        ? nativeBank.bass.filter(x => x !== current && !phraseExcluded(x, parsed.exclusions))
+        : original.bass.filter(x => x !== current && !phraseExcluded(x, parsed.exclusions));
+      let second: PromptCandidate | null = null;
+      for (const replacement of alternatives) {
+        const modifiedBass = [replacement, ...(original.native?.sections.bass ?? original.bass).filter(x => x !== replacement && x !== current)];
+        const abPlan: SonicPlan = {
+          ...original,
+          bass: modifiedBass,
+          native: original.native ? { ...original.native, sections: { ...original.native.sections, bass: modifiedBass } } : undefined,
+          recipeId: original.recipeId + "|ab:bass:" + replacement,
+          variationMode: "ab",
+          abAxis: "bass",
+          variantAxes: ["A/B: bass articulation only"],
+        };
+        if (changedMusicalAxes(original, abPlan).join(",") !== "bass") continue;
+        const styles = renderStyles(abPlan);
+        const check = validatePrompt(styles, abPlan, peerTexts, peerPlans);
+        if (!allHardGatesPass(check.hardGates)) continue;
+        second = {
+          title: formatTitle(abPlan.seed, abPlan.bpm, abPlan.key, styles.length),
+          seed: abPlan.seed, key: abPlan.key,
+          exclude: (abPlan.exclusions ?? []).join(", "),
+          phrase: abPlan.titlePhrase, bpm: abPlan.bpm, characters: styles.length,
+          styles, plan: abPlan, score: check.score,
+          hardGates: check.hardGates, issues: check.issues,
+        };
+        break;
       }
-      const styles = renderStyles(abPlan);
-      const check = validatePrompt(styles, abPlan, peerTexts, peerPlans);
-      if (!allHardGatesPass(check.hardGates)) {
-        throw new Error("A/B validation failed: " + check.issues.join(", "));
+      if (!second) {
+        throw new Error("A/B cannot find a genre-safe alternate bass articulation within the length limit.");
       }
-      const second: PromptCandidate = {
-        title: formatTitle(abPlan.seed, abPlan.bpm, abPlan.key, styles.length),
-        seed: abPlan.seed,
-        key: abPlan.key,
-        exclude: (abPlan.exclusions ?? []).join(", "),
-        phrase: abPlan.titlePhrase,
-        bpm: abPlan.bpm,
-        characters: styles.length,
-        styles,
-        plan: abPlan,
-        score: check.score,
-        hardGates: check.hardGates,
-        issues: check.issues,
-      };
       prompts.push(second);
       peerTexts.push(second.styles);
       peerPlans.push(second.plan);
