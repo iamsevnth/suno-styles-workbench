@@ -63,14 +63,6 @@ export const TRAP: FamilyLexicon = {
     ["dark melodic intro", "hard 808 drop", "breakdown and final drop with extra hats"],
     ["filtered loop intro", "beat drop with vocal hook", "stripped bridge into full return"],
   ],
-  padding: [
-    "Pitched hi-hat rolls ride over a slow half-time snare.",
-    "The 808 slides between notes, tuned to the key and heavy on the low end.",
-    "Dark piano and bell loops set a cold, nocturnal mood.",
-    "Sparse kicks leave space for the 808 to carry the groove.",
-    "Short stutters and tape stops mark the turns between sections.",
-    "Atmospheric pads sit behind the drums for depth.",
-  ],
   titles: [
     "Midnight Codeine Glow",
     "808 Cathedral",
@@ -132,12 +124,6 @@ export const FUTURE: FamilyLexicon = {
     ["emotional piano intro", "chord-stack build", "euphoric drop with vocal chops"],
     ["vocal verse", "riser into the drop", "second drop with new melody"],
   ],
-  padding: [
-    "Detuned supersaw chords swell and pump with the sidechain.",
-    "Pitched vocal chops carry the main melody in the drop.",
-    "Bright arpeggios and plucks sparkle above the chord stacks.",
-    "The drop lands with huge chords and a deep, steady sub.",
-  ],
   titles: ["Neon Daydream", "Supersaw Sunrise", "Heartglow Drop", "Pastel Skyline", "Wavelength Bloom"],
 };
 
@@ -152,7 +138,7 @@ export const BASS: FamilyLexicon = {
     "festival bass-music production",
   ],
   groove: [
-    "140 BPM half-time stomp",
+    "half-time stomp",
     "sparse sound-system swing",
     "triplet-snare half-time rhythm",
     "stop-start drop rhythm",
@@ -195,12 +181,6 @@ export const BASS: FamilyLexicon = {
     ["dark atmospheric intro", "heavy first drop", "switch-up second drop"],
     ["melodic intro with vocal", "emotional build", "melodic dubstep drop"],
   ],
-  padding: [
-    "The half-time snare lands like a hammer on beat three.",
-    "Mid-bass sounds talk and wobble between sub hits.",
-    "A dark atmospheric bed keeps tension between the heavy sections.",
-    "The second drop switches up the bass sound for contrast.",
-  ],
   titles: ["Sub Pressure Rising", "Concrete Wobble", "Basement Thunder", "Iron Lung Drop", "Sound System Ritual"],
 };
 
@@ -242,12 +222,6 @@ export const RIDDIM: FamilyLexicon = {
   mix: ["bass dry and in your face", "sub mono and steady"],
   master: ["loud, compressed riddim master"],
   arrangement: [["minimal intro", "repetitive riddim drop", "variation drop with new bass sound"]],
-  padding: [
-    "Repetitive bass phrases hammer the same rhythm for hypnotic weight.",
-    "Each bass hit is short and clipped, separated by tight gaps.",
-    "The riddim pattern repeats with small changes in bass tone each time.",
-    "Tight gaps between bass hits make every note land harder.",
-  ],
   titles: ["Riddim Machine", "Stomp Protocol", "Minimal Menace"],
 };
 
@@ -309,13 +283,6 @@ export const DRILL: FamilyLexicon = {
   mix: ["sliding 808s loud and centered", "hats crisp and busy", "vocal aggressive and upfront"],
   master: ["dark, loud drill master"],
   arrangement: [["eerie piano intro", "drill beat entry", "verse-hook-verse with beat switch"]],
-  padding: [
-    "Sliding 808s glide between notes under skippy, syncopated hats.",
-    "The snare lands late on beat three for a tense drill bounce.",
-    "Dark piano and strings set a cold, ominous mood.",
-    "Dark strings and choir pads give the beat a cold, cinematic tension.",
-    "Off-kilter rims and choppy hats keep the drill bounce restless.",
-  ],
   titles: ["Concrete Slide", "Block Winter", "Midnight Slide Pattern", "Cold Estate"],
 };
 
@@ -373,12 +340,6 @@ export const PHONK: FamilyLexicon = {
   mix: ["heavily saturated low end", "cowbell bright and upfront", "crunchy lo-fi drum bus"],
   master: ["loud, distorted phonk master"],
   arrangement: [["lo-fi sample intro", "cowbell drop", "distorted switch-up finale"]],
-  padding: [
-    "Distorted cowbell melodies drive the track over crunchy 808s.",
-    "Pitched-down vocal samples and cassette hiss give it a dark Memphis feel.",
-    "Cowbell riffs carry the melody over a pounding, saturated low end.",
-    "Tape warble and lo-fi grit give the track a raw underground feel.",
-  ],
   titles: ["Drift King Cowbell", "Memphis Haze", "Midnight Drift"],
 };
 
@@ -434,11 +395,5 @@ export const RITUAL: FamilyLexicon = {
   mix: ["drums huge and cavernous", "drones wide and low"],
   master: ["dark, wide ritual master"],
   arrangement: [["chant opening", "processional build", "ritual climax with full drums"]],
-  padding: [
-    "Ceremonial drums and chants build like a slow procession.",
-    "Cavernous reverb gives every hit a temple-sized echo.",
-    "Chant layers and drones build a hypnotic, trance-like atmosphere.",
-    "Heavy frame drums and metal percussion give the rhythm a primal weight.",
-  ],
   titles: ["Temple Of Sub", "Ritual Fire", "Obsidian Procession"],
 };

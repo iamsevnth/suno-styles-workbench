@@ -1,25 +1,25 @@
 import { conceptsOf, dedupeByConcept, dedupeSimilar, genreClause, isCovered, joinList, reconcileMoods, sentenceCase } from "./blend.ts";
 import { familyKeys, fitsFamilies, hasDrops } from "./families.ts";
 import {
-  FAMILY_PADDING,
   FEELS,
-  MICROS,
   oneFamily,
-  PADDING,
-  RAP_PADDING,
   PRODUCTION,
   PRODUCTION_VERBS,
   VOCAL_ARC,
   VOCAL_STYLE,
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
+import { renderNative } from "./native/compose.ts";
 import { SonicPlan } from "./types.ts";
 
-export const MIN_CHARS = 925;
-export const MAX_CHARS = 975;
-
-/** Last-resort pad, worded so it fits any genre. */
-export const FINAL_PAD = "Translation stays clear on every playback system.";
+/**
+ * Suno's Styles field takes 1,000 characters, and 750-900 is where prompts stay specific without
+ * diluting. The renderers aim inside this window; nothing is ever padded to reach it.
+ */
+export const MIN_CHARS = 750;
+export const MAX_CHARS = 900;
+/** The hard cap of the Styles field. */
+export const HARD_MAX_CHARS = 1000;
 
 const RAP_STYLES = new Set([
   "rap",
@@ -33,34 +33,8 @@ const RAP_STYLES = new Set([
   "lyrical-rap",
 ]);
 
-/** Lines in RAP_PADDING that only fit some rap styles; any other line fits every rap style. */
-const RAP_PADDING_STYLES: [RegExp, string[]][] = [
-  [/SoundCloud|skrrt/i, ["mumble-rap", "soundcloud-rap"]],
-  [/talk-rap/i, ["talk-rap"]],
-  [/Lyrical bars/i, ["lyrical-rap"]],
-  [/Sung-rap melodic topline/i, ["melodic-rap", "sung-rap", "sing-rap"]],
-  [/Autotuned pitch snaps|Fast retune auto-tune/i, ["autotuned-rap", "melodic-rap", "mumble-rap"]],
-  [
-    /rap pocket with unison doubles|lead stays in rap cadence|rather than vocal harmonizing|tight, chanted stack/i,
-    ["rap", "lyrical-rap", "talk-rap", "autotuned-rap"],
-  ],
-];
-
-/** Instrumentals skip sentences about singers; rap leads skip sentences about sung harmony. */
-function suitsVocal(sentence: string, plan: SonicPlan): boolean {
-  if (!plan.vocals.present) return !/vocal|singing|harmon|sung|choir|chant/i.test(sentence);
-  if (hasRapVocal(plan)) return !/harmon|singing|choir|sung/i.test(sentence);
-  return true;
-}
-
 function hasRapVocal(plan: SonicPlan): boolean {
   return plan.vocals.present === true && RAP_STYLES.has(plan.vocals.style ?? "");
-}
-
-function rapPaddingFor(style: string | undefined): string[] {
-  return RAP_PADDING.filter((line) =>
-    RAP_PADDING_STYLES.every(([pattern, styles]) => !pattern.test(line) || styles.includes(style ?? ""))
-  );
 }
 
 /**
@@ -146,6 +120,7 @@ function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
 }
 
 export function renderStyles(plan: SonicPlan): string {
+  if (plan.native) return renderNative(plan);
   let text = compose(plan);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   if (!hasDrops(families)) text = sanitizeNonDropWording(text);
@@ -155,7 +130,7 @@ export function renderStyles(plan: SonicPlan): string {
 /**
  * Final semantic guardrail for song/world/ambient families. Phrase banks already filter drop language,
  * but this protects against a future renderer or padding phrase reintroducing it. The replacements
- * preserve length, so the 925–975 character window remains unchanged.
+ * preserve length, so the 750–900 character window remains unchanged.
  */
 function sanitizeNonDropWording(text: string): string {
   return text
@@ -170,7 +145,7 @@ function sanitizeNonDropWording(text: string): string {
 /*   1 genre blend + BPM + mood   2 drums & groove   3 bass   4 harmony / melody / texture         */
 /*   5 instrumentation   6 vocals   7 arrangement   8 mix                                         */
 /* The plan decides WHAT is said; this file decides the order, the connective wording and how     */
-/* much of each section fits in the 925–975 character window.                                    */
+/* much of each section fits in the 750–900 character window.                                    */
 /* -------------------------------------------------------------------------------------------- */
 
 /** How many items each section may list. The renderer starts at FULL and shrinks or grows from there. */
@@ -242,20 +217,22 @@ function compose(plan: SonicPlan): string {
     mixLead: Math.floor(rng() * MIX_LEADS.length),
     vocal: vocalSection(plan, rng, fits, Math.floor(rng() * 4)),
     moodPhrase: plan.moodPhrase ?? reconcileMoods([plan.moodPrimary, plan.moodSecondary ?? ""].filter(Boolean))?.phrase ?? plan.moodPrimary,
-    genreText: genreClause(plan.primaryGenre, supporting),
+    genreText:
+      genreClause(plan.primaryGenre, supporting) +
+      (plan.unknownGenres?.length ? ` with ${plan.unknownGenres.join(" and ")} influences` : ""),
     isBassMusic: hasDrops(families),
   };
 
   const anchors = anchorsToCheck(plan);
-  const build = (detail: Detail, extras: string[], pads: string[]) => assemble(plan, choices, detail, extras, pads, keepCaps);
+  const build = (detail: Detail, extras: string[]) => assemble(plan, choices, detail, extras, keepCaps);
   const covers = (text: string, anchor: string) =>
     hasAnchor(text, anchor) || (!VOCAL_ANCHOR.test(anchor) && !namesInstrument(anchor) && isCovered(text, anchor));
   const missingIn = (text: string) => anchors.filter((a) => !/\bBPM\b/i.test(a) && !covers(text, a));
 
   // Brief elements the plan's sections never mention join the instrumentation list instead of a filler sentence.
   const detail: Detail = { ...FULL };
-  const extras = missingIn(build(detail, [], []));
-  let text = build(detail, extras, []);
+  const extras = missingIn(build(detail, []));
+  let text = build(detail, extras);
 
   // 1. Over the window: remove detail, never an anchor the brief asked for.
   for (const strict of [true, false]) {
@@ -263,7 +240,7 @@ function compose(plan: SonicPlan): string {
       if (text.length <= MAX_CHARS) break;
       if (detail[key] <= value) continue;
       const trial = { ...detail, [key]: value };
-      const next = build(trial, extras, []);
+      const next = build(trial, extras);
       if (strict && anchors.some((a) => covers(text, a) && !covers(next, a))) continue;
       Object.assign(detail, trial);
       text = next;
@@ -276,20 +253,9 @@ function compose(plan: SonicPlan): string {
       if (text.length >= MIN_CHARS) break;
       if (detail[key] >= value) continue;
       const trial = { ...detail, [key]: value };
-      const next = build(trial, extras, []);
+      const next = build(trial, extras);
       if (next.length <= MAX_CHARS && next.length > text.length) {
         Object.assign(detail, trial);
-        text = next;
-      }
-    }
-  }
-  const pads: string[] = [];
-  if (text.length < MIN_CHARS) {
-    for (const pad of padCandidates(plan, families, text, rng)) {
-      if (text.length >= MIN_CHARS) break;
-      const next = build(detail, extras, [...pads, pad]);
-      if (next.length <= MAX_CHARS) {
-        pads.push(pad);
         text = next;
       }
     }
@@ -329,7 +295,6 @@ const INSTRUMENT_INTROS = [
   "Instrumentation features",
   "Arranged with",
   "Instrumentation is built around",
-  "Acoustic palette includes",
 ];
 
 const ARRANGEMENT_FORMS = ["The arrangement moves through", "The record unfolds as", "Form runs through"];
@@ -357,7 +322,6 @@ function assemble(
   c: Choices,
   d: Detail,
   extras: string[],
-  pads: string[],
   keepCaps: string[]
 ): string {
   const sentences: string[] = [];
@@ -367,7 +331,11 @@ function assemble(
 
   // 1. Primary genre, tempo and feel; the supporting genres carry explicit roles.
   const prod = d.prod > 0 ? `, delivered as ${c.prod}` : "";
-  sentences.push(`${plan.bpm} BPM ${c.genreText}, ${c.moodPhrase}${prod}.`);
+  // A mood the genre name already says ("Dark Trap, dark") is not repeated.
+  const genreWords = new Set(c.genreText.toLowerCase().match(/[a-z]+/g) ?? []);
+  const moodWords = c.moodPhrase.toLowerCase().match(/[a-z]+/g) ?? [];
+  const mood = moodWords.length && moodWords.every((w) => genreWords.has(w)) ? "" : `, ${c.moodPhrase}`;
+  sentences.push(`${plan.bpm} BPM ${c.genreText}${mood}${prod}.`);
 
   // 2. Drums and groove.
   const drums = claim(take(plan.drums, d.drums));
@@ -412,9 +380,6 @@ function assemble(
   for (const stage of stages) if (keep.size < Math.min(2, stages.length)) keep.add(stage);
   const arr = stages.filter((stage) => keep.has(stage));
   if (arr.length) sentences.push(`${ARRANGEMENT_FORMS[c.arrForm % ARRANGEMENT_FORMS.length]} ${arr.join(", then ")}.`);
-
-  // Genre sentences that top up the length sit just before the mix so the mix stays last.
-  sentences.push(...pads);
 
   // 8. Mix and finish.
   // A mix note that re-names a sound the sections above already described ("kick and 808 carved apart"
@@ -482,43 +447,6 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
       : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
   const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][variant % 3];
   return vocalSentence(intro, identity, v, stylePhrase, arc);
-}
-
-/**
- * Sentences that top a short prompt up to the window, best first: the genre's own, then neutral ones.
- * A sentence is skipped when the sounds it names are already in the text, so padding never repeats a section.
- */
-function padCandidates(plan: SonicPlan, families: string[], text: string, rng: () => number): string[] {
-  const fits = (phrase: string) => fitsFamilies(phrase, families);
-  const present = conceptsOf(text);
-  const fresh = (sentence: string) => {
-    const concepts = [...conceptsOf(sentence)];
-    return concepts.length === 0 || concepts.some((k) => !present.has(k));
-  };
-  const familyPadding = families.flatMap((f) => FAMILY_PADDING[f] ?? []).filter((p) => suitsVocal(p, plan));
-  const genericPadding = hasRapVocal(plan)
-    ? [
-        ...rapPaddingFor(plan.vocals.style),
-        ...PADDING.filter((p) => !/harmonies|singing|belting|chorus belt|pads, harmonies|chord stacks bloom/i.test(p)),
-      ]
-    : PADDING;
-  const shuffled = (list: string[]) =>
-    list
-      .map((e, i) => ({ e, i: (rng() * 1000 + i) % list.length }))
-      .sort((a, b) => a.i - b.i)
-      .map((x) => x.e);
-  const ordered = [
-    ...shuffled(familyPadding),
-    ...shuffled(genericPadding.filter((p) => !/vocal|singing|harmonies|sung/i.test(p))),
-    ...MICROS,
-  ].filter(fits);
-  const out: string[] = [];
-  for (const sentence of ordered) {
-    if (!fresh(sentence) || out.includes(sentence)) continue;
-    out.push(sentence);
-  }
-  // Last resorts, used only when everything above has been tried.
-  return [...out, FINAL_PAD];
 }
 
 function feelPhrase(feel: string, families: string[], rng: () => number): string {

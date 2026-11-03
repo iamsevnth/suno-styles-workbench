@@ -55,6 +55,8 @@ import { VARIANT_PRESETS, VariantPreset } from "./presets.ts";
 import { expandMood, GENRES, matchGenre } from "./ontology.ts";
 import { PROFILE } from "./profile.ts";
 import { mulberry32, pick } from "./rng.ts";
+import { buildNativePlan } from "./native/compose.ts";
+import { isBassWorld, nonEdmBleed } from "./consistency.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
 
 export function buildPlans(
@@ -93,6 +95,13 @@ export function buildOnePlan(
     attempt?: number;
   } = {}
 ): SonicPlan {
+  if (parsed.native) {
+    return buildNativePlan(parsed, seed, {
+      variantIndex,
+      diversityRank: options.diversityRank,
+      attempt: options.attempt,
+    });
+  }
   const rngSeed = seed >>> 0;
   const rng = mulberry32(rngSeed);
   const rank = options.diversityRank ?? variantIndex;
@@ -271,6 +280,17 @@ export function buildOnePlan(
     titlePhrase,
   ].join("|");
 
+  // A brief that asks for acoustic guitar never gets an electric one added next to it.
+  const acousticOnly = /\b(?:acoustic|nylon|classical|steel-string)\b/i.test(parsed.raw) && !/\belectric\b/i.test(parsed.raw);
+  const noElectricOnly = (list: string[]) => (acousticOnly ? list.filter((x) => !/\b(?:electric|distorted|overdriven) guitars?\b/i.test(x)) : list);
+  // Bass music, club and rap never pick up acoustic, band or lo-fi phrases the brief did not ask for.
+  const bassWorld = isBassWorld(familyKeys([primaryGenre, secondaryGenre, accentGenre]), undefined, false);
+  const allowed = [parsed.raw, primaryGenre, secondaryGenre, accentGenre].filter(Boolean).join(" ");
+  const noElectric = (list: string[]) => {
+    const kept = noElectricOnly(list);
+    return bassWorld ? kept.filter((x) => nonEdmBleed(x, allowed).length === 0) : kept;
+  };
+
   return {
     bpm,
     key: parsed.key,
@@ -282,23 +302,26 @@ export function buildOnePlan(
     moodSecondary,
     moodPhrase: reconciled?.phrase,
     bpmNotes: bpmNotes([primaryGenre, secondaryGenre, accentGenre].filter((g): g is string => Boolean(g)), bpm),
-    atmosphere: unique(atmosphere).slice(0, 3),
+    atmosphere: noElectric(unique(atmosphere)).slice(0, 3),
     metricFeel,
     groove,
-    drums,
-    bass,
-    bassBehavior,
-    harmony,
-    melody,
-    instruments,
+    drums: noElectric(drums),
+    bass: noElectric(bass),
+    bassBehavior: noElectric(bassBehavior),
+    harmony: noElectric(harmony),
+    melody: noElectric(melody),
+    instruments: noElectric(instruments),
     vocals,
-    arrangement,
-    soundDesign,
-    mix,
+    arrangement: noElectric(arrangement),
+    // The brief's own textures and scenes come first, in its own words.
+    soundDesign: noElectric(unique([...(parsed.textures ?? []), ...(parsed.scenes ?? []).map((sc) => `${sc} ambience`), ...soundDesign])),
+    mix: noElectric(mix),
     master,
     titlePhrase,
     anchors,
     recipeId,
+    briefText: parsed.raw,
+    unknownGenres: parsed.unknownGenres?.length ? parsed.unknownGenres : undefined,
     variantAxes: [...preset.axes, `seed:${seed % 1000}`, `recipe:${recipeId.slice(0, 48)}`],
     seed: rngSeed,
   };
@@ -396,24 +419,9 @@ function diversifyGenres(
     if (band === "unhinged" && genres.length < 3) {
       const extra = pickFaithfulAccent(rng, pool, locked, genres, "unhinged", parsed.bpm, allowed);
       if (extra) genres.push(extra.name);
-    } else if (genres.length === 1) {
-      // The accent must share the brief's drop-or-song character: an ambient brief gets no bass-music accent.
-      const lockedFamilies = familyKeys(locked);
-      const lockedHasDrops = hasDrops(lockedFamilies);
-      // UKG and UK garage never stand in for each other, and a UKG brief keeps its trap drums and
-      // sub pressure: its accent may add trap but not wobble, riddim or other bass-music families.
-      const sameCharacter = (g: { name: string }) => {
-        if (!allowed(g)) return false;
-        const families = familyKeys([g.name]);
-        if (hasDrops(families) !== lockedHasDrops) return false;
-        if (lockedFamilies.includes("ukg")) {
-          return families.every((f) => f === "ukg" || f === "trap" || lockedFamilies.includes(f));
-        }
-        return !(lockedFamilies.includes("garage") && families.includes("ukg"));
-      };
-      const extra = pickFaithfulAccent(rng, pool, locked, genres, "tame", parsed.bpm, sameCharacter);
-      if (extra) genres.push(extra.name);
     }
+    // A single named genre stays a single genre: variants change the lead, vocal approach and era,
+    // never invent an accent the brief did not ask for.
     return genres.slice(0, 3);
   }
 
@@ -463,6 +471,9 @@ function buildAnchors(parsed: ParsedInput, bpm: number): string[] {
   for (const h of parsed.drumHints) anchors.push(h);
   for (const h of parsed.soundDesignHints) anchors.push(h);
   for (const h of parsed.instruments.slice(0, 4)) anchors.push(h);
+  for (const h of parsed.instrumentPhrases ?? []) anchors.push(h);
+  for (const h of parsed.textures ?? []) anchors.push(h);
+  for (const h of parsed.scenes ?? []) anchors.push(h);
   // Only the moods the reconciled phrase keeps are anchors; a dropped contradiction is not a requirement.
   const mood = reconcileMoods(parsed.moods);
   for (const m of parsed.moods) if (mood && new RegExp(`\\b${m}\\b`, "i").test(mood.phrase)) anchors.push(m);
@@ -491,7 +502,8 @@ function buildAnchors(parsed: ParsedInput, bpm: number): string[] {
   else if (parsed.vocals?.style === "rap") anchors.push("rap");
   else if (parsed.vocals?.style === "sung") anchors.push("sung");
   if (parsed.vocals?.language) anchors.push(parsed.vocals.language);
-  return [...new Set(anchors)];
+  const acousticOnly = /\b(?:acoustic|nylon|classical|steel-string)\b/i.test(parsed.raw) && !/\belectric\b/i.test(parsed.raw);
+  return [...new Set(anchors)].filter((a) => !(acousticOnly && /\b(?:electric|distorted|overdriven) guitars?\b/i.test(a)));
 }
 
 function pickTitle(
@@ -877,7 +889,8 @@ function buildArrangement(energy: string, families: string[], parsed: ParsedInpu
 
 function buildMix(families: string[], parsed: ParsedInput, rng: () => number): string[] {
   const m = [...parsed.mixHints];
-  m.push("centered mono low end", "wide harmonic upper field");
+  // Low-end and width language is only boilerplate-safe for club and bass families.
+  if (hasDrops(families)) m.push("centered mono low end", "wide harmonic upper field");
   const familyMix = families.flatMap((f) => FAMILY_MIX[f] ?? []);
   if (familyMix.length) m.push(...[...familyMix].sort(() => rng() - 0.5).slice(0, 2));
   const fits = (x: string) => fitsFamilies(x, families);

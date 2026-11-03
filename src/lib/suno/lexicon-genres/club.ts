@@ -70,16 +70,6 @@ export const HOUSE: FamilyLexicon = {
     ["kick and hats intro", "bassline entry with vocal hook", "extended outro for mixing"],
     ["pad-led breakdown", "snare-roll build", "peak-time drop with full chords"],
   ],
-  padding: [
-    "The kick sits on every beat while open hats answer on the offbeats, keeping the floor moving.",
-    "Filter automation opens the chords gradually, so each section feels brighter than the last.",
-    "Shakers and congas add human swing on top of a grid-tight kick.",
-    "The breakdown strips back to pads and vocal before the full groove returns.",
-    "A rolling bassline answers the kick between beats, sidechained so both stay clear.",
-    "Percussion builds in sixteen-bar phrases, made for long DJ blends.",
-    "Organ and piano stabs land on the offbeat for a classic dance-floor lift.",
-    "Warm saturation on the drum bus gives the groove a vintage drum-machine feel.",
-  ],
   titles: [
     "Warehouse Lights",
     "Four To The Floor",
@@ -156,14 +146,6 @@ export const GARAGE: FamilyLexicon = {
     ["shuffled drum intro", "soulful vocal hook", "organ-stab breakdown and return"],
     ["filtered intro", "sub-heavy second section", "4x4 switch-up for the final run"],
   ],
-  padding: [
-    "Swung hats and skipping kicks give the groove its rolling garage lilt.",
-    "Chopped and pitched vocal hooks bounce around the beat as a second rhythm part.",
-    "Warm organ and Rhodes stabs bring a soulful late-night color.",
-    "The sub sits deep and round, leaving the swung percussion crisp on top.",
-    "Ghost kicks and offbeat rimshots keep the shuffle light on its feet.",
-    "City-night ambience and vinyl texture add a pirate-radio warmth.",
-  ],
   titles: [
     "South London Shuffle",
     "Two Step Midnight",
@@ -189,7 +171,7 @@ export const BREAKS: FamilyLexicon = {
   groove: [
     "rolling two-step breakbeat",
     "fast chopped Amen-style breaks",
-    "160 BPM footwork triplet stutter",
+    "footwork triplet stutter",
     "Jersey club bed-squeak kick pattern",
     "half-time DnB weight",
     "ghost-note heavy break rolls",
@@ -241,14 +223,6 @@ export const BREAKS: FamilyLexicon = {
     ["atmospheric intro", "rolling first drop", "breakdown into a harder second drop"],
     ["break-led intro", "vocal verse over half-time drums", "full-tempo switch-up"],
     ["pad and vocal intro", "liquid roller section", "DJ-friendly outro"],
-  ],
-  padding: [
-    "Chopped breakbeats roll under the track, full of ghost notes and quick fills.",
-    "The snare cracks hard on two and four while the kicks chase it in syncopation.",
-    "A deep sub rolls underneath the breaks, kept clean so the drums can run fast.",
-    "Atmospheric pads hold long chords above the busy drums for contrast.",
-    "Edits, stutters and spinbacks mark the turns between sections.",
-    "Fast hats and rides keep the energy high from the first bar.",
   ],
   titles: [
     "Amen Rush",

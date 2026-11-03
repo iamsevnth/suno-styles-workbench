@@ -1,4 +1,5 @@
 import { mulberry32, pick, pickN } from "../suno/rng.ts";
+import { ARTIST_LEAK_RE } from "../suno/validate.ts";
 import {
   GeneratedLyrics,
   GeneratedSection,
@@ -48,6 +49,40 @@ const RHYME_POOLS: Record<string, RhymeBank> = {
       "Sweeping up the ashes of a dream that had to pop",
       "Running through the wreckage with a vision on the lock",
       "Standing on the rooftop while the sirens ring the clock",
+    ],
+  },
+  songAcoustic: {
+    a: [
+      "The porch light flickers where the evening settles in",
+      "Dust on the dashboard and a song about where we've been",
+      "Coffee going cold by the window pane",
+      "Every little road still knows your name",
+      "Boots by the door and a map I never learned",
+      "Letters in a drawer that I never could burn",
+    ],
+    b: [
+      "I kept the faded photograph inside my coat",
+      "Counting all the miles on a borrowed boat",
+      "Every winter promise that we wrote",
+      "Hummed a quiet hymn to keep the cold remote",
+      "Sunlight on the floorboards, slow and gold",
+      "Stories that the years were never meant to hold",
+    ],
+    c: [
+      "Sing it like the river sings when it's finally free",
+      "Carry what you can and leave the rest to me",
+      "We were younger then, but we were wild and clear",
+      "Every open window brings the morning near",
+      "Hold the line a little longer, hold it here",
+      "Nothing left to prove and nothing left to fear",
+    ],
+    d: [
+      "So we sing it loud for the ones who stayed",
+      "Every broken promise that was finally made",
+      "Lift the light a little higher, let it blaze",
+      "Walking out of yesterday and into better days",
+      "Carry me home when the evening falls",
+      "Hear it echo down the empty halls",
     ],
   },
   futureEmotional: {
@@ -416,13 +451,22 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
 
   const theme = params.theme.trim() || "Midnight Drive Through the Heavy Bass City";
   const genre = (params.genre || "Hybrid Bass / Trapstep").toLowerCase();
+  const nonBass = !BASSY_GENRE_RE.test(genre);
+  const keywords = themeKeywords(theme);
+  const ctx: LineContext = { keywords, used: new Set<string>(), nonBass, hook: undefined };
+  if (keywords.length) ctx.hook = hookLine(keywords.find((w) => !w.endsWith("ing")) ?? keywords[0], rng, RAP_SONG_RE.test(genre));
   const delivery = params.delivery || "Sung Melodic to Belt";
   const scheme = params.rhymeScheme || "AABB";
   const includeTags = params.includePerformanceTags !== false;
 
   // Pick rhyme pool based on genre & theme
   let rhymePoolKey = "darkBass";
-  if (genre.includes("future") || genre.includes("melodic") || genre.includes("pop")) {
+  const rapSong = RAP_SONG_RE.test(genre);
+  if (rapSong) {
+    rhymePoolKey = "trapStreet";
+  } else if (nonBass && /folk|country|acoustic|indie|rock|punk|metal|singer|americana|blues|gospel/.test(genre)) {
+    rhymePoolKey = "songAcoustic";
+  } else if (genre.includes("future") || genre.includes("melodic") || genre.includes("pop")) {
     rhymePoolKey = "futureEmotional";
   } else if (genre.includes("r&b") || genre.includes("soul") || genre.includes("lo-fi")) {
     rhymePoolKey = "rnbSoul";
@@ -537,6 +581,14 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
     }
   }
 
+  // Songs without drops get no build-up or drop sections; a rap song keeps its pre-hook but has no drop.
+  if (rapSong) {
+    for (let i = plan.length - 1; i >= 0; i--) if (plan[i].type === "drop") plan.splice(i, 1);
+  }
+  if (rhymePoolKey === "songAcoustic") {
+    for (let i = plan.length - 1; i >= 0; i--) if (plan[i].type === "drop" || plan[i].type === "buildup") plan.splice(i, 1);
+  }
+
   // Generate each planned section
   const totalOfEachType: Record<string, number> = {};
   for (const p of plan) {
@@ -550,6 +602,10 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
 
     // Label & Tag
     let label = item.customLabel;
+    if (!label && rapSong && (sType === "chorus" || sType === "buildup")) {
+      // Rap songs call the chorus a hook and the build-up a pre-hook, unnumbered like the tags they feed.
+      label = sType === "chorus" ? "Hook" : "Pre-Hook";
+    }
     if (!label) {
       if (totalOfEachType[sType] > 1) {
         label = `${capitalize(sType === "buildup" ? "Build Up" : sType)} ${item.index}`;
@@ -557,7 +613,8 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
         label = capitalize(sType === "buildup" ? "Build Up" : sType);
       }
     }
-    const tag = `[${label}]`;
+    const direction = includeTags ? voiceDirection(sType, item.index, params, genre) : "";
+    const tag = direction ? `[${label} | ${direction}]` : `[${label}]`;
 
     const isRapDelivery =
       /rap|mumble|autotune|sung-rap|sing-rap|lyrical|bars|talk-rap|spoken|chopper|drill|trap|boom bap/i.test(
@@ -573,7 +630,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
             "(low-pass filtered intro, atmospheric sub rumble, producer tag)",
             "(close-mic vocal intro, cold ad-libs: yeah, listen)",
             "(dry spoken count-in, 808 pre-drop tease)",
-            "(telephone EQ vocals, vinyl static, spaced-out cadence)",
+            "(telephone EQ vocals, filtered noise bed, spaced-out cadence)",
           ]);
         } else if (sType === "verse") {
           if (/mumble/i.test(delivery)) {
@@ -591,7 +648,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
           } else if (/sung-rap|sing-rap/i.test(delivery)) {
             performanceNote = pick(rng, [
               "(melodic sung-rap trap flow, pitched cadence in the pocket, no choir)",
-              "(Drake/Juice WRLD inspired sung-rap delivery, rhythmic bounce, autotuned sheen)",
+              "(melodic sung-rap delivery, rhythmic bounce, autotuned sheen)",
               "(vibey nocturnal sing-rap pocket, tight delay throws, strictly rap timing)",
             ]);
           } else if (/lyrical|bars|chopper/i.test(delivery)) {
@@ -638,7 +695,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
             performanceNote = pick(rng, [
               "(hard-tuned hook anthem, metallic pitch snaps, wide stereo ad-lib echoes)",
               "(saturated autotune chant hook, robotic octave doubles, zero choir singing)",
-              "(Travis Scott-style cavernous autotuned hook, reverb throw ad-libs)",
+              "(cavernous autotuned hook, reverb throw ad-libs)",
             ]);
           } else if (/sung-rap|sing-rap/i.test(delivery)) {
             performanceNote = pick(rng, [
@@ -668,7 +725,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
         } else if (sType === "breakdown") {
           performanceNote = pick(rng, [
             "(drums cut out, solo 808 sub rumble, dry conversational spoken bars)",
-            "(low-pass filtered sample, quiet mumble ad-libs, intimate street confession)",
+            "(low-pass filtered synth, quiet mumble ad-libs, intimate street confession)",
             "(sparse bass break, lead MC spoken reflection, zero sung harmonies)",
             "(filtered synth keys, whispered punchline, tension gathering for drop)",
           ]);
@@ -684,18 +741,22 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
             "(drums fade, lingering sub rumble, conversational talk-rap sign-off)",
             "(fading 808 slides, quiet ad-lib echoes: yeah... let it ride...)",
             "(slurred mumble vocal trailing into delay, solo 808 hits into silence)",
-            "(spoken street sign-off, vinyl crackle fade, zero vocal harmonies)",
+            "(spoken street sign-off, reverb tail fade, zero vocal harmonies)",
           ]);
         }
       } else {
-        performanceNote = pick(rng, tpl.performanceNotes);
+        const acoustic = ACOUSTIC_NOTES[sType];
+        const notes = rhymePoolKey === "songAcoustic" && acoustic ? acoustic : nonBass ? tpl.performanceNotes.filter((x) => !BASS_LINE_RE.test(x)) : tpl.performanceNotes;
+        performanceNote = pick(rng, notes.length ? notes : tpl.performanceNotes);
       }
     }
 
     // Check if user draft lyrics can be incorporated
     let lines: string[] = [];
+    let fromDraft = false;
 
     if (draftInfo.userStanzas.length > userStanzaIdx) {
+      fromDraft = true;
       const stanza = draftInfo.userStanzas[userStanzaIdx];
       userStanzaIdx++;
       // If stanza has enough lines, use it
@@ -705,7 +766,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
         // Expand user stanza with rhyming continuations
         lines = [...stanza];
         const needed = targetLineCount - stanza.length;
-        const extra = generateLinesForSection(sType, needed, rhymePool, scheme, theme, rng);
+        const extra = generateLinesForSection(sType, needed, rhymePool, scheme, theme, rng, item.index, ctx);
         lines.push(...extra);
       }
     } else {
@@ -717,9 +778,12 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
         scheme,
         theme,
         rng,
-        item.index
+        item.index,
+        ctx
       );
     }
+
+    if (rapSong && !fromDraft) lines = withAdLibs(sType, lines, rapStyleLabel(delivery, genre).sung, rng);
 
     sections.push({
       type: sType,
@@ -747,7 +811,7 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
   const fullText = fullTextBlocks.join("\n\n");
 
   // Title calculation
-  const titleWords = theme.split(/\s+/).slice(0, 5).join(" ");
+  const titleWords = theme.replace(new RegExp(ARTIST_LEAK_RE.source, "gi"), " ").trim().split(/\s+/).slice(0, 5).join(" ");
   const title = capitalizeWords(titleWords || "Untitled Suno Track");
 
   return {
@@ -760,6 +824,165 @@ export function generateLyrics(params: LyricsGenParams): GeneratedLyrics {
   };
 }
 
+interface LineContext {
+  keywords: string[];
+  /** Every line already used in the song, so no line repeats except the chorus hook. */
+  used: Set<string>;
+  nonBass: boolean;
+  hook?: string;
+}
+
+/** Performance cues for songs built on acoustic instruments, in place of the club-leaning defaults. */
+const ACOUSTIC_NOTES: Partial<Record<SectionType, string[]>> = {
+  intro: ["(solo acoustic guitar, room tone)", "(hummed melody over soft fingerpicking)"],
+  verse: ["(close-mic, conversational delivery)", "(intimate and steady, guitar upfront)"],
+  chorus: ["(open-throated, doubled harmonies, full band)", "(wide stacked harmonies, strummed chords)"],
+  breakdown: ["(guitar alone, whispered phrasing)", "(stripped to voice and one instrument)"],
+  bridge: ["(rising dynamics, held notes, drums return)", "(exposed vocal, building strum)"],
+  outro: ["(slow fade, last chord ringing)", "(hummed refrain, guitar tail)"],
+};
+
+const BASSY_GENRE_RE = /bass|trap|drill|dubstep|brostep|drumstep|phonk|riddim|grime|dnb|drum and|drum &|garage|ukg|hybrid|wobble|wub|rap|hip|baile|moombah|glitch|edm|ritual|club/;
+const BASS_LINE_RE = /\b(?:sub|sub-bass|bass|808s?|drops?|supersaws?|chord stacks?|frequency|low-end|speaker|dial turning)\b/i;
+
+const LYRIC_STOP = new Set([
+  "song", "songs", "music", "track", "tracks", "tune", "tunes", "vibe", "vibes",
+  "the", "and", "for", "with", "that", "this", "from", "into", "about", "song", "track", "lyrics", "write", "make", "about",
+  "your", "their", "have", "will", "when", "where", "what", "feel", "feels", "like", "over", "under", "between", "through",
+  "music", "style", "sound", "heavy", "bass", "drop", "vocal", "vocals", "female", "male", "mood", "theme",
+  "behind", "after", "before", "above", "below", "just", "more", "still", "some", "them", "then", "than", "been", "were", "they", "very", "much",
+]);
+
+/** Up to four content words from the theme, never an artist name. */
+export function themeKeywords(theme: string): string[] {
+  const clean = theme.replace(new RegExp(ARTIST_LEAK_RE.source, "gi"), " ");
+  const out: string[] = [];
+  for (const w of clean.toLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? []) {
+    if (LYRIC_STOP.has(w) || out.includes(w)) continue;
+    out.push(w);
+    if (out.length === 4) break;
+  }
+  return out;
+}
+
+const THEME_LINES = [
+  "{K}, that's the word I can't shake",
+  "I hear it in the quiet: {k}",
+  "Somewhere between {k} and the morning",
+  "Say it again, {k}, say it like you mean it",
+  "All of this was always about {k}",
+  "Nothing sounds like {k} at the end of the night",
+  "One more verse for {k}, then I'm gone",
+  "{K} and me, we've got nothing left to hide",
+  "I wrote down {k} on the back of my hand",
+  "Funny how {k} finds you when you stop looking",
+];
+
+const HOOK_LINES = [
+  "Hold on to {k}, don't let it fade",
+  "We were born for {k}, we were never afraid",
+  "Sing it for {k} till the night gives way",
+  "Take me back to {k}, just for today",
+];
+
+function fill(template: string, kw: string): string {
+  return template.replace("{k}", kw).replace("{K}", kw.charAt(0).toUpperCase() + kw.slice(1));
+}
+
+const RAP_HOOK_LINES = [
+  "Run it back for {k}, run it back again",
+  "{K} on my mind and I can't let it go",
+  "Say it for {k}, say it one more time",
+  "All I ever wanted was {k}, now it's mine",
+];
+
+function hookLine(kw: string, rng: () => number, rap = false): string {
+  return fill(pick(rng, rap ? RAP_HOOK_LINES : HOOK_LINES), kw);
+}
+
+/** A themed line that has not been used yet. */
+function themeLine(ctx: LineContext, rng: () => number, n: number): string | undefined {
+  if (!ctx.keywords.length) return undefined;
+  for (let i = 0; i < 12; i++) {
+    const kw = ctx.keywords[(n + i) % ctx.keywords.length];
+    const line = fill(pick(rng, THEME_LINES), kw);
+    if (!ctx.used.has(line)) return line;
+  }
+  return undefined;
+}
+
+
+/** A rap song: the genre says rap, hip-hop, trap or drill, or an autotuned sung-rap. Dance trap-steps are not. */
+const RAP_SONG_RE = /\brap\b|sung[- ]?rap|sing[- ]?rap|hip[- ]?hop|\btrap\b|drill|autotun/i;
+
+/** The tag wording for the rap style the brief asked for ("autotuned sung-rap"). */
+function rapStyleLabel(delivery: string, genre: string): { label: string; sung: boolean } {
+  const said = `${delivery} ${genre}`.toLowerCase();
+  const auto = /auto-?tun/.test(said);
+  if (/sung[- ]?rap|sing[- ]?rap|melodic (?:rap|trap|sing)/.test(said)) return { label: auto || /sung[- ]?rap/.test(said) ? "autotuned sung-rap" : "sung-rap", sung: true };
+  if (/mumble/.test(said)) return { label: "mumble rap", sung: false };
+  if (auto) return { label: "autotuned rap", sung: false };
+  if (/lyrical|bars|chopper|internal rhymes/.test(said)) return { label: "lyrical rap", sung: false };
+  if (/talk[- ]rap|spoken|conversational/.test(said)) return { label: "talk-rap", sung: false };
+  if (/drill/.test(said)) return { label: "drill rap", sung: false };
+  return { label: "rap", sung: false };
+}
+
+const RAP_AD_LIBS = ["yeah", "aye", "uh", "what", "let's go", "for real", "okay", "woo"];
+const SUNG_AD_LIBS = ["ooh", "yeah", "woah", "ay", "mm", "hey"];
+
+/** Bracketed ad-libs on some lines, so a rap or sung-rap lyric carries the vocal's own answers. */
+function withAdLibs(type: SectionType, lines: string[], sung: boolean, rng: () => number): string[] {
+  const bank = sung ? SUNG_AD_LIBS : RAP_AD_LIBS;
+  const adlib = () => `[ad-lib: ${pick(rng, bank)}]`;
+  return lines.map((line, i) => {
+    const last = i === lines.length - 1;
+    const every = type === "chorus" ? last || i === 0 : type === "verse" ? i % 2 === 1 : type === "intro" || type === "outro" ? last : false;
+    return every ? `${line} ${adlib()}` : line;
+  });
+}
+
+/** Bracketed direction for the tag, e.g. "soft male vocal"; the section sets the dynamic, the brief sets the voice. */
+function voiceDirection(
+  type: SectionType,
+  index: number,
+  params: LyricsGenParams,
+  genre: string
+): string {
+  const said = `${params.delivery ?? ""} ${params.instructions ?? ""} ${params.mood ?? ""}`.toLowerCase();
+  const voice = /female|woman|girl/.test(said) ? "female" : /\bmale\b|\bman\b|\bboy/.test(said) ? "male" : "";
+  const rap = /rap|mumble|bars|chopper|drill|spoken|talk/.test(`${said} ${genre}`);
+  const noun = rap ? "rap delivery" : "vocal";
+  const dynamics: Record<SectionType, string[]> = {
+    intro: ["soft", "hushed"],
+    verse: ["soft", "intimate", "steady"],
+    buildup: ["rising", "tense"],
+    drop: ["chanted", "punchy"],
+    chorus: ["full", "anthemic", "open"],
+    breakdown: ["stripped", "close-mic'd"],
+    bridge: ["exposed", "building"],
+    outro: ["fading", "whispered"],
+  };
+  if (RAP_SONG_RE.test(genre)) {
+    const { label, sung } = rapStyleLabel(params.delivery ?? "", genre);
+    const styled = [voice, label].filter(Boolean).join(" ");
+    const byType: Record<SectionType, string> = {
+      intro: `${label}, hushed ad-libs`,
+      verse: sung ? `${styled}, melodic` : `${styled}, steady pocket`,
+      buildup: sung ? "rising, melodic" : "rising, double-time hats",
+      drop: "chanted, punchy",
+      chorus: sung ? "melodic chant" : "chant",
+      breakdown: "stripped, ad-libs",
+      bridge: sung ? `${label}, stripped beat` : `${label}, half-time switch`,
+      outro: "fading ad-libs",
+    };
+    return byType[type];
+  }
+  const options = dynamics[type];
+  const dyn = options[(index - 1) % options.length];
+  return [dyn, voice, noun].filter(Boolean).join(" ");
+}
+
 function generateLinesForSection(
   type: SectionType,
   count: number,
@@ -767,9 +990,52 @@ function generateLinesForSection(
   scheme: string,
   theme: string,
   rng: () => number,
-  index: number = 1
+  index: number = 1,
+  ctx?: LineContext
 ): string[] {
-  const tpl = SECTION_TEMPLATES[type];
+  const base = linesForSection(type, count, bank, scheme, theme, rng, index, ctx?.nonBass ?? false);
+  if (!ctx) return base;
+  const lines: string[] = [];
+  const inSection = new Set<string>();
+  for (const raw of base) {
+    let line = raw;
+    // No repeated line anywhere in the song: swap in a fresh one from the bank.
+    for (let i = 0; i < 8 && (ctx.used.has(line) || inSection.has(line)); i++) {
+      line = pick(rng, [...bank.a, ...bank.b, ...bank.c, ...bank.d].filter((x) => !ctx.nonBass || !BASS_LINE_RE.test(x)));
+    }
+    lines.push(line);
+    inSection.add(line);
+  }
+  const key = (type === "verse" || type === "bridge" || type === "outro" || type === "breakdown") && count > 1;
+  if (type === "chorus" && ctx.hook) {
+    // The hook opens every chorus; the other lines are never repeated.
+    lines[0] = ctx.hook;
+  } else if (key) {
+    const themed = themeLine(ctx, rng, index);
+    if (themed) lines[lines.length - 1] = themed;
+  }
+  for (const l of lines) if (l !== ctx.hook) ctx.used.add(l);
+  return lines;
+}
+
+function linesForSection(
+  type: SectionType,
+  count: number,
+  bank: RhymeBank,
+  scheme: string,
+  theme: string,
+  rng: () => number,
+  index: number = 1,
+  nonBass: boolean = false
+): string[] {
+  if (nonBass) {
+    const safe = (xs: string[]) => {
+      const kept = xs.filter((x) => !BASS_LINE_RE.test(x));
+      return kept.length ? kept : xs;
+    };
+    bank = { a: safe(bank.a), b: safe(bank.b), c: safe(bank.c), d: safe(bank.d) };
+  }
+  const tpl = nonBass ? safeTemplate(SECTION_TEMPLATES[type]) : SECTION_TEMPLATES[type];
   const out: string[] = [];
 
   if (type === "drop") {
@@ -840,6 +1106,14 @@ function generateLinesForSection(
     ...pickN(rng, bank.d, 2),
   ];
   return linesPool.slice(0, count);
+}
+
+function safeTemplate<T extends { openers: string[]; phrases: string[] }>(tpl: T): T {
+  const keep = (xs: string[]) => {
+    const kept = xs.filter((x) => !BASS_LINE_RE.test(x));
+    return kept.length ? kept : xs;
+  };
+  return { ...tpl, openers: keep(tpl.openers), phrases: keep(tpl.phrases) };
 }
 
 function capitalize(s: string): string {

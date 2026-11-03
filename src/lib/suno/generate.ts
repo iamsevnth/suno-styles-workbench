@@ -1,14 +1,7 @@
 import { parseUserInput } from "./parse.ts";
 import { buildPlans } from "./plan.ts";
-import {
-  FINAL_PAD,
-  formatTitle,
-  insertBeforeInstruments,
-  MAX_CHARS,
-  MIN_CHARS,
-  renderStyles,
-  trimKeepingInstruments,
-} from "./render.ts";
+import { hasConflictingBpm } from "./consistency.ts";
+import { formatTitle, HARD_MAX_CHARS, renderStyles, trimKeepingInstruments } from "./render.ts";
 import { hashString } from "./rng.ts";
 import { GenerateResult, PromptCandidate, SonicPlan } from "./types.ts";
 import { allHardGatesPass, criticalGatesPass, validatePrompt } from "./validate.ts";
@@ -61,6 +54,7 @@ export function generateStylesPrompts(
       let repairs = 0;
       while (!criticalGatesPass(validation.hardGates) && repairs < 6) {
         repairs++;
+        const before = styles;
         if (!validation.hardGates.characterRange) {
           styles = forceCharacterWindow(styles, plan.bpm);
         }
@@ -75,6 +69,10 @@ export function generateStylesPrompts(
             "with original production character"
           );
         }
+        if (validation.hardGates.noContradictions === false && hasConflictingBpm(styles, plan.bpm)) {
+          // Any tempo other than the plan's becomes a plain reference to the set tempo.
+          styles = styles.replace(/\b(\d{2,3})\s*BPM\b/gi, (m, n) => (Number(n) === plan.bpm ? m : "the set tempo"));
+        }
         if (!validation.hardGates.integerBpm) {
           styles = renderStyles(plan);
           if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(styles)) {
@@ -83,6 +81,7 @@ export function generateStylesPrompts(
           }
         }
         validation = validatePrompt(styles, plan, peerTexts, peerPlans);
+        if (styles === before) break;
       }
 
       const characters = styles.length;
@@ -140,33 +139,13 @@ export function generateStylesPrompts(
   return { prompts, parsed };
 }
 
+/**
+ * Repairs a prompt that missed a hard gate: the tempo must be named and the text must fit the Styles field.
+ * A prompt that is too short is never padded; the renderer adds real detail or the prompt stays short.
+ */
 function forceCharacterWindow(text: string, bpm: number): string {
   let t = text.replace(/\s+/g, " ").trim();
-
-  if (!new RegExp(`\\b${bpm}\\s*BPM\\b`, "i").test(t)) {
-    t = `${bpm} BPM ${t}`;
-  }
-
-  const pads = [
-    "Strong motif identity and disciplined low-end hierarchy keep the production coherent.",
-    "Swing-aware groove detail and intentional dynamic contrast leave room for expressive performance.",
-    "Cinematic spatial motion supports section transitions without crowding the sub foundation.",
-    "Organic and synthetic layers trade focus while the groove stays physical and clear.",
-    FINAL_PAD,
-  ];
-
-  for (const pad of pads) {
-    if (t.length >= MIN_CHARS) break;
-    if (t.length + 1 + pad.length <= MAX_CHARS) t = insertBeforeInstruments(t, pad);
-  }
-
-  if (t.length > MAX_CHARS) t = trimKeepingInstruments(t, MAX_CHARS);
-
-  let guard = 0;
-  while (t.length < MIN_CHARS && t.length + 1 + FINAL_PAD.length <= MAX_CHARS && guard < 10) {
-    guard++;
-    t = insertBeforeInstruments(t, FINAL_PAD);
-  }
-
+  if (!new RegExp(`\\b${bpm}\\s*BPM\\b`, "i").test(t)) t = `${bpm} BPM ${t}`;
+  if (t.length > HARD_MAX_CHARS) t = trimKeepingInstruments(t, HARD_MAX_CHARS);
   return t;
 }

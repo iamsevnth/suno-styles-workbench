@@ -68,14 +68,6 @@ export const AFRO: FamilyLexicon = {
     ["guitar-led intro", "sing-along chorus", "percussion break and final chorus"],
     ["chant intro", "bass-led groove section", "call-and-response finale"],
   ],
-  padding: [
-    "Layered shakers, congas and talking drum build a rich rolling pocket.",
-    "Highlife-style guitar lines weave around the vocal in bright, clean tones.",
-    "The log drum bass slides and bounces between chord changes.",
-    "Jazzy piano chords give the groove a smooth late-evening warmth.",
-    "Percussion stays busy but light, leaving space for the melody.",
-    "Call-and-response vocals and chants lift the chorus.",
-  ],
   titles: [
     "Lagos Sunset",
     "Log Drum Glow",
@@ -152,14 +144,6 @@ export const LATIN: FamilyLexicon = {
     ["vocal intro", "bouncy pre-chorus", "full-band chorus with brass hooks"],
     ["percussion intro", "slow-house groove", "breakdown into final chorus"],
   ],
-  padding: [
-    "The dembow pattern drives the song with a steady kick and syncopated snare.",
-    "Nylon-string guitar and warm keys add a romantic Latin color.",
-    "Shakers, guiro and timbales fill the space between kicks.",
-    "The bass follows the kick tightly, keeping the groove heavy and danceable.",
-    "Brass stabs and vocal chops punctuate the chorus hooks.",
-    "Bright, glossy production keeps the vocal clear on radio and phones.",
-  ],
   titles: ["Perreo Nights", "Dembow Heat", "Caribbean Gold", "Tropical Pulse", "Moonlit Malecón", "Calor Club"],
 };
 
@@ -224,13 +208,6 @@ export const DANCEHALL: FamilyLexicon = {
     ["vocal intro over bass", "full riddim groove", "echo-heavy outro"],
     ["siren intro", "bouncy verse", "hook-led finale"],
   ],
-  padding: [
-    "The riddim bounces on the offbeat with skanking guitar and organ.",
-    "A deep, round bass carries the groove for sound-system weight.",
-    "Dub echoes and spring reverb trail off the ends of phrases.",
-    "Rimshots and offbeat hats keep the rhythm crisp and light.",
-    "The vocal rides the riddim with a confident, melodic flow.",
-  ],
   titles: ["Kingston Riddim", "Island Sound System", "Offbeat Sunshine", "Riddim Nights", "Echo Yard"],
 };
 
@@ -249,7 +226,7 @@ export const BAILE: FamilyLexicon = {
     "tamborzão beat pattern",
     "aggressive baile bounce",
     "syncopated favela groove",
-    "rolling 130 BPM funk drive",
+    "rolling funk drive",
     "stuttering vocal-chop rhythm",
     "bouncing tamborzão swing",
     "fast funk-carioca drive",
@@ -294,13 +271,6 @@ export const BAILE: FamilyLexicon = {
   arrangement: [
     ["chant intro", "tamborzão drop", "chopped vocal break and final drop"],
     ["drum intro", "vocal call-and-response", "high-energy outro"],
-  ],
-  padding: [
-    "The tamborzão drum pattern drives the track with relentless street-party energy.",
-    "Chopped vocal chants answer the beat in rapid call-and-response.",
-    "Distorted 808 kicks and claps give the groove its raw edge.",
-    "Shouted chants and claps keep the energy of a Rio street party.",
-    "The tamborzão loop bounces relentlessly under heavy 808 kicks.",
   ],
   titles: ["Favela Fever", "Rio Pressure", "Tamborzão Rush", "Baile Night"],
 };

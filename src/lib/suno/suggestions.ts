@@ -73,12 +73,24 @@ export function suggestionPool(): string[] {
   push("142 BPM Rage Trap, hard autotuned rap flow, distorted synths, hyper-energy ad-libs");
   push("132 BPM Cloud Rap, hypnotic SoundCloud mumble rapper, spaced-out pads, lo-fi 808");
   push("92 BPM Underground Hip Hop, dense lyrical bars, boom bap drums, razor-sharp internal rhymes");
-  push("138 BPM Melodic Trap, Tory Lanez style sung-rap topline, autotuned hooks, zero pop singing");
+  push("138 BPM Melodic Trap, smooth sung-rap topline, autotuned hooks, zero pop singing");
   push("100 BPM Detroit Hip Hop, offbeat talk-rap cadence, punchline pauses, clean sub-bass");
   push("140 BPM NY Drill, menacing female drill rap flow, sliding 808s, triplet bursts");
   push("146 BPM Southern Trap, rapid chopper rap cadence, triplet hats, heavy brass stabs");
   push("134 BPM Emo Trap, melancholic autotuned sung-rap, acoustic guitar loop, sliding sub");
   push("140 BPM Memphis Phonk, gritty distorted rap delivery, phonk cowbells, sub-bass bounce");
+
+  // Songs, scores and club grooves outside bass music, each with scene and instrument words worth keeping
+  push("Melodic techno, 126 BPM, hypnotic, pulsing arpeggios, rainy warehouse");
+  push("Deep house, 122 BPM, female vocals, warm, sunset rooftop");
+  push("Lo-fi jazz hop, 80 BPM, rainy night study music, warm Rhodes, vinyl crackle");
+  push("Indie folk, 96 BPM, male vocals, acoustic guitar, campfire, wistful");
+  push("Alt rock, 128 BPM, male vocals, electric guitar riff, energetic, garage band");
+  push("Synthwave, 108 BPM, instrumental, neon night drive, analog arpeggios");
+  push("Country ballad, 72 BPM, female vocals, pedal steel, front porch, heartfelt");
+  push("Cinematic ambient, 70 BPM, instrumental, soft piano, slow strings, misty morning");
+  push("Dance pop, 118 BPM, female vocals, bright, summer road trip");
+  push("Heavy metal, 150 BPM, male vocals, twin guitar harmonies, epic");
 
   return out;
 }

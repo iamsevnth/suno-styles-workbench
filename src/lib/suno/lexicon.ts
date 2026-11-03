@@ -37,10 +37,9 @@ function withBassSounds(bank: Record<string, string[]>, field: "tones" | "moves"
   return merged;
 }
 
-/** Mix, mastering, padding and song-form phrases written for each family. */
+/** Mix, mastering and song-form phrases written for each family. */
 export const FAMILY_MIX = genreField("mix");
 export const FAMILY_MASTER = genreField("master");
-export const FAMILY_PADDING = genreField("padding");
 export const FAMILY_ARRANGEMENT = genreField("arrangement");
 export const FAMILY_MOODS = genreField("moods");
 
@@ -1386,89 +1385,6 @@ export const TITLES: Record<string, string[]> = withGenreVocabulary({
     "Resonant Hybrid Wave",
   ],
 }, "titles");
-
-export const PADDING: string[] = [
-  "The arrangement builds from a restrained opening into a fuller, wider final section.",
-  "Kick, bass and lead vocal stay centered while pads, harmonies and ambience spread wide.",
-  "Organic and synthetic layers trade focus, keeping human warmth against electronic weight.",
-  "Section changes are marked by rising percussion, filter sweeps and wider stereo space.",
-  "Melodic motifs stay short and memorable, repeating with small variations.",
-  "Clear, polished production keeps every part distinct at low and high volume.",
-  "Percussion and bass trade leadership so the groove stays physical and clear.",
-  "Short pauses and space between phrases give the rhythm room to breathe.",
-  "The hook stays readable on small speakers with a clear midrange.",
-  "Drop weight arrives in phrases, each return hitting harder than the last.",
-  "Hats speed up into section peaks, then thin out to give the vocal room.",
-  "Chord stacks swell with the sidechain, then pull back so verses feel close.",
-  "Ad-libs and ear-candy answer the main hook in the gaps between lines.",
-  "The second drop adds one new layer, such as a harmony, a wobble syllable or a new hat pattern.",
-  "Low end stays mono and steady while the upper layers go wide.",
-  "Choruses open up bright and wide; verses keep a drier, closer image.",
-  "Hats swing lightly while the kick stays tight on the grid.",
-  "Vocal consonants stay crisp enough to cut through long bass tails.",
-  "Each bass phrase has a clear start and stop, leaving space before the next hit.",
-  "Impact FX mark section borders instead of looping under the whole hook.",
-  "High-energy sections add motion in the hats and vocals rather than more midrange layers.",
-  "The hook motif is short enough to chant and strong enough to carry a stripped breakdown.",
-  "Filter automation shapes the journey: darker verses, open choruses and a brief closed tunnel before the last section.",
-  "The layer count stays focused: sub, bass, drums, one harmonic bed, one lead and an optional vocal stack.",
-  "Kick and sub land together as one punch, with the mid-bass sitting above them.",
-  "The hook stays audible at low volume, so the track works on headphones and phones.",
-  "Breakdowns strip back before building again, so the next section feels earned.",
-  "Chords change slowly while the percussion keeps moving underneath.",
-  "Guitar, pluck and bell parts appear as short accents around the main hook.",
-  "Warm saturation and gentle compression glue the full mix together.",
-];
-
-export const RAP_PADDING: string[] = [
-  "Vocal delivery stays strictly in the rap pocket with unison doubles, letting 808 slides and kick transients punch through cleanly.",
-  "Ad-libs, chant doubles, and delay throws punctuate punchlines while the lead stays in rap cadence.",
-  "Mono lead rap vocal stays upfront with fast-attack compression, flanked by hard-panned ad-libs and hype accents.",
-  "Cadence is locked to the drum grid, leaving intentional pocket gaps between bars for sub-bass responses.",
-  "Hook impact relies on chant doubling and crowd shouts rather than vocal harmonizing.",
-  "Consonant punch and rhythmic delivery drive the topline energy from intro to outro.",
-  "Fast retune auto-tune and saturation provide the melodic texture while preserving pure rap cadence.",
-  "Verses keep a bone-dry, in-your-face center image so the flow remains distinct on small speakers.",
-  "Ad-lib layers use telephone bandpass filtering and stereo delay throws to create space around a clean center lead.",
-  "Drum pockets leave space after every fourth bar for an aggressive punchline delivery.",
-  "Bass and kick work as a single low-end fist while the rapper drives the rhythmic counterpoint.",
-  "Pitched-down vocal doubles anchor the hook as a tight, chanted stack.",
-  "High-hat rolls and triplet snare fills wrap around the rap cadence rather than clashing with syllables.",
-  "Punchlines land on dry rests before the 808 bass drops back in.",
-  "Lead rapper commands the front-to-back depth with tight slapback delay and a dry, close vocal image.",
-  "SoundCloud-style distorted ad-lib screams ('skrrt', 'aye') bounce across the stereo field around the dry center lead.",
-  "Sung-rap melodic topline keeps strict hip-hop pocket timing throughout.",
-  "Autotuned pitch snaps lock tightly to minor scale steps, avoiding choir pads or vocal harmony stacks.",
-  "Lyrical bars flow continuously with razor-sharp consonant articulation and breathless internal rhymes.",
-  "Conversational talk-rap delivery uses deadpan dynamic restraint to contrast with explosive 808 drops.",
-  "Triplet flows and rapid-fire syllable bursts give way to spacious chanted hook refrains.",
-  "Stereo width is shaped by hard-panned hype doubles, keeping the lead vocal locked dead-center in mono.",
-  "Low-end frequencies duck momentarily behind the kick and vocal transients to preserve maximum lyrical punch.",
-  "Breath sounds and aggressive mic close-proximity give the rap delivery raw, unpolished street authenticity.",
-];
-
-export const MICROS: string[] = [
-  "Clean low-end translation.",
-  "Simple, memorable motifs.",
-  "Intentional dynamic contrast.",
-  "Mono-compatible low end.",
-  "Upper layers widen on the peaks.",
-  "Short, breathing bass phrases.",
-  "Hook clear on phone speakers.",
-  "Space is part of the groove.",
-  "Motion over clutter.",
-  "Warm analog saturation.",
-  "Crisp transient detail.",
-  "Wide stereo atmosphere.",
-  "Polished vocal presence.",
-  "Tight, punchy drums.",
-  "Smooth, airy top end.",
-  "Rich harmonic texture.",
-  "Natural room ambience.",
-  "Deep, round low end.",
-  "Gentle sidechain movement.",
-  "Clear section contrast.",
-];
 
 export function pickTitleLex(
   rng: () => number,

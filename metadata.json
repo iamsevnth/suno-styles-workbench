@@ -1,6 +1,6 @@
 {
   "name": "Suno Workbench",
-  "description": "Browser-only Suno v6 toolkit: create or repair 925–975 character Styles prompts and build structured lyrics with American phonetics.",
+  "description": "Browser-only Suno v6 toolkit: create or repair 750–900 character Styles prompts and build structured lyrics with American phonetics.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

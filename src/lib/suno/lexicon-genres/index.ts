@@ -45,7 +45,7 @@ export function withGenreVocabulary(bank: Record<string, string[]>, field: ListF
   return merged;
 }
 
-/** One field of every family's vocabulary, for banks that are new (mix, master, padding, arrangement). */
+/** One field of every family's vocabulary, for banks that are new (mix, master, arrangement). */
 export function genreField<K extends keyof FamilyLexicon>(field: K): Record<string, FamilyLexicon[K]> {
   return Object.fromEntries(Object.entries(GENRE_LEXICON).map(([family, lexicon]) => [family, lexicon[field]]));
 }

@@ -74,16 +74,6 @@ export const POP: FamilyLexicon = {
     ["catchy intro hook", "verse-chorus-verse build", "bridge into final double chorus"],
     ["stripped first verse", "full-band second verse", "key-change final chorus"],
   ],
-  padding: [
-    "The chorus opens up wide with stacked vocals and bright synths.",
-    "Verses stay tight and close so the chorus lands with extra lift.",
-    "A short post-chorus hook repeats the title in a catchy chant.",
-    "Handclaps and snaps keep the rhythm light and danceable.",
-    "The bridge strips back to vocal and piano before the final chorus.",
-    "Every section adds one new layer so the song keeps building.",
-    "Vocal ad-libs and harmonies fill the gaps between lines.",
-    "Glossy production keeps the lead vocal clear at any volume.",
-  ],
   titles: [
     "Neon Heartbeat",
     "Golden Chorus",
@@ -162,16 +152,6 @@ export const SOUL: FamilyLexicon = {
     ["intimate verse", "warm chorus bloom", "ad-lib-heavy outro vamp"],
     ["spoken intro", "groove-led verses", "key change into the last chorus"],
   ],
-  padding: [
-    "Rich extended chords on Rhodes and guitar give the song a warm, jazzy color.",
-    "The groove sits just behind the beat for a relaxed, sensual feel.",
-    "Background vocals answer the lead with soft stacked harmonies.",
-    "A melodic bass line walks between chords, warm and round.",
-    "Brushed drums and finger snaps keep the rhythm intimate.",
-    "The final chorus opens up with layered harmonies and ad-libs.",
-    "Warm tape saturation and vinyl texture add a vintage glow.",
-    "Strings swell under the bridge for an emotional lift.",
-  ],
   titles: [
     "Velvet Hours",
     "Slow Burn Satin",
@@ -243,14 +223,6 @@ export const GOSPEL: FamilyLexicon = {
     ["quiet hymn opening", "band builds behind the choir", "triumphant final chorus"],
     ["organ intro", "call-and-response verses", "praise-break finale"],
   ],
-  padding: [
-    "A full choir answers the lead vocal in rich, stacked harmony.",
-    "Hammond organ and piano trade runs between the vocal phrases.",
-    "The vamp repeats and modulates, building intensity each time.",
-    "Handclaps and tambourine lift the backbeat with joyful energy.",
-    "Church-hall reverb gives the voices a warm, spacious glow.",
-    "The band builds from a quiet start to a triumphant full-choir finish.",
-  ],
   titles: ["Sunday Morning Light", "Higher Ground Vamp", "Hallelujah Rising", "Choir Of Mercy", "Praise Break Fire"],
 };
 
@@ -269,7 +241,7 @@ export const RAP: FamilyLexicon = {
   groove: [
     "head-nod boom-bap swing",
     "lazy swung hip-hop pocket",
-    "punchy 90 BPM backbeat",
+    "punchy backbeat",
     "bouncy G-funk groove",
     "sample-chop rhythm",
     "triplet-flow hat pocket",
@@ -321,14 +293,6 @@ export const RAP: FamilyLexicon = {
     ["sample intro", "verse over the beat", "hook with ad-libs and beat switch"],
     ["drumless intro bars", "hard-hitting verses", "chant hook and outro"],
     ["vinyl-crackle intro", "two verses with a hook", "beat-switch final verse"],
-  ],
-  padding: [
-    "A chopped sample loop carries the beat with dusty, warm character.",
-    "Kick and snare knock hard on the backbeat with a swung head-nod feel.",
-    "The vocal stays upfront and dry so every word cuts through.",
-    "Record scratches and ad-libs fill the gaps between bars.",
-    "A beat switch late in the track keeps the energy moving.",
-    "Vinyl crackle and tape warmth add a classic hip-hop texture.",
   ],
   titles: [
     "Boom Bap Chronicles",

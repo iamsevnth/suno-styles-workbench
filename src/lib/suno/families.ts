@@ -53,6 +53,7 @@ const FAMILIES_BY_NAME: [RegExp, string][] = [
   [/melodic rap|emotional rap|\brap\b|hip-hop|hip hop|\bgrime\b|\bplugg|\brage\b|\bopium\b|digicore/, "rap"],
   [/dancehall|\breggae\b/, "dancehall"],
   [/reggaeton|dembow|moombah|tropical/, "latin"],
+  [/moombah/, "baile"],
   [/afro|amapiano|gqom/, "afro"],
   [
     /breakbeat|breaks|jungle|dnb|drum and bass|footwork|juke|jersey|baltimore|glitch|wonky|drumstep|crossbreed/,
