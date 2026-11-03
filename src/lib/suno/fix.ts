@@ -13,9 +13,17 @@ const BOILERPLATE = /\b(?:the harmonic bed uses|the sound palette centers|transl
  * text cannot fit safely, return null to fall back to the legacy compiler.
  */
 export function repairExistingPrompt(source: string, plan: SonicPlan): FixResult | null {
-  if (source.trim().length < 690) return null;
+  // Preserve short but already well-structured musical briefs before rebuilding them.
+  if (source.trim().length < 550) return null;
   if (BOILERPLATE.test(source)) return null;
-  const stripped = extractConstraintIntent(source).positiveText
+  // Normalize descriptions of absent material into affirmative musical intent.
+  // These transformations do not introduce new vocals or instruments.
+  const safeSource = source
+    .replace(/\bavoid flattening ([^.!,;]+?) with constant maximal loudness\b/gi,
+      (_whole, target: string) => "maintain the dynamics of " + target + " with controlled loudness")
+    .replace(/\breplacing (?:the )?vocals? with\b/gi, "centering")
+    .replace(/\bmissing lyrics? hook\b/gi, "absent hook");
+  const stripped = extractConstraintIntent(safeSource).positiveText
     .replace(/^```(?:text)?\s*/i, "").replace(/\s*```$/, "")
     .replace(/\s+/g, " ").trim();
   const sentences = stripped.split(/(?<=[.!?])\s+/).filter(Boolean);
