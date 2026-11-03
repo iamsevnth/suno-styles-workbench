@@ -75,6 +75,8 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
           <PlanCell label="BPM" value={plan.bpm} />
           <PlanCell label="Mood" value={plan.moodPrimary} />
           <PlanCell label="Metric Feel" value={plan.metricFeel} />
+          <PlanCell label="Sonic Identity" value={plan.sonicIdentity} />
+          <PlanCell label="A/B Changed Axis" value={plan.abAxis} />
           <PlanCell label="Rhythm Donor" value={plan.donors?.rhythm} />
           <PlanCell label="Bass Donor" value={plan.donors?.bass} />
           <PlanCell label="Bass Stack" value={(plan.bass || []).slice(0, 3).join(", ")} />

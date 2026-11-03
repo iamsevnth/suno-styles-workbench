@@ -126,11 +126,12 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
               type="range"
               min={1}
               max={6}
-              value={wb.count}
+              value={wb.variationMode === "ab" && !fixing ? 2 : wb.count}
+              disabled={wb.variationMode === "ab" && !fixing}
               onChange={(e) => wb.setCount(Number(e.target.value))}
               className="w-full accent-[var(--accent)] cursor-pointer"
             />
-            <span className="font-mono text-sm tabular-nums w-6 text-center text-[var(--fg)]">{wb.count}</span>
+            <span className="font-mono text-sm tabular-nums w-6 text-center text-[var(--fg)]">{wb.variationMode === "ab" && !fixing ? 2 : wb.count}</span>
           </div>
         </div>
 
@@ -150,6 +151,25 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
           />
         </label>
       </div>
+
+      {!fixing && (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="variation-strategy" className="text-sm font-semibold text-[var(--fg)]">
+            Variation Strategy
+          </label>
+          <select id="variation-strategy" value={wb.variationMode}
+            onChange={(e) => wb.setVariationMode(e.target.value as "precision" | "exploration" | "ab")}
+            className="w-full rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] text-[var(--fg)] px-3 py-2.5 text-sm">
+            <option value="precision">Precision — Preserve the Brief</option>
+            <option value="exploration">Exploration — Native Sonic Identities</option>
+            <option value="ab">A/B Lab — Change Bass Articulation Only</option>
+          </select>
+          <p className="text-xs text-[var(--fg-muted)]">
+            A/B Lab creates exactly two prompts with the same musical plan except for one bass-articulation phrase.
+            It requires a compatible alternate within the matched genre bank.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 pt-1">
         <button
