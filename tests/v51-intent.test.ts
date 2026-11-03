@@ -70,4 +70,16 @@ describe("v5.1 musical intent adapter", () => {
     assert.ok(prompt.styles.length <= MAX_CHARS);
     assert.ok(prompt.hardGates.noExcludedConcepts !== false);
   });
+  it("does not invent a singer from vocal-chop sound design in Fix mode", () => {
+    const brief = "143 BPM brostep with metallic FM growls, rapid LFO stabs, and vocal-chop-style glitch edits, no orchestral sections; tight dry half-time snare hits.";
+    const parsed = parseUserInput(brief, { mode: "rewrite", profileEnabled: false });
+    assert.equal(parsed.instrumental, true);
+    const output = generateStylesPrompts(brief, {
+      mode: "rewrite", seed: 193, count: 1, profileEnabled: false,
+    }).prompts[0];
+    assert.equal(output.plan.vocals.present, false);
+    assert.doesNotMatch(output.styles, /\b(?:male|female)\s+(?:singer|vocal)|\bwith vocal\b/i);
+    assert.ok(Object.values(output.hardGates).every(Boolean), output.issues.join(", "));
+  });
+
 });

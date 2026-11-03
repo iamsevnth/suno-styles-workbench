@@ -191,7 +191,11 @@ export function parseUserInput(
   const namedVoice = /\b(?:male|female)\b[^.!?\n]{0,55}\b(?:singer|vocal|voice|rapper|rapping|singing)\b|\b(?:singer|vocalist|rapper|rapping|sung[- ]?rap)\b/i.test(text);
   const explicitInstrumental = /^\s*(?:an?\s+)?instrumental\b/i.test(text) ||
     /\b(?:strictly|purely|fully|mostly)\s+instrumental\b|\binstrumental[- ]only\b|\binstrumental\s+(?:track|song|piece|cut|version|remix)\b/i.test(text);
-  const instrumental = explicitInstrumental || (!namedVoice && /\binstrumental\b/i.test(text)) ||
+  // In source-prompt rewrites, vocal chops are an effect, not consent to
+  // invent a lead singer. An explicitly named singer still takes precedence.
+  const vocalFxOnly = /\bvocal[- ]chops?(?:[- ]style)?\b|\bchopped vocal samples?\b/i.test(text) && !namedVoice &&
+    !/\b(?:lead vocals?|sung vocals?|melodic rap|singing voice)\b/i.test(text);
+  const instrumental = explicitInstrumental || (options?.mode === "rewrite" && vocalFxOnly) || (!namedVoice && /\binstrumental\b/i.test(text)) ||
     constraintIntent.exclusions.some((x) => /^(?:lead\s+)?vocals?$|^singing$|^rapping$/i.test(x));
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 

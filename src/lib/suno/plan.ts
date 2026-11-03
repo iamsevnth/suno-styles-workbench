@@ -318,7 +318,9 @@ export function buildOnePlan(
     melody: noElectric(melody),
     instruments: noElectric(instruments),
     vocals,
-    arrangement: noElectric(arrangement),
+    // Vocal-chop FX are legitimate in instrumentals, but a sung lead is not.
+    arrangement: noElectric(arrangement).filter(x => vocals.present !== false ||
+      !/\b(?:with vocal|for (?:the )?vocal|lead vocals?|sung|rapper)\b/i.test(x)),
     // The brief's own textures and scenes come first, in its own words.
     soundDesign: noElectric(unique([...(parsed.textures ?? []), ...(parsed.scenes ?? []).map((sc) => `${sc} ambience`), ...soundDesign])),
     mix: noElectric(mix),
