@@ -40,6 +40,21 @@ jobs:
       - name: Build site and offline file
         run: npm run build
 
+      - name: Share Source Snapshot For Offline Regression Benchmarking
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: v51-source-benchmark
+          path: |
+            src/**
+            tests/**
+            scripts/**
+            package.json
+            package-lock.json
+            tsconfig.json
+            vite.config.ts
+          retention-days: 2
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.event_name != 'pull_request'
         with:
