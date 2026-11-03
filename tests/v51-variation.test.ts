@@ -67,6 +67,11 @@ describe("v5.1 musical diversity and Fix fidelity", () => {
     for (const marker of ["Drop 2", "full-beat silence", "four-bar", "female alto", "central motif"]) {
       assert.ok(fixed.text.toLowerCase().includes(marker.toLowerCase()), marker);
     }
+    const writtenAccidental = source.replace("145 BPM C# minor", "145 BPM C-sharp minor");
+    const spelled = repairExistingPrompt(writtenAccidental, base);
+    assert.ok(spelled, "equivalent key spelling should not require recompilation");
+    assert.match(spelled.text, /C-sharp minor/i);
+    assert.doesNotMatch(spelled.text, /C# minor/i, "do not insert a redundant canonical key");
   });
 });
 
