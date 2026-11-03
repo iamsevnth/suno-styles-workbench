@@ -2,7 +2,7 @@ import { conceptsOf, reconcileMoods } from "../blend.ts";
 import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
-import { moodClash } from "../consistency.ts";
+import { moodClash, nonEdmBleed } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./catalog.ts";
@@ -319,7 +319,12 @@ export function buildNativePlan(
     // A bass or rap blend weaves the second genre in from the second phrase on, so both worlds are audible.
     const woven = primary.edm && ss.length ? [sp[0], ss[0], tt[0], sp[1], ss[1], ...sp.slice(2)].filter((x): x is string => !!x) : [...sp, ...ss];
     const pool = uniq(woven);
-    const withoutExclusions = pool.filter((x) => !phraseExcluded(x, parsed.exclusions));
+    // The existing v5 bleed rule must govern *which* native phrases are eligible,
+    // not only reject a completed prompt after the fact.
+    const allowedWords = [parsed.raw, primary.name, secondary?.name, tertiary?.name,
+      primary.allow, secondary?.allow, tertiary?.allow].filter(Boolean).join(" ");
+    const withoutExclusions = pool.filter((x) => !phraseExcluded(x, parsed.exclusions) &&
+      (!primary.edm || nonEdmBleed(x, allowedWords).length === 0));
     const allowed = instrumental ? withoutExclusions.filter((x) => !VOCAL_WORD.test(x)) : withoutExclusions;
     // Rotate so sibling variants lead with different phrases even when the shuffles collide.
     const rot = allowed.length ? rankOffset % Math.min(allowed.length, p.length || allowed.length) : 0;

@@ -39,10 +39,12 @@ export function applyNativeIdentity(
   const next = { ...sections };
   // Protect the first phrase of every explicitly specified source clause.
   if (!locked[focus]) {
-    const candidates = ((primary[keys[focus]] as string[] | undefined) ?? [])
-      .filter(x => !phraseExcluded(x, parsed.exclusions));
     const section = sectionKey[focus];
     const current = sections[section] ?? [];
+    // Identity may only promote phrases already cleared by the native bank's
+    // exclusion and genre-bleed filters; never inject filtered-out material.
+    const candidates = ((primary[keys[focus]] as string[] | undefined) ?? [])
+      .filter(x => current.includes(x) && !phraseExcluded(x, parsed.exclusions));
     const chosen = candidates[(rank + i) % candidates.length];
     if (chosen && current.includes(chosen)) {
       next[section] = [chosen, ...current.filter(x => x !== chosen)];
