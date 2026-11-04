@@ -80,6 +80,19 @@ describe("v5.3 fidelity: explicit source facts", () => {
     assert.equal(fact(result, "exclude:flute").status, "matched");
     assert.ok(!result.findings.some(x => x.id === "flute"));
   });
+  it("can audit both an externally supplied pre-Fix prompt and a fixed prompt against the same original brief", () => {
+    const brief = "150 BPM, female vocals, acoustic guitar, no choir.";
+    const preFix = "150 BPM male vocals, electric guitar, with choir.";
+    const fixed = "150 BPM female vocals, acoustic guitar.";
+    const before = analyzePromptFidelity(brief, preFix, "");
+    const after = analyzePromptFidelity(brief, fixed, "choir");
+    for (const id of ["female", "acoustic-guitar", "exclude:choir"]) {
+      assert.equal(fact(before, id).status, "different", "pre-Fix " + id);
+      assert.equal(fact(after, id).status, "matched", "fixed " + id);
+    }
+    assert.equal(fact(before, "target-tempo").status, "matched");
+    assert.equal(fact(after, "target-tempo").status, "matched");
+  });
   it("does not interpret alto saxophone as vocal range", () => {
     const result = analyzePromptFidelity("150 BPM, alto saxophone solo.", "150 BPM saxophone solo");
     assert.ok(!result.findings.some(x => x.id === "alto"));
