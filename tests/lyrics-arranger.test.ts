@@ -84,6 +84,39 @@ describe("v5.2 source-only lyric arrangement", () => {
     assert.equal(a.fullText, "[Verse]\nAlpha\nBeta\nGamma");
     assert.equal(a.fullText, b.fullText);
   });
+  it("keeps recognizable ABAB and AABB end-rhyme schemes within each four-line unit", () => {
+    const abab: SourceSection = { id: "abab", type: "verse", text: [
+      "I see the glow", "We feel the rain", "We watch it grow", "We face the pain",
+      "They choose the night", "We run away", "We hold the light", "We want to stay",
+    ].join("\n") };
+    const target: TargetSection[] = [{ id: "dest", type: "verse", bars: 8, sourceId: "abab", mode: "whole" }];
+    const result = arrangeLyrics([abab], target, { seed: 50, preserveRhyme: true, targetBpm: 140 });
+    const lines = result.sections[0].lines;
+    for (let i = 0; i < lines.length; i += 4) {
+      const keys = lines.slice(i, i + 4).map(x => approximateRhymeKey(x.text));
+      assert.equal(keys[0], keys[2]);
+      assert.equal(keys[1], keys[3]);
+    }
+    const aabb: SourceSection = { id: "aabb", type: "chorus", text: [
+      "Follow the light", "Through the night", "Walking in rain", "Feeling the pain",
+    ].join("\n") };
+    const arranged = arrangeLyrics([aabb], [{ id: "c", type: "chorus", bars: 4, sourceId: "aabb", mode: "whole" }],
+      { seed: 7, preserveRhyme: true, targetBpm: 140 });
+    const rhyme = arranged.sections[0].lines.map(x => approximateRhymeKey(x.text));
+    assert.equal(rhyme[0], rhyme[1]);
+    assert.equal(rhyme[2], rhyme[3]);
+  });
+  it("preserves order of mixed sources if any contributing source is locked", () => {
+    const source: SourceSection[] = [
+      { id: "locked", type: "verse", text: "One\nTwo", locked: true },
+      { id: "free", type: "verse", text: "Three\nFour" },
+    ];
+    const target: TargetSection[] = [{ id: "mixed", type: "verse", bars: 4, mode: "whole" }];
+    const a = arrangeLyrics(source, target, { seed: 11, preserveRhyme: false, targetBpm: 120 });
+    const b = arrangeLyrics(source, target, { seed: 99, preserveRhyme: false, targetBpm: 120 });
+    assert.equal(a.fullText, "[Verse]\nOne\nTwo\nThree\nFour");
+    assert.equal(a.fullText, b.fullText);
+  });
   it("rejects altered outputs, invalid offsets, and source changes", () => {
     const result = arrangeLyrics([chorus], destination, options);
     assert.equal(verifyArrangement([chorus], { ...result, fullText: result.fullText + " invented" }), false);
