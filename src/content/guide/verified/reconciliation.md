@@ -1,45 +1,49 @@
-# Reconciliation — Manuscript vs. Workbench v4
+# Documentation Reconciliation — Workbench v5.3 and Historical Manuscript
 
-The complete documentation has been migrated from the author's **157-page DOCX manuscript**. It contains substantial production teaching, code descriptions, examples, tables, lexicon inventories and genre reference material. The original text is retained as **source-manuscript material**, not silently presented as the final authority on the current code.
+This Guide preserves the author's long-form **157-page source manuscript** as an archive of production practices, examples, charts and lexicon material. Chapters marked **Source manuscript** are not independently re-certified to describe the current Workbench code or current Suno controls.
 
-Current v4 facts from the running repository and current official Suno Help Center content take priority when a historical source passage disagrees.
+**Current baseline:** Suno Workbench **v5.3.0**, checked November 4, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
 
-## Corrections applied to the public reading experience
+## Changes reconciled through v5.3
 
-1. **Skills Studio is retired.** Its dedicated Chapter 12 and obsolete catalog portion of Appendix F are excluded from active documentation.
-2. **Lyrics Remixer is retired.** Lyrics Studio Custom Sequence remains, but a complete automatic sequence-preserving lyric rewrite is still a future plan.
-3. **Old title and ID are obsolete.** v4 uses the real 10-digit unsigned plan seed plus BPM, key (or `--`) and character count; the random hexadecimal identifier and decorative three-word track name no longer apply.
-4. **Compiler path changes.** Core source files now reside in `src/lib/suno/`, not the older `src/compiler/` tree.
-5. **Suno models changed.** The active family is v6, v6-wild and v6-mini. All pre-v6 models are retired for new generation.
-6. **Slider percentages are contextual.** Weirdness is Safe → Chaos with 50% the documented normal; Style Influence is Loose → Strong; Audio Influence appears for uploads; Variety 0 preserves exact Styles tags. Old absolute settings recipes are producer suggestions, not Suno mandates.
-7. **Some historical “925–975” examples are longer than 975 characters.** Appendix D is retained for study, but is explicitly **not paste-ready validated output**.
-8. **The manuscript includes old lock/provenance/role-rotation labels and blend-band descriptions.** Treat them as historical architecture commentary unless verified against current TypeScript.
-9. **Privacy is a separate policy.** See `/privacy-policy` for SEVNTHLABS legal/privacy information.
-10. **“Code-verified” is a claim on the original manuscript cover**, not a new certification of every archived paragraph.
+1. **Retired Skills Studio and old Lyrics Remixer UI:** The dedicated Skills Studio chapter is excluded. Old Lyrics Remixer descriptions remain historical only. The shipped v5.2 **source-preserving Lyrics Arranger** replaces the generic lyric-generation UI, and preserves the American Phonetics Converter.
+2. **Current song-structure workflow:** Users can paste whole lyrics or separate sections and manually/suggestedly map existing words to destination bar slots. Source spans, repetition, approximate rhyme and BPM warnings, explicit save/export and phonetics are present. The historical claim that a complete automatic arranger is only a plan is now obsolete.
+3. **v5.3 Prompt Fidelity Inspector:** New text-level source-versus-output comparison covers selected BPM, key, meter, genres, instruments, voice, arrangements, source phrases and Exclude-field instructions. It reports matched, different, undetected or review-needed findings. The optional Original Intent / Brief in Fix Mode enables a common source baseline for pre-Fix and fixed comparisons. No measured audio-quality rating is provided.
+4. **v5.1 / v5.1.1:** Negative instructions are separated into Exclude; Fix Mode uses preservation-first editing and fallback recompilation warnings. Legitimate Dancehall *riddim* and reggae *one-drop* terms have genre-scoped exceptions without exempting unrelated bass-music language.
+5. **Candidate titles and IDs:** The live version uses the real ten-digit unsigned planning seed alongside BPM, key or `--`, and character count. Decorative generated track names and old hex IDs in the manuscript are superseded.
+6. **Current source code:** The compiler lives in `src/lib/suno/`, Lyrics Arranger in `src/lib/lyrics/arranger.ts`, fidelity analysis in `src/lib/suno/fidelity.ts` and Guide content in `src/content/guide/`. Historical paths should not be treated as current.
+7. **Suno v6 models:** Suno's official [v6 FAQ](https://help.suno.com/en/articles/13924481) says the v6/v6-wild/v6-mini family is current and older models are retired for new creation. Suno may change plan availability and features; use live official documentation.
+8. **Controls and percentages:** Weirdness, Style Influence, Audio Influence and Variety refer to Suno controls, not Workbench sliders. The 800–975-character compiler target and the old manuscript's suggested slider percentages are not empirically certified performance optima. Set Variety to zero **for controlled exact-tag experiments**, not as a universal musical recommendation.
+9. **Historical prompt examples:** Some examples labeled 925–975 characters exceed that window. They remain instructive archival text but are **not validated paste-ready Styles output**.
+10. **Browser-only privacy:** Workbench's current app operates without its own analytics or remote generation API. Its persistent project save and exported files are user-directed. See the dedicated [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data handling.
+11. **Official v5.3 offline release:** A self-contained HTML build is distributed with the official tag `v5.3.0` as `suno-workbench-sevnthlabs-v5.3.html`; the release is built from the tagged commit and accompanied by a SHA-256 checksum when available.
 
-## Reading the source material
+## Evidentiary labels
 
-**Current v4** means the running Workbench implementation.
+**Current Workbench:** Checked against the active repository implementation and release commit.
 
-**Suno official** means a Suno Help Center or Terms fact, checked on the date specified.
+**Suno official:** Verified vendor Help Center, Terms or Release Notes; authoritative for platform-specific product controls, not for Workbench's algorithm correctness.
 
-**Source manuscript** means the author's long-form historical text. Its production techniques and illustrations may still be valuable, but some UI paths, source file names and numeric prescriptions are outdated.
+**Source manuscript:** Archival writing and illustrations, potentially describing retired UI and source layout.
 
-**Producer guidance** is a musical heuristic, not an official platform guarantee.
+**Producer guidance:** Practical musical judgment or experiment starting point, not a guaranteed audible result.
 
-The reference chapters retain depth and searchable text. Where a chapter carries a caution above its content, follow the caution and the current introductory chapters rather than treating every old code statement literally.
+## Reading the Guide safely
+
+Search the full manuscript and appendices for conceptual and production vocabulary, but rely on the **current v5.3 chapters** for user-facing controls and supported features. Earlier descriptions of “lock,” provenance, source preservation, role rotation and blend bands do not establish that those exact historical components still exist.
+
+The included illustrations of vocal character budgeting and genre-family coverage remain historical or illustrative where not matched against current code. No static visual diagram proves an external audio outcome.
 
 ## Maintenance rule
 
-When the app or Suno evolves, reconcile the current-summary chapters first. Keep manuscript changes trackable in Git and do not rewrite the historical record to conceal differences.
+When Workbench changes, first update the current chapters, Guide manifest/index, source-status notes, source-backed references, release documentation and README. Keep historical manuscripts intact and separately labeled; do not erase the source record to conceal disagreement.
 
-## Useful links
+## Relevant references
 
-- Source repository: https://github.com/iamsevnth/suno-styles-workbench
-- Suno v6 FAQ: https://help.suno.com/en/articles/13924481
-- Creative Sliders: https://help.suno.com/en/articles/6141377
-- Release Notes: https://suno.com/release-notes
-
-## Diagrams in the manuscript
-
-The source DOCX contains visual summaries of vocal character budgeting, genre-family coverage and slider interactions. The web reader supplies **code-backed live visualizations** for the first two and an updated **illustrative** slider interaction map. The original dated images are not used as authoritative current data; the surrounding explanations and underlying reference material remain in the migrated chapters.
+- [Workbench repository](https://github.com/iamsevnth/suno-styles-workbench)
+- [v5.3 Release Notes](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/releases/v5.3.0.md)
+- [Prompt Fidelity Methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md)
+- [Suno v6 FAQ](https://help.suno.com/en/articles/13924481)
+- [Exclude](https://help.suno.com/en/articles/3161921)
+- [Creative Sliders](https://help.suno.com/en/articles/6141377)
+- [Suno Release Notes](https://suno.com/release-notes)
