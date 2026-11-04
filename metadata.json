@@ -1,6 +1,6 @@
 {
   "name": "Suno Workbench",
-  "description": "Browser-only Suno v6 toolkit: compile or repair Styles prompts, rearrange original lyrics without new words, and convert American phonetics.",
+  "description": "Browser-only Suno v6 toolkit: compile, fix and text-audit Styles prompts; rearrange original lyrics without new words; convert American phonetics.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
