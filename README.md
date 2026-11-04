@@ -7,7 +7,7 @@
 [![Test and deploy](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml)
 [![README Score](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml)
 
-A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles prompts, repairs existing prompts, rearranges lyrics supplied by the user without creating new lyrical words, and includes a locally searchable production guide. Creative content stays in the browser.
+A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles prompts, repairs existing prompts, audits detectable source-to-output prompt fidelity, rearranges lyrics supplied by the user without inventing lyric words, and includes a locally searchable production guide. Creative content stays in the browser.
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
@@ -18,7 +18,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 | Tool | What It Does |
 | --- | --- |
-| **Styles Compiler** | Creates one to six 800–975 character Styles prompts from a short brief, or rebuilds an existing Suno Styles prompt in **Fix Existing Prompt** mode. |
+| **Styles Compiler** | Creates one to six 800–975-character Styles prompts from a brief or repairs existing prompts. The **Prompt Fidelity Inspector** audits text-level preservation against the source, including the separate Exclude field; it does not assign musical-quality scores. |
 | **Lyrics Studio** | Rearranges original user-supplied lyrics into a manual or suggested section sequence using planned bar slots, chopping, repetition, verified source spans, local project saves, and optional American-English phonetic conversion. No new lyric words are generated. |
 | **Guide** | Provides a complete, locally searchable reference manual with chapter navigation, the 59-section sonic encyclopedia, recipes, genre and lexicon appendices, verified guidance, and official Suno v6 controls. |
 | **Offline Build** | Produces a self-contained <code>dist/suno-workbench.html</code> file that runs directly from disk without a server. |
@@ -88,6 +88,14 @@ Workbench maps recognized genres to sound families, plans the sonic hierarchy, a
 
 Use **Fix Existing Prompt** when a prompt already produces something useful but contains conflicting instructions, an unclear genre hierarchy, negative wording, or multiple competing tempos. The rebuild attempts to preserve detected genres, BPM, named instruments, groove/bass cues, and vocal traits while making the prompt more coherent. When long or conflicting source prompts require recompilation, results may show **Check source retention** warnings for recognizable instructions that did not survive. These warnings are text-level review indicators, not a guarantee of complete semantic fidelity or audible quality.
 
+### Prompt Fidelity Inspector
+
+After generating or fixing, expand **Prompt Fidelity Inspector** below a result. It compares the original brief (or the original pre-Fix prompt) to that exact output, including the separate Exclude field. Findings identify **Text Matched**, **Explicit Difference**, **Not Detected**, and **Review Needed** with individual source snippets and observations. You can export the full comparison as JSON locally.
+
+In Fix Mode, you may optionally paste a still-earlier **Original Intent / Brief** inside the inspector to compare both the pre-Fix prompt and the fixed result against the same source. Without that reference, the pre-Fix prompt itself is the only known baseline. The extra reference is not saved to browser history or sent to a server.
+
+These are text-based diagnostics, not scores for musical creativity or predictions of Suno audio output. See [Methodology and Suno source documentation](docs/PROMPT_FIDELITY_METHODOLOGY.md).
+
 ### Lyrics Studio
 
 Lyrics Studio now arranges **existing user-supplied lyrics only**. Paste an entire song using optional section headings, or supply separately labeled source sections. Choose a suggested arrangement or create your own Intro → Chorus → Build Up → Drop → Breakdown → Drop sequence. Each destination uses explicit **planned bar slots**, a source selection, and either original-line rearrangement or source-phrase chopping.
@@ -130,6 +138,12 @@ Start with the few facts that must survive: lead genre, BPM, voice, signature in
 ### Fix Existing Prompt
 
 Paste a Styles prompt that already ran in Suno. Fix mode reparses the musical intent and rebuilds the prompt in rewrite mode. It is intended to reduce conflicting instructions, clean up negative wording, focus the genre hierarchy, and recover a single coherent tempo while preserving detected genres, BPM, instruments, groove/bass cues, and vocal traits.
+
+### Prompt Fidelity Inspector
+
+Every output can be evaluated against the actual original input saved with its compiler run. The v5.3 inspector separates explicit text matches, conflicting facts, undetected lexical evidence, and unresolved cases. It checks recognized BPMs/ranges, keys, time signatures, genres, instruments, voice and arrangement cues, source phrases, and Exclude-field instructions. Its exported JSON includes traceable observations and official Suno Help links for relevant field behavior.
+
+**No empirical audio-quality rating is supplied.** The detector is a limited rule-based text auditor; unrecognized requirements are not counted as preserved, paraphrased facts can appear as Not Detected, and any audible outcome requires generation and listening evidence. See the [complete methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
 ## Lyrics Studio
 
@@ -187,7 +201,7 @@ The build process creates clean hosted route files, <code>404.html</code>, <code
 
 | Path | Responsibility |
 | --- | --- |
-| <code>src/lib/suno/</code> | Styles parsing, planning, rendering, and Suno-oriented logic |
+| <code>src/lib/suno/</code> | Styles parsing, planning, rendering, validation and evidence-bound textual fidelity analysis |
 | <code>src/lib/lyrics/</code> | Source-preserving arrangement, provenance checks, local project schema, legacy generator tests and phonetics |
 | <code>src/lib/browser/</code> | Browser-local persistence and runtime helpers |
 | <code>src/content/guide/</code> | Guide source material and verified reference content |
@@ -277,7 +291,7 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.2.0**. This release redesigns Lyrics Studio around source-preserving lyric arrangement, custom destination sections and bar slots, source-traceable phrase chopping and repetition, reproducible variation, rhythm/rhyme estimates, and local project recovery. No lyric writing API is added. See [v5.2.0 release notes](docs/releases/v5.2.0.md), [v5.1.1 maintenance notes](docs/releases/v5.1.1.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
+The current package version is **5.3.0**. This release adds the source-backed Prompt Fidelity Inspector, optional original-intent comparisons for Fix Mode, source-by-source findings, local JSON export, and explicit limitations against unsupported musical-quality claims. See [v5.3.0 release notes](docs/releases/v5.3.0.md), [methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md), [v5.2.0 release notes](docs/releases/v5.2.0.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
 
 There is not currently a standalone <code>CHANGELOG.md</code>. Future release notes should be recorded in GitHub Releases or a dedicated changelog when the project begins maintaining formal release milestones.
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FidelityInspector from "./FidelityInspector.tsx";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 
 function PlanCell({ label, value }: { label: string; value: string | number | undefined }) {
@@ -15,7 +16,7 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate; onCopy: (styles: string) => void }) {
+export default function PromptCard({ prompt, onCopy, sourceText }: { prompt: PromptCandidate; onCopy: (styles: string) => void; sourceText: string }) {
   const [planOpen, setPlanOpen] = useState(false);
   const plan = prompt.plan;
   const genreLine = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(" × ");
@@ -84,6 +85,8 @@ export default function PromptCard({ prompt, onCopy }: { prompt: PromptCandidate
           <PlanCell label="Vocals" value={vocalSummary(plan)} />
         </div>
       )}
+      <FidelityInspector sourceText={sourceText} styleText={prompt.styles} excludeText={prompt.exclude ?? ""}
+        fixMode={!!prompt.fixStrategy} label={prompt.title} />
     </article>
   );
 }

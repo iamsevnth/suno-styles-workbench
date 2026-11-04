@@ -1,8 +1,8 @@
 {
   "name": "suno-styles-workbench",
   "private": true,
-  "version": "5.2.0",
-  "description": "Browser-only Suno v6 toolkit: Styles prompt compiler, source-preserving Lyrics Arranger, American phonetics, and production guide.",
+  "version": "5.3.0",
+  "description": "Browser-only Suno v6 toolkit: Styles compiler with source-based Prompt Fidelity Inspector, source-preserving Lyrics Arranger, and production guide.",
   "type": "module",
   "repository": {
     "type": "git",
