@@ -1,52 +1,85 @@
-# Workbench v4 — Start Here
+# Suno Workbench v5.3 — Start Here
+
+**Current Workbench documentation, checked November 4, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench does
 
-Suno Workbench is a browser-only, deterministic Styles Compiler and Lyrics Studio. Compilation uses local parsing, genre families, planning, phrase libraries and validation. It does not call an AI service or send prompts to a backend. The downloadable offline file contains the same application.
+Suno Workbench is a **browser-only, deterministic Styles Compiler, source-preserving Lyrics Arranger and Prompt Fidelity Inspector** with a searchable production Guide and a downloadable, self-contained offline HTML edition. It does not create music, call Suno's generation API, or send original prompts or lyric content to an application backend.
 
-The Styles Compiler builds **800–975-character** prompts and tries to preserve recognized user intent. Suno still decides how to perform the music; a Workbench output is not a guarantee of a specific acoustic result.
+Workbench's Styles Compiler targets 800–975 characters with a 1,000-character hard cap. These are **Workbench application constraints**, not Suno-published optimal prompt lengths. Suno determines the generated audio, so compliance with a text rule never proves an audible result.
 
-## Practical six-step workflow
+## Quick workflow: generate or repair Styles
 
-1. Open **Styles Compiler**. Choose **Create From Brief** for a new idea or **Fix Existing Prompt** for an existing Styles prompt that needs clearer organization.
-2. Provide a lead genre, BPM, voice, mood, groove, instruments and any decisive bass/arrangement details. Example: `140 BPM EDM Trap + Future Bass, female alto, half-time, Rhodes, LFO wobble response, pre-drop choke`.
-3. **Example Briefs** are clickable learning inputs. **Always Available** keeps an exploration example accessible. Selecting an example does not run the generator.
-4. Choose **Variations** (1–6). Different seeds lead to different deterministic production plans. **Hybrid Bass Profile** supplies a default creative taste only when your brief leaves room; disable it for more neutral genre-led decisions.
-5. Press **Generate Styles** or **Fix Prompt**, inspect the candidate cards and quality status, and compare the variants. Controls do not compile until you explicitly generate.
-6. Copy the selected Styles prompt into Suno's Advanced Create Styles field. For a controlled A/B experiment, set Suno Variety to **0** to retain exact style tags, then vary one musical control at a time.
+1. Select **Styles Compiler**, then **Create From Brief** or **Fix Existing Prompt**.
+2. Provide a lead genre, target BPM, voice/instrumental direction, mood, groove and required instruments, sonic details and arrangement changes. An example: `140 BPM EDM Trap and Future Bass, female alto, half-time, Rhodes, LFO wobble, pre-drop choke`.
+3. Example Briefs fill the input without running the generator. Choose **Variations** and the Hybrid Bass Profile as needed. The existing compiler variation options include Precision and Exploration; its *A/B Lab* creates a constrained two-prompt bass-articulation comparison. This is **not** the separately proposed future empirical experiment laboratory.
+4. Press **Generate Styles** or **Fix Prompt**. Inspect the candidate's BPM, genres, musical directions, Source Retention warnings (if present) and **Separate Exclude** field.
+5. Expand **Prompt Fidelity Inspector** to review textual preservation against the original input, with explicit matched/different/not-detected/review statuses. You may download a JSON report with the observations.
+6. Copy the selected **Styles** into Suno's Styles input; copy prohibited phrases to Suno's separate **Exclude** control. For an exact style-tag comparison in Suno v6, Suno's official FAQ suggests **Variety = 0**.
 
-## Input-to-output mapping
+**Suno v6 slider context:** [Creative Sliders](https://help.suno.com/en/articles/6141377) describes Style Influence as adherence to text, Weirdness as Safe–Chaos, and Audio Influence when source audio is uploaded. [Suno v6 FAQ](https://help.suno.com/en/articles/13924481) explains Variety. These product controls live in Suno; Workbench does not control or verify them.
 
-- **Genre order:** a lead identity plus secondary/accent traits; genre families restrict inappropriate drop/bass vocab.
-- **BPM and key:** one recognized integer BPM is rendered; a typed musical key can guide harmony and appears in the header.
-- **Voice:** recognized timbre, register, sung/rap delivery, treatment and instrumental status change vocal planning and the remaining character budget.
-- **Instruments and sampling:** explicit instruments are anchor cues. In v4, MPC/chopped samples can be melodic or harmonic identity elements.
-- **Bass/drums:** sliding 808, growl, Reese, LFO modulation, portamento, snare rolls, rim ticks and similar requests are routed to their respective production axes.
-- **Arrangement:** negative space, fakeouts, pre-drop chokes and evolved second drops are planned where genre-appropriate.
-- **Mix:** mono low end, wide upper texture, sidechain, headroom and low-mid separation map to mix language rather than generic mood adjectives.
+## What's new since the historical v4 Guide
 
-The strongest briefs describe each element's **role**: sample = melodic hook; sub = foundation; mid-bass = motion; vocal = focal point; drums = pocket; FX = transition punctuation.
+### v5.1: compiler intent and Fix improvements
 
-## New v4 seed identity
+The parser handles explicit target vs. reference tempos, BPM ranges, musical keys/modes and meters, voice details, instruments, source exclusions and arrangement cues such as Drop 2, motifs, silence, pre-drop chokes and bar lengths. Fix Mode tries conservative source editing first and recompiles when needed. The existing native genre banks and genre-family consistency checks constrain unrelated sonic vocabulary.
 
-The old three-word generated title and 8-character random ID were removed. Every candidate identifies the actual unsigned 32-bit planning seed, zero-padded to 10 digits:
+### v5.1.1: corrective maintenance
 
-`Seed #: 0123456789 | BPM: 140 | Key: F minor | Total Characters: 950`
+Dancehall and reggae vocabulary such as **riddim** and **one-drop** are no longer mistaken for inappropriate EDM terms when correctly scoped. Fix Mode's fallback candidate selection prefers retention of recognizable source facts and exposes **Check source retention** warnings for selected omitted details.
 
-With no explicit key, the heading uses **Key: --**. Retain the original input, settings and seed for repeatability; a seed by itself is not a complete project state.
+### v5.2: user-supplied Lyrics Arranger
 
-## Quality and iteration
+The old generic lyric creation interface was replaced with a **source-preserving arrangement workspace**. Paste an entire original song or separately labeled source sections; choose destination order, source material and planned bar slots; then reorder, repeat or chop existing phrases. Each output span is checked against the exact user-authored source. Estimated syllable density and rhyme preservation are advisory. Explicit browser saving and JSON/TXT exports are supported. The American Phonetics Converter remains accessible.
 
-The core gates check 800–975 characters (1,000 hard cap), one whole-number BPM, safe artist reference handling, positive Styles wording and the separation of Lyrics from Styles. Variants are also checked for meaningful distinction. A final genre safety pass prevents EDM-drop wording in non-drop families.
+For a guided example with a 16-line chorus, eight-slot buildup and sixteen-slot drop, read **Lyrics Studio — Source-Preserving Arranger v5.2+**.
 
-Use positive phrasing: `dry close-mic vocal` communicates a desired result more clearly than `no autotune`. Keep one or two primary genre identities prominent, then describe the supporting donor roles.
+### v5.3: Prompt Fidelity Inspector
 
-## Lyrics Studio
+Every Styles result has an expandable **Prompt Fidelity Inspector**. It compares the run's actual source input with the produced Styles text and the separately suggested Exclude field. The inspector finds selected explicit BPM, key, meter, genre, instruments, voice, groove, bar count, arrangement and scene/texture details.
 
-Lyrics Studio includes structured section sequences, section-level line counts, Suno structural tags and an American English phonetics converter. The **Modular Song Structure Order (Custom Sequence)** is already present. A full automatic rewrite engine that preserves an exact arbitrary sequence is documented in `docs/LYRICS_STUDIO_OVERHAUL.md` as a plan, not a shipped v4 feature.
+Its four evidence labels are **Text Matched**, **Explicit Difference**, **Not Detected** and **Review Needed**. These are outcomes of a limited text detector, **not audio-quality ratings** and **not percentages of all user intent**. Undetected words can reflect paraphrase or unsupported concepts. Inspect the evidence rather than treating a green count as success.
 
-## Local privacy and offline operation
+In Fix Mode, an optional **Original Intent / Brief** lets you compare both the pre-Fix prompt and fixed output against that same earlier source. Without that separate brief, Workbench cannot determine whether the original pre-Fix prompt already diverged from the user's true intentions. Reports can be exported locally in JSON format.
 
-Prompt generation and lyric processing stay in your browser. History and preferences are local device state. No Workbench analytics, cookies or prompt-upload backend are used. Hosting-level GitHub Pages logging is described in the dedicated **Privacy Policy** at `/privacy-policy`.
+Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
-This Guide and its search index ship inside the single-file offline HTML. External documentation links need an internet connection, but the Guide itself does not.
+## Genre, timing and production interpretation
+
+- **BPM and musical key:** A recognized integer BPM and optional named key can be carried into the compiler plan. Treat reference/source tempos differently from requested target tempo.
+- **Voice:** Vocal register, timbre, delivery and processing matter; a vocal-chop effect alone is not consent to invent a singer.
+- **Bass and drums:** 808, Reese, wobble/LFO, FM growl, portamento, snare-roll and syncopated-groove instructions are mapped to genre-compatible production elements.
+- **Instruments and motifs:** Named instruments are important anchors but may not survive a dense recompile; use source-retention warnings and the Inspector to find possible omissions.
+- **Arrangement:** Specify contrasts, second-drop changes, silence/fakeouts, build/drop transitions and bar counts if they are important.
+- **Mix:** Describe concrete engineering roles such as mono low end, controlled stereo width, sidechain space and low-mid separation.
+- **Exclude:** Phrases you explicitly prohibit belong in Suno's separate Exclude field. Negative prose in Styles alone does not verify that an exclusion was applied.
+
+## Seeds, variation and internal scoring
+
+Generated candidate titles report a real ten-digit unsigned seed alongside BPM, key (or `--`) and character count. Retain your original input, compilation settings and seed for reproduction; a seed alone is not a project file.
+
+The compiler still uses an **internal 0–100 selection heuristic** to help pick candidate texts. That number is not a validated forecast of how a song will sound. The **v5.3 Fidelity Inspector deliberately does not give an audio-quality score**.
+
+## Lyrics and phonetics
+
+To rearrange original words, use **Lyrics Studio**. The composer will not invent new lyrical text: larger destination structures must use repetition or existing-word chops. One lyric line or phrase is one *planned slot*, not automatically a performed musical bar. The user can save projects locally or export JSON and Suno-ready TXT.
+
+The separate American Phonetics Converter helps represent words with alternate phonetic spelling. This is not pronunciation certification.
+
+## Privacy, downloads and offline use
+
+The hosted site and offline application process creative material locally; there is no prompt-upload backend, AI API or Workbench analytics. Some features keep session history in local browser storage; Lyrics Studio's persistent project save is explicit and optional. See the [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data details.
+
+The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
+
+The **official v5.3 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.html`. The GitHub release is [v5.3.0](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0); the tag corresponds to the v5.3.0 package. Verify the SHA-256 checksum before redistribution when provided.
+
+## Source status and official documentation
+
+- **Current Workbench:** statements checked against the running source and v5.3 release.
+- **Suno official:** vendor Help Center or Release Notes, linked for platform-specific behavior.
+- **Historical manuscript:** archival production guidance that may discuss retired tabs or previous versions.
+- **Producer heuristic:** a useful starting suggestion, not a Suno certification or audio benchmark.
+
+Official references checked November 4, 2026: [Exclude](https://help.suno.com/en/articles/3161921), [Creative Sliders](https://help.suno.com/en/articles/6141377), [v6 FAQ](https://help.suno.com/en/articles/13924481), and [Release Notes](https://suno.com/release-notes). Current official documentation takes precedence when Suno changes its controls, models or terminology.

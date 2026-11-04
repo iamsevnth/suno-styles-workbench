@@ -11,6 +11,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
+**Official v5.3 Release:** [suno-workbench-sevnthlabs-v5.3](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0)  
 **Privacy Policy:** https://sunoworkbench.com/privacy-policy  
 **Security Policy:** [SECURITY.md](SECURITY.md)
 
@@ -20,7 +21,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 | --- | --- |
 | **Styles Compiler** | Creates one to six 800–975-character Styles prompts from a brief or repairs existing prompts. The **Prompt Fidelity Inspector** audits text-level preservation against the source, including the separate Exclude field; it does not assign musical-quality scores. |
 | **Lyrics Studio** | Rearranges original user-supplied lyrics into a manual or suggested section sequence using planned bar slots, chopping, repetition, verified source spans, local project saves, and optional American-English phonetic conversion. No new lyric words are generated. |
-| **Guide** | Provides a complete, locally searchable reference manual with chapter navigation, the 59-section sonic encyclopedia, recipes, genre and lexicon appendices, verified guidance, and official Suno v6 controls. |
+| **Guide** | Includes current v5.3 getting-started instructions, dedicated Prompt Fidelity Inspector and v5.2 Lyrics Arranger walkthroughs, documented Suno v6 controls, and a separately labeled historical manuscript with searchable recipes and a 59-section sonic encyclopedia. |
 | **Offline Build** | Produces a self-contained <code>dist/suno-workbench.html</code> file that runs directly from disk without a server. |
 | **Privacy-First Runtime** | Uses no application server, account system, analytics service, cookies, API keys, or AI API calls. |
 
@@ -69,6 +70,17 @@ dist/suno-workbench.html
 
 Open that file directly in a current desktop browser. The offline builder inlines the application assets and rewrites the Content Security Policy to permit only the exact inlined scripts and styles by SHA-256 hash.
 
+### Official v5.3 Standalone Download
+
+The official [GitHub v5.3.0 Release](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0) is titled **suno-workbench-sevnthlabs-v5.3** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP.
+
+- **[suno-workbench-sevnthlabs-v5.3.html](https://github.com/iamsevnth/suno-styles-workbench/releases/download/v5.3.0/suno-workbench-sevnthlabs-v5.3.html)** — one-file offline application with the refreshed v5.3 Guide, compiler, Fidelity Inspector, Lyrics Arranger and phonetics.
+- **[SHA-256 checksum](https://github.com/iamsevnth/suno-styles-workbench/releases/download/v5.3.0/suno-workbench-sevnthlabs-v5.3.html.sha256)** — allows verification of the downloaded HTML.
+
+The standalone file is rebuilt from the validated release commit with `npm run build`, the complete test suite, TypeScript checking and the offline Content Security Policy validator before publication. No installation or account is needed for core offline use; external links to Suno documentation need an internet connection.
+
+To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.3.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.3.html` and compare its digest with the checksum file.
+
 ## Usage and Examples
 
 ### Styles Compiler
@@ -106,7 +118,7 @@ Use **Save to Browser** for an explicit local save, **Export Project JSON** for 
 
 ### Guide
 
-Open https://sunoworkbench.com/guide for the searchable production reference. Search and navigation run in-browser and are also included in the offline build.
+Open https://sunoworkbench.com/guide for the searchable production reference. The Guide now starts with **Workbench v5.3 — Start Here**, and includes dedicated **Prompt Fidelity Inspector — v5.3** and **Lyrics Studio Arranger — v5.2+** chapters. It also contains verified Suno controls, reconciliation notes, and a clearly labeled historical source manuscript. Search and navigation run locally in the hosted and offline editions.
 
 ## Styles Compiler
 
@@ -155,7 +167,7 @@ Projects can be explicitly saved to the current browser and exported as validate
 
 ## Guide and Suno Create Mode Reference
 
-The <code>/guide</code> page contains a chapter-based edition of the long-form engineering and production manuscript. The reference content is committed as Markdown in <code>src/content/guide/manuscript/</code>; current verified material lives in <code>src/content/guide/verified/</code>.
+The <code>/guide</code> page contains **current v5.3 documentation** alongside a preserved long-form engineering and production manuscript. The historical manuscript remains in <code>src/content/guide/manuscript/</code>; current Workbench v5.3 introductory material, verified product references, Fidelity Inspector guidance, Lyrics Arranger instructions and reconciliation notes live in <code>src/content/guide/verified/</code>. The historical 157-page source is not silently represented as a current feature specification.
 
 Search and navigation run in-browser and in the self-contained offline edition, with no network requests or analytics. Historical chapters carry source-status and reconciliation notes so retired workflows, legacy prompt formats, and obsolete model behavior are not presented as current features.
 
@@ -291,7 +303,7 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.3.0**. This release adds the source-backed Prompt Fidelity Inspector, optional original-intent comparisons for Fix Mode, source-by-source findings, local JSON export, and explicit limitations against unsupported musical-quality claims. See [v5.3.0 release notes](docs/releases/v5.3.0.md), [methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md), [v5.2.0 release notes](docs/releases/v5.2.0.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
+The current package version is **5.3.0**. The latest documentation update reconciles the Guide with v5.1/v5.1.1 compiler maintenance, the v5.2 source-preserving Lyrics Arranger, and the v5.3 Prompt Fidelity Inspector (including optional original-intent comparisons in Fix Mode). The official **[v5.3.0 Release](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0)** is titled **suno-workbench-sevnthlabs-v5.3** and packages the verified offline HTML and SHA-256 checksum. See [release notes](docs/releases/v5.3.0.md), [Fidelity Inspector methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md), [v5.2.0 release notes](docs/releases/v5.2.0.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
 
 There is not currently a standalone <code>CHANGELOG.md</code>. Future release notes should be recorded in GitHub Releases or a dedicated changelog when the project begins maintaining formal release milestones.
 

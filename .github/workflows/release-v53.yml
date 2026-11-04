@@ -1,0 +1,106 @@
+name: Official v5.3 release (standalone HTML)
+
+# Publish only after the trusted main-branch production pipeline completes.
+# This workflow never consumes PR artifacts or executes code from fork branches.
+on:
+  workflow_run:
+    workflows: ["Test and deploy"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: official-release-v5.3.0
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the validated main-branch commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - name: Check exact release version
+        run: |
+          set -euo pipefail
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json","utf8")); const l=JSON.parse(fs.readFileSync("package-lock.json","utf8")); if(p.version!=="5.3.0" || l.version!=="5.3.0" || l.packages[""].version!=="5.3.0") { throw new Error("Not the approved v5.3.0 package/lockfile"); }'
+          grep -Fq 'The current package version is **5.3.0**' README.md
+          test -s src/content/guide/verified/fidelity-inspector.md
+          test -s src/content/guide/verified/lyrics-arranger.md
+          git rev-parse HEAD
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install exact lockfile dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Run regression tests
+        run: npm test
+
+      - name: Build hosted app, standalone HTML, and validate CSP
+        run: npm run build
+
+      - name: Package and verify standalone release HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          readonly ASSET="suno-workbench-sevnthlabs-v5.3.html"
+          test -s dist/suno-workbench.html
+          test "$(wc -c < dist/suno-workbench.html)" -gt 100000
+          cp dist/suno-workbench.html "dist/$ASSET"
+          cmp -s dist/suno-workbench.html "dist/$ASSET"
+          (
+            cd dist
+            sha256sum "$ASSET" > "$ASSET.sha256"
+            sha256sum --check "$ASSET.sha256"
+          )
+          test -s "dist/$ASSET.sha256"
+
+      - name: Publish immutable versioned GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          readonly TAG="v5.3.0"
+          readonly ASSET="suno-workbench-sevnthlabs-v5.3.html"
+          readonly RELEASE_TITLE="suno-workbench-sevnthlabs-v5.3"
+          readonly COMMIT_SHA="$(git rev-parse HEAD)"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release already exists; checking asset names without overwriting."
+            gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET"
+            gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET.sha256"
+          else
+            gh release create "$TAG" "dist/$ASSET" "dist/$ASSET.sha256" \
+              --title "$RELEASE_TITLE" \
+              --notes-file docs/releases/v5.3.0.md \
+              --target "$COMMIT_SHA" \
+              --latest
+          fi
+          gh release view "$TAG" --json tagName,name,isDraft,isPrerelease,assets \
+            --jq '{tag: .tagName, title: .name, draft: .isDraft, prerelease: .isPrerelease, assets: [.assets[].name]}'
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET"
+          gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET.sha256"
