@@ -36,7 +36,8 @@ describe("official v5.3 release packaging contract", () => {
     assert.match(workflow, /sha256sum --check/);
     assert.match(workflow, /gh release create/);
     assert.ok(workflow.includes(asset));
-    assert.ok(workflow.includes(asset + ".sha256"));
+    assert.ok(workflow.includes('"dist/$ASSET.sha256"'));
+    assert.ok(workflow.includes('sha256sum "$ASSET" > "$ASSET.sha256"'));
     assert.ok(workflow.includes("suno-workbench-sevnthlabs-v5.3"));
     assert.ok(workflow.includes("v5.3.0"));
     assert.match(workflow, /--target "\$COMMIT_SHA"/);
