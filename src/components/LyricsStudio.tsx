@@ -1,376 +1,42 @@
 import React, { useState } from "react";
 import ArrangerStudio from "./ArrangerStudio.tsx";
-import { generateLyrics } from "../lib/lyrics/generator.ts";
 import { convertToPhonetics } from "../lib/lyrics/phonetics.ts";
-import {
-  DEFAULT_MODULAR_SEQUENCE,
-  GeneratedLyrics,
-  ModularSectionItem,
-  PhoneticResult,
-  SectionType,
-} from "../lib/lyrics/types.ts";
-import { historyFileStamp } from "../lib/suno/title-case.ts";
+import type { PhoneticResult } from "../lib/lyrics/types.ts";
 
 interface LyricsStudioProps {
   onShowDialog: (kind: "ok" | "error", title: string, body: string) => void;
   copyToClipboard: (text: string) => Promise<boolean>;
 }
 
-const THEME_PRESETS = [
-  "Nocturnal cyberpunk chase through neon rain",
-  "Heavy 808 redemption in the concrete canyon",
-  "Intimate bedroom R&B confession after midnight",
-  "Euphoric festival sunrise after the storm",
-  "Ceremonial dark ritual sub bass invocation",
-  "Street drill tension on the midnight avenue",
-];
-
-const GENRE_OPTIONS = [
-  "Hybrid Bass / Trapstep",
-  "Melodic Future Bass",
-  "Dark R&B / Soul",
-  "Trap / Street Drill",
-  "Modern Rap / Trap Rap",
-  "Autotuned Sung-Rap",
-  "Dubstep / Wobble Bass",
-  "Baile Funk / Latin Club",
-  "Cinematic / Ritual Bass",
-  "Pop / Radio Topline",
-  "Lo-Fi / Bedroom Soul",
-];
-
-const DELIVERY_OPTIONS = [
-  "Mumble SoundCloud Rapper (slurred cadence, distorted 808s, hype ad-libs)",
-  "Autotuned Trap Flow (hard pitch snap, robotic slides, metallic tone)",
-  "Sung-Rap / Melodic Trap Hybrid (pitched bounce, melodic cadence, no choir)",
-  "Lyrical Bars & Internal Rhymes (dense syllables, multi-rhymes, breath control)",
-  "Talk-Rap / Conversational Spoken (deadpan West Coast / Detroit off-beat, zero singing)",
-  "Fast Chopper / Double-Time Rap (rapid-fire consonants, breath-controlled sprint)",
-  "UK / NY Street Drill Cadence (menacing syncopation, sliding 808 pockets)",
-  "Southern Trap Bounce (triplet rolls, heavy low-end pocket, raw mic presence)",
-  "Boom Bap Golden Era Flow (crisp pocket delivery, punchline emphasis)",
-  "Melodic Sing-Rap Topline (melodic contours, zero pop belting, autotuned sheen)",
-  "Rhythmic Fast Rap Cadence (in-the-pocket syncopated delivery)",
-  "Sung Melodic to High Belt",
-  "Intimate Breathy Whisper",
-  "Anthemic Group Chant",
-];
-
-const SECTION_TYPE_META: Record<
-  SectionType,
-  { label: string; badgeColor: string; textColor: string; borderColor: string }
-> = {
-  intro: {
-    label: "Intro",
-    badgeColor: "bg-zinc-800/80 light:bg-slate-100",
-    textColor: "text-zinc-300 light:text-slate-700",
-    borderColor: "border-zinc-700 light:border-slate-200",
-  },
-  verse: {
-    label: "Verse",
-    badgeColor: "bg-blue-950/70 light:bg-blue-50",
-    textColor: "text-blue-300 light:text-blue-700",
-    borderColor: "border-blue-800/60 light:border-blue-200",
-  },
-  chorus: {
-    label: "Chorus",
-    badgeColor: "bg-amber-950/70 light:bg-amber-50",
-    textColor: "text-amber-300 light:text-amber-700",
-    borderColor: "border-amber-800/60 light:border-amber-200",
-  },
-  buildup: {
-    label: "Build Up",
-    badgeColor: "bg-orange-950/70 light:bg-orange-50",
-    textColor: "text-orange-300 light:text-orange-700",
-    borderColor: "border-orange-800/60 light:border-orange-200",
-  },
-  drop: {
-    label: "Drop",
-    badgeColor: "bg-red-950/80 light:bg-red-50",
-    textColor: "text-red-300 light:text-red-700",
-    borderColor: "border-red-800/70 light:border-red-200",
-  },
-  breakdown: {
-    label: "Breakdown",
-    badgeColor: "bg-purple-950/70 light:bg-purple-50",
-    textColor: "text-purple-300 light:text-purple-700",
-    borderColor: "border-purple-800/60 light:border-purple-200",
-  },
-  bridge: {
-    label: "Bridge",
-    badgeColor: "bg-cyan-950/70 light:bg-cyan-50",
-    textColor: "text-cyan-300 light:text-cyan-700",
-    borderColor: "border-cyan-800/60 light:border-cyan-200",
-  },
-  outro: {
-    label: "Outro",
-    badgeColor: "bg-zinc-800/70 light:bg-slate-100",
-    textColor: "text-zinc-400 light:text-slate-700",
-    borderColor: "border-zinc-700/60 light:border-slate-200",
-  },
-};
-
 export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsStudioProps) {
   const [activeSubTab, setActiveSubTab] = useState<"creator" | "phonetics">("creator");
-
-  // Generator & Remixer inputs
-  const [theme, setTheme] = useState<string>("");
-  const [genre, setGenre] = useState<string>(GENRE_OPTIONS[0]);
-  const [delivery, setDelivery] = useState<string>(DELIVERY_OPTIONS[0]);
-  const [rhymeScheme, setRhymeScheme] = useState<"AABB" | "ABAB" | "AABBCC" | "Freeform">("AABB");
-  const [draftLyrics, setDraftLyrics] = useState<string>("");
-  const [instructions, setInstructions] = useState<string>("");
-  const [includeTags, setIncludeTags] = useState<boolean>(true);
-
-  // Modular ordered section sequence (Item 3)
-  const [sectionSequence, setSectionSequence] = useState<ModularSectionItem[]>([
-    { id: "init-intro", type: "intro", lines: 2 },
-    { id: "init-verse-1", type: "verse", lines: 4 },
-    { id: "init-chorus-1", type: "chorus", lines: 4 },
-    { id: "init-buildup-1", type: "buildup", lines: 2 },
-    { id: "init-drop-1", type: "drop", lines: 2 },
-    { id: "init-buildup-2", type: "buildup", lines: 2 },
-    { id: "init-drop-2", type: "drop", lines: 2 },
-    { id: "init-breakdown", type: "breakdown", lines: 2 },
-    { id: "init-drop-3", type: "drop", lines: 2 },
-    { id: "init-outro", type: "outro", lines: 2 },
-  ]);
-
-  // Result state
-  const [generatedLyrics, setGeneratedLyrics] = useState<GeneratedLyrics | null>(null);
-  const [editableFullText, setEditableFullText] = useState<string>("");
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-
-  // Phonetics tool state (Item 5)
-  const [phoneticInput, setPhoneticInput] = useState<string>("");
+  const [phoneticInput, setPhoneticInput] = useState("");
   const [phoneticResult, setPhoneticResult] = useState<PhoneticResult | null>(null);
-  const [phoneticDisplayMode, setPhoneticDisplayMode] = useState<"pure" | "interlinear" | "split">(
-    "pure"
-  );
+  const [phoneticDisplayMode, setPhoneticDisplayMode] = useState<"pure" | "interlinear" | "split">("pure");
   const [phoneticStyleMode, setPhoneticStyleMode] = useState<"rap" | "natural">("rap");
 
-  // Modular sequence actions
-  const addSection = (type: SectionType) => {
-    const id = `s-${type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const defaultLines = type === "verse" || type === "chorus" || type === "bridge" ? 4 : 2;
-    setSectionSequence((prev) => [...prev, { id, type, lines: defaultLines }]);
-  };
-
-  const removeSection = (index: number) => {
-    setSectionSequence((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const moveSection = (index: number, direction: "up" | "down") => {
-    const targetIdx = direction === "up" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= sectionSequence.length) return;
-    setSectionSequence((prev) => {
-      const copy = [...prev];
-      const item = copy[index];
-      copy[index] = copy[targetIdx];
-      copy[targetIdx] = item;
-      return copy;
-    });
-  };
-
-  const duplicateSection = (index: number) => {
-    setSectionSequence((prev) => {
-      const copy = [...prev];
-      const item = copy[index];
-      const newItem: ModularSectionItem = {
-        ...item,
-        id: `s-${item.type}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      };
-      copy.splice(index + 1, 0, newItem);
-      return copy;
-    });
-  };
-
-  const updateSectionLines = (index: number, lines: number) => {
-    setSectionSequence((prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], lines };
-      return copy;
-    });
-  };
-
-  // Modular preset layouts
-  const applySequencePreset = (presetName: string) => {
-    if (presetName === "club-multi-drop") {
-      // User requested layout: chorus -> build up -> drop -> build up -> drop -> breakdown -> drop ...
-      setSectionSequence([
-        { id: "p-intro", type: "intro", lines: 2 },
-        { id: "p-verse-1", type: "verse", lines: 4 },
-        { id: "p-chorus-1", type: "chorus", lines: 4 },
-        { id: "p-buildup-1", type: "buildup", lines: 2 },
-        { id: "p-drop-1", type: "drop", lines: 2 },
-        { id: "p-buildup-2", type: "buildup", lines: 2 },
-        { id: "p-drop-2", type: "drop", lines: 2 },
-        { id: "p-breakdown", type: "breakdown", lines: 2 },
-        { id: "p-buildup-3", type: "buildup", lines: 2 },
-        { id: "p-drop-3", type: "drop", lines: 2 },
-        { id: "p-outro", type: "outro", lines: 2 },
-      ]);
-    } else if (presetName === "triple-drop") {
-      // 3 drops, 3 build ups, 2 choruses, 1 breakdown
-      setSectionSequence([
-        { id: "td-intro", type: "intro", lines: 2 },
-        { id: "td-chorus-1", type: "chorus", lines: 4 },
-        { id: "td-buildup-1", type: "buildup", lines: 2 },
-        { id: "td-drop-1", type: "drop", lines: 2 },
-        { id: "td-chorus-2", type: "chorus", lines: 4 },
-        { id: "td-buildup-2", type: "buildup", lines: 2 },
-        { id: "td-drop-2", type: "drop", lines: 2 },
-        { id: "td-breakdown", type: "breakdown", lines: 2 },
-        { id: "td-buildup-3", type: "buildup", lines: 2 },
-        { id: "td-drop-3", type: "drop", lines: 2 },
-        { id: "td-outro", type: "outro", lines: 2 },
-      ]);
-    } else if (presetName === "standard") {
-      setSectionSequence(DEFAULT_MODULAR_SEQUENCE);
-    } else if (presetName === "pop-anthem") {
-      setSectionSequence([
-        { id: "p-intro", type: "intro", lines: 2 },
-        { id: "p-verse-1", type: "verse", lines: 4 },
-        { id: "p-buildup-1", type: "buildup", lines: 2 },
-        { id: "p-chorus-1", type: "chorus", lines: 4 },
-        { id: "p-verse-2", type: "verse", lines: 4 },
-        { id: "p-buildup-2", type: "buildup", lines: 2 },
-        { id: "p-chorus-2", type: "chorus", lines: 4 },
-        { id: "p-bridge", type: "bridge", lines: 4 },
-        { id: "p-chorus-3", type: "chorus", lines: 4 },
-        { id: "p-outro", type: "outro", lines: 2 },
-      ]);
-    } else if (presetName === "minimal") {
-      setSectionSequence([
-        { id: "p-intro", type: "intro", lines: 2 },
-        { id: "p-verse-1", type: "verse", lines: 4 },
-        { id: "p-chorus-1", type: "chorus", lines: 4 },
-        { id: "p-drop-1", type: "drop", lines: 2 },
-        { id: "p-outro", type: "outro", lines: 2 },
-      ]);
-    }
-  };
-
-  // Quick structure statistics
-  const structureCounts = sectionSequence.reduce((acc, cur) => {
-    acc[cur.type] = (acc[cur.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const totalPlannedLines = sectionSequence.reduce((acc, cur) => acc + cur.lines, 0);
-
-  // Generate / Finish Lyrics
-  const handleGenerateLyrics = () => {
-    if (!sectionSequence.length) {
-      onShowDialog("error", "No Sections", "Please add at least one section to your song structure.");
-      return;
-    }
-
-    const activeTheme =
-      theme.trim() || draftLyrics.trim().slice(0, 60) || "Midnight Heavy Bass Resonance";
-    setIsGenerating(true);
-
-    try {
-      const res = generateLyrics({
-        theme: activeTheme,
-        genre,
-        mood: delivery,
-        delivery,
-        rhymeScheme,
-        draftLyrics: draftLyrics.trim(),
-        instructions: instructions.trim(),
-        includePerformanceTags: includeTags,
-        sectionSequence,
-      });
-
-      setGeneratedLyrics(res);
-      setEditableFullText(res.fullText);
-    } catch {
-      onShowDialog(
-        "error",
-        "Generation Failed",
-        "Could not generate lyrics with the current structure. Try adjusting section sequence."
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Copy full lyrics
-  const handleCopyLyrics = async () => {
-    if (!editableFullText) return;
-    const ok = await copyToClipboard(editableFullText);
-    onShowDialog(
-      ok ? "ok" : "error",
-      ok ? "Lyrics Copied" : "Clipboard Blocked",
-      ok
-        ? "Lyrics copied to clipboard! You can paste them directly into Suno's Lyrics field."
-        : "Could not write to clipboard. Select the text and press Ctrl+C / Cmd+C."
-    );
-  };
-
-  // Download Lyrics as .txt
-  const handleDownloadLyrics = () => {
-    if (!editableFullText) return;
-    const filename = `suno-lyrics-${historyFileStamp()}.txt`;
-    const blob = new Blob([editableFullText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    onShowDialog("ok", "Downloaded", `${filename} has been saved.`);
-  };
-
-  // Transfer lyrics to Phonetics Converter
-  const handleSendToPhonetics = (textToSend?: string) => {
-    const text = textToSend || editableFullText;
-    if (!text.trim()) return;
-    setPhoneticInput(text);
-    const converted = convertToPhonetics(text, { mode: phoneticStyleMode });
-    setPhoneticResult(converted);
+  const handleSendToPhonetics = (lyrics: string) => {
+    if (!lyrics.trim()) return;
+    setPhoneticInput(lyrics);
+    setPhoneticResult(convertToPhonetics(lyrics, { mode: phoneticStyleMode }));
     setActiveSubTab("phonetics");
   };
 
-  // Run phonetics on custom text (no hyphens, American singing/rap flow)
   const handleConvertPhonetics = () => {
     if (!phoneticInput.trim()) {
-      onShowDialog("error", "Input Empty", "Paste or type some lyrics to convert to American phonetics.");
+      onShowDialog("error", "Input Empty", "Paste or type lyrics to convert to American phonetics.");
       return;
     }
-    const res = convertToPhonetics(phoneticInput, { mode: phoneticStyleMode });
-    setPhoneticResult(res);
+    setPhoneticResult(convertToPhonetics(phoneticInput, { mode: phoneticStyleMode }));
   };
 
   const handleCopyPhonetics = async () => {
     if (!phoneticResult) return;
     const ok = await copyToClipboard(phoneticResult.fullPhonetic);
-    onShowDialog(
-      ok ? "ok" : "error",
-      ok ? "Phonetic Lyrics Copied" : "Clipboard Blocked",
-      ok
-        ? "American English phonetic lyrics (without hyphens) copied to clipboard! Use this in Suno to lock authentic American vocal pronunciation ('tha', 'problee', 'droppin')."
-        : "Could not write to clipboard. Select the text and copy manually."
-    );
+    onShowDialog(ok ? "ok" : "error", ok ? "Phonetic Lyrics Copied" : "Clipboard Blocked",
+      ok ? "American-English phonetic lyrics copied. Suno pronunciation is not guaranteed."
+        : "Unable to write to clipboard. Select the text and copy manually.");
   };
-
-  const sectionTypesList: SectionType[] = [
-    "buildup",
-    "drop",
-    "chorus",
-    "verse",
-    "breakdown",
-    "bridge",
-    "intro",
-    "outro",
-  ];
-
-  const draftLineCount = draftLyrics
-    ? draftLyrics.split("\n").filter((l) => l.trim().length > 0).length
-    : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -409,11 +75,8 @@ export default function LyricsStudio({ onShowDialog, copyToClipboard }: LyricsSt
       </div>
 
       {activeSubTab === "creator" ? (
-        <ArrangerStudio
-          onShowDialog={onShowDialog}
-          copyToClipboard={copyToClipboard}
-          onSendToPhonetics={(text) => handleSendToPhonetics(text)}
-        />
+        <ArrangerStudio onShowDialog={onShowDialog} copyToClipboard={copyToClipboard}
+          onSendToPhonetics={handleSendToPhonetics} />
       ) : (
         /* ============================================================ */
         /* ITEM 5: AMERICAN PHONETICS CONVERTER (ZERO HYPHENS)           */
