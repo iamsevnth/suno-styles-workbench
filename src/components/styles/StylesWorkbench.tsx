@@ -64,7 +64,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               </div>
             </div>
           ) : (
-            wb.prompts.map((p) => <PromptCard key={p.plan.recipeId} prompt={p} onCopy={wb.copyStyle} />)
+            wb.prompts.map((p) => <PromptCard key={p.plan.recipeId} prompt={p} onCopy={wb.copyStyle} sourceText={wb.parsed?.raw ?? ""} />)
           )}
         </section>
       </div>
