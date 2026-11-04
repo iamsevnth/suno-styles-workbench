@@ -2,13 +2,13 @@
 
 **Current Workbench documentation, checked November 4, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
-## What Workbench does
+## What Workbench Does
 
 Suno Workbench is a **browser-only, deterministic Styles Compiler, source-preserving Lyrics Arranger and Prompt Fidelity Inspector** with a searchable production Guide and a downloadable, self-contained offline HTML edition. It does not create music, call Suno's generation API, or send original prompts or lyric content to an application backend.
 
 Workbench's Styles Compiler targets 800–975 characters with a 1,000-character hard cap. These are **Workbench application constraints**, not Suno-published optimal prompt lengths. Suno determines the generated audio, so compliance with a text rule never proves an audible result.
 
-## Quick workflow: generate or repair Styles
+## Quick Workflow: Generate or Repair Styles
 
 1. Select **Styles Compiler**, then **Create From Brief** or **Fix Existing Prompt**.
 2. Provide a lead genre, target BPM, voice/instrumental direction, mood, groove and required instruments, sonic details and arrangement changes. An example: `140 BPM EDM Trap and Future Bass, female alto, half-time, Rhodes, LFO wobble, pre-drop choke`.
@@ -19,17 +19,17 @@ Workbench's Styles Compiler targets 800–975 characters with a 1,000-character 
 
 **Suno v6 slider context:** [Creative Sliders](https://help.suno.com/en/articles/6141377) describes Style Influence as adherence to text, Weirdness as Safe–Chaos, and Audio Influence when source audio is uploaded. [Suno v6 FAQ](https://help.suno.com/en/articles/13924481) explains Variety. These product controls live in Suno; Workbench does not control or verify them.
 
-## What's new since the historical v4 Guide
+## What's New Since the Historical v4 Guide
 
-### v5.1: compiler intent and Fix improvements
+### v5.1: Compiler Intent and Fix Improvements
 
 The parser handles explicit target vs. reference tempos, BPM ranges, musical keys/modes and meters, voice details, instruments, source exclusions and arrangement cues such as Drop 2, motifs, silence, pre-drop chokes and bar lengths. Fix Mode tries conservative source editing first and recompiles when needed. The existing native genre banks and genre-family consistency checks constrain unrelated sonic vocabulary.
 
-### v5.1.1: corrective maintenance
+### v5.1.1: Corrective Maintenance
 
 Dancehall and reggae vocabulary such as **riddim** and **one-drop** are no longer mistaken for inappropriate EDM terms when correctly scoped. Fix Mode's fallback candidate selection prefers retention of recognizable source facts and exposes **Check source retention** warnings for selected omitted details.
 
-### v5.2: user-supplied Lyrics Arranger
+### v5.2: User-Supplied Lyrics Arranger
 
 The old generic lyric creation interface was replaced with a **source-preserving arrangement workspace**. Paste an entire original song or separately labeled source sections; choose destination order, source material and planned bar slots; then reorder, repeat or chop existing phrases. Each output span is checked against the exact user-authored source. Estimated syllable density and rhyme preservation are advisory. Explicit browser saving and JSON/TXT exports are supported. The American Phonetics Converter remains accessible.
 
@@ -45,7 +45,7 @@ In Fix Mode, an optional **Original Intent / Brief** lets you compare both the p
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
-## Genre, timing and production interpretation
+## Genre, Timing and Production Interpretation
 
 - **BPM and musical key:** A recognized integer BPM and optional named key can be carried into the compiler plan. Treat reference/source tempos differently from requested target tempo.
 - **Voice:** Vocal register, timbre, delivery and processing matter; a vocal-chop effect alone is not consent to invent a singer.
@@ -55,19 +55,19 @@ Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [meth
 - **Mix:** Describe concrete engineering roles such as mono low end, controlled stereo width, sidechain space and low-mid separation.
 - **Exclude:** Phrases you explicitly prohibit belong in Suno's separate Exclude field. Negative prose in Styles alone does not verify that an exclusion was applied.
 
-## Seeds, variation and internal scoring
+## Seeds, Variation and Internal Scoring
 
 Generated candidate titles report a real ten-digit unsigned seed alongside BPM, key (or `--`) and character count. Retain your original input, compilation settings and seed for reproduction; a seed alone is not a project file.
 
 The compiler still uses an **internal 0–100 selection heuristic** to help pick candidate texts. That number is not a validated forecast of how a song will sound. The **v5.3 Fidelity Inspector deliberately does not give an audio-quality score**.
 
-## Lyrics and phonetics
+## Lyrics and Phonetics
 
 To rearrange original words, use **Lyrics Studio**. The composer will not invent new lyrical text: larger destination structures must use repetition or existing-word chops. One lyric line or phrase is one *planned slot*, not automatically a performed musical bar. The user can save projects locally or export JSON and Suno-ready TXT.
 
 The separate American Phonetics Converter helps represent words with alternate phonetic spelling. This is not pronunciation certification.
 
-## Privacy, downloads and offline use
+## Privacy, Downloads and Offline Use
 
 The hosted site and offline application process creative material locally; there is no prompt-upload backend, AI API or Workbench analytics. Some features keep session history in local browser storage; Lyrics Studio's persistent project save is explicit and optional. See the [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data details.
 
@@ -75,7 +75,7 @@ The standalone HTML includes the app, this full Guide and the searchable referen
 
 The **official v5.3 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.html`. The GitHub release is [v5.3.0](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0); the tag corresponds to the v5.3.0 package. Verify the SHA-256 checksum before redistribution when provided.
 
-## Source status and official documentation
+## Source Status and Official Documentation
 
 - **Current Workbench:** statements checked against the running source and v5.3 release.
 - **Suno official:** vendor Help Center or Release Notes, linked for platform-specific behavior.
