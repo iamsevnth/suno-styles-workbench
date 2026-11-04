@@ -104,7 +104,7 @@ const ROLE_BY_FAMILY: [string, (name: string) => string][] = [
   ["ukg", (n) => `${n} hat skip and sub pressure`],
   ["garage", (n) => `${n} swing in the drums`],
   ["riddim", (n) => `${n} wub answers`],
-  ["bass", (n) => `${n} bass movement`],
+  ["bass", (n) => /\bbass\b/i.test(n) ? `${n} low-end movement` : `${n} bass movement`],
   ["future", (n) => `${n} chord lift`],
   ["trap", (n) => `${n} half-time drums and 808 weight`],
   ["drill", (n) => `${n} sliding bass and hat patterns`],
