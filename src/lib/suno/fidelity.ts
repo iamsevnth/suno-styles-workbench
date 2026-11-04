@@ -213,7 +213,8 @@ export function analyzePromptFidelity(sourceText: string, styleText: string, exc
     const differing = generatedTargets.find(x => x.value < Math.min(from, to) ||
       x.value > Math.max(from, to));
     const observed = generatedTargets.map(x => x.raw).join(", ") || undefined;
-    const state: FidelityStatus = conflicts ? "review" : acceptable ? "matched" : differing ? "different" : "not-found";
+    const distinctOutputs = new Set(generatedTargets.map(x => String(x.value) + "-" + String(x.upper ?? x.value)));
+    const state: FidelityStatus = conflicts || distinctOutputs.size > 1 ? "review" : acceptable ? "matched" : differing ? "different" : "not-found";
     makeItem("target-tempo", "Tempo", "Target " + first.raw, first.raw,
       state, "normalized", observed,
       conflicts ? "Multiple incompatible target BPM instructions appear in the source; no single target is assumed."
