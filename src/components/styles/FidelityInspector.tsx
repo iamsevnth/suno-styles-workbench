@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { downloadFile } from "../../lib/browser/download.ts";
 import { extractConstraintIntent, parseKeyIntent, parseMeterIntent, parseTempoIntent } from "../../lib/suno/intent.ts";
 import {
@@ -86,6 +86,7 @@ function FindingsTable({ findings }: { findings: FidelityFinding[] }) {
 export default function FidelityInspector({
   sourceText, styleText, excludeText, fixMode, label,
 }: FidelityInspectorProps) {
+  const referenceId = useId();
   const [expanded, setExpanded] = useState(false);
   const [showMatched, setShowMatched] = useState(false);
   const [referenceBrief, setReferenceBrief] = useState("");
@@ -164,10 +165,10 @@ export default function FidelityInspector({
 
           {fixMode && (
             <div className="border border-[var(--border)] rounded-lg p-3 text-xs flex flex-col gap-2">
-              <label htmlFor="fidelity-reference-brief" className="font-semibold text-[var(--fg)]">
+              <label htmlFor={referenceId} className="font-semibold text-[var(--fg)]">
                 Optional Original Intent / Brief (before the pre-Fix prompt)
               </label>
-              <textarea id="fidelity-reference-brief" rows={4} value={referenceBrief}
+              <textarea id={referenceId} rows={4} value={referenceBrief}
                 onChange={e => setReferenceBrief(e.target.value)}
                 placeholder="If your original creative brief is available, paste it here to audit both pre-Fix and fixed Styles against the same original instructions."
                 className="w-full rounded-lg p-2 text-xs font-mono bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] resize-y"/>
