@@ -88,14 +88,20 @@ export default function FidelityInspector({
 }: FidelityInspectorProps) {
   const [expanded, setExpanded] = useState(false);
   const [showMatched, setShowMatched] = useState(false);
+  const [referenceBrief, setReferenceBrief] = useState("");
+  const comparisonSource = fixMode && referenceBrief.trim() ? referenceBrief : sourceText;
   const report = useMemo(() => {
-    if (!sourceText.trim() || !styleText.trim()) return null;
+    if (!comparisonSource.trim() || !styleText.trim()) return null;
     try {
-      return { report: analyzePromptFidelity(sourceText, styleText, excludeText), error: "" };
+      return { report: analyzePromptFidelity(comparisonSource, styleText, excludeText), error: "" };
     } catch (error) {
       return { report: null, error: error instanceof Error ? error.message : "Could not inspect the provided text." };
     }
-  }, [sourceText, styleText, excludeText]);
+  }, [comparisonSource, styleText, excludeText]);
+  const preFixReport = useMemo(() => {
+    if (!fixMode || !referenceBrief.trim() || !sourceText.trim()) return null;
+    try { return analyzePromptFidelity(referenceBrief, sourceText, ""); } catch { return null; }
+  }, [fixMode, referenceBrief, sourceText]);
 
   if (!report) {
     return <p className="text-xs text-[var(--fg-subtle)] p-4 border-t border-[var(--border)]">
@@ -117,7 +123,8 @@ export default function FidelityInspector({
       inspectorVersion: "5.3.0",
       generatedAt: new Date().toISOString(),
       sourceMode: fixMode ? "pre-fixed-styles" : "original-creative-brief",
-      label, source: sourceText, output: styleText, exclude: excludeText, ...audit,
+      label, originalIntent: referenceBrief.trim() || undefined, source: sourceText,
+      comparisonSource, output: styleText, exclude: excludeText, preFixReport, ...audit,
       officialSources: SUNO_FIELD_SOURCES,
     }, null, 2), "application/json;charset=utf-8");
   };
@@ -149,9 +156,30 @@ export default function FidelityInspector({
               <h4 className="font-semibold text-[var(--fg)] mb-1">Before Fix — original text snapshot</h4>
               <p>{initialFacts(sourceText)}</p>
               <p className="mt-2 text-[var(--fg-subtle)]">
-                The original prompt is the comparison baseline, not an independently validated quality score.
+                Without a separate original-intent brief, the pre-Fix prompt is the only available baseline; its fidelity to an earlier intent cannot be evaluated.
                 A negative instruction written in Styles is not proof that Suno's separate Exclude field was configured.
               </p>
+            </div>
+          )}
+
+          {fixMode && (
+            <div className="border border-[var(--border)] rounded-lg p-3 text-xs flex flex-col gap-2">
+              <label htmlFor="fidelity-reference-brief" className="font-semibold text-[var(--fg)]">
+                Optional Original Intent / Brief (before the pre-Fix prompt)
+              </label>
+              <textarea id="fidelity-reference-brief" rows={4} value={referenceBrief}
+                onChange={e => setReferenceBrief(e.target.value)}
+                placeholder="If your original creative brief is available, paste it here to audit both pre-Fix and fixed Styles against the same original instructions."
+                className="w-full rounded-lg p-2 text-xs font-mono bg-[var(--bg)] border border-[var(--border)] text-[var(--fg)] resize-y"/>
+              <p className="text-[var(--fg-subtle)]">Optional and stored only in this open inspector session. No compiler changes or server requests. If omitted, the pre-Fix prompt remains the sole reference.</p>
+              {preFixReport && (
+                <div className="space-y-2">
+                  <strong className="block text-[var(--fg)]">Original Brief vs. Pre-Fix Prompt</strong>
+                  <p className="text-[var(--fg-muted)]">Before fix: {preFixReport.counts.matched} text matches · {preFixReport.counts.different} explicit differences · {preFixReport.counts["not-found"]} not detected · {preFixReport.counts.review} review needed.</p>
+                  <p className="text-[var(--fg-subtle)]">The pre-Fix Exclude field was not provided, so absence of exclusions here cannot establish the settings used for the earlier generation.</p>
+                  <FindingsTable findings={preFixReport.findings} />
+                </div>
+              )}
             </div>
           )}
 
