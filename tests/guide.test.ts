@@ -46,7 +46,7 @@ describe("complete Guide manuscript", () => {
     assert.ok(sectionNumbers.length >= 59, `Expected all 59 numbered sonic-identity sections, found ${sectionNumbers.length}`);
   });
 
-  it("keeps the current v4 and official Suno reference separate from the historical source", () => {
+  it("keeps the current v5.3 and official Suno reference separate from the historical manuscript", () => {
     const current = GUIDE_CHAPTERS.find(x => x.id === "current-workbench");
     const official = GUIDE_CHAPTERS.find(x => x.id === "create-mode");
     const reconciliation = GUIDE_CHAPTERS.find(x => x.id === "reconciliation");
@@ -55,10 +55,25 @@ describe("complete Guide manuscript", () => {
     assert.equal(reconciliation?.status, "current");
     assert.match(readFileSync(sourcePath("reconciliation","current"), "utf8"), /ten-digit|10-digit/i);
     assert.match(readFileSync(sourcePath("create-mode","official"), "utf8"), /v6-mini/);
+    assert.match(current?.title ?? "", /v5\.3/);
+    assert.ok(GUIDE_CHAPTERS.some(x => x.id === "fidelity-inspector" && x.status === "current"));
+    assert.ok(GUIDE_CHAPTERS.some(x => x.id === "lyrics-arranger" && x.status === "current"));
+  });
+
+
+  it("does not expose historical v4 instructions as the current Guide", () => {
+    const current = readFileSync(sourcePath("current-workbench","current"), "utf8");
+    const status = readFileSync(sourcePath("reconciliation","current"), "utf8");
+    assert.match(current, /^# Suno Workbench v5\.3/m);
+    assert.match(current, /Prompt Fidelity Inspector/);
+    assert.match(current, /source-preserving Lyrics Arranger/i);
+    assert.match(current, /suno-workbench-sevnthlabs-v5\.3\.html/);
+    assert.match(status, /v5\.3\.0/);
+    assert.match(status, /archiv/i);
   });
 
   it("retains links for old Guide quicklinks through chapter redirects", () => {
-    for (const name of ["quick-start","briefs","vocals","coverage","quality","create-mode","rights"]) {
+    for (const name of ["quick-start","briefs","vocals","coverage","quality","create-mode","rights","fidelity","lyrics-arranger"]) {
       assert.ok(GUIDE_CHAPTERS.some(x => x.id === GUIDE_ANCHOR_REDIRECTS[name]), name);
     }
   });
@@ -71,6 +86,8 @@ describe("complete Guide manuscript", () => {
     assert.ok(result.length >= 1);
     assert.ok(result.every(hit => hit.excerpt.length > 0));
     assert.ok(searchGuide(docs, "v6-mini").some(hit => hit.chapter.id === "create-mode"));
+    assert.ok(searchGuide(docs, "Exclude field").some(hit => hit.chapter.id === "fidelity-inspector" || hit.chapter.id === "current-workbench"));
+    assert.ok(searchGuide(docs, "source-preserving").some(hit => hit.chapter.id === "lyrics-arranger" || hit.chapter.id === "current-workbench"));
     assert.deepEqual(searchGuide(docs, "  "), []);
   });
 
