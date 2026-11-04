@@ -1,6 +1,6 @@
 # Create Mode — Official Suno v6 Controls
 
-**Checked October 26, 2026.** These descriptions come from Suno's own Help Center; Suno controls do not become Workbench controls merely because they are discussed here.
+**Checked November 4, 2026.** These descriptions come from Suno's Help Center and Release Notes; Suno controls do not become Workbench controls merely because they are discussed here. Workbench v5.3 only audits detectable textual intent; it cannot read Suno's actual slider settings or audio output.
 
 ## Available models
 
@@ -28,7 +28,14 @@
 
 Suno v6 also supports plain-language editing, combining multiple sources, sampling/isolation workflows and targeted lyric changes. These actions happen within Suno, not in Workbench.
 
-Suno Studio Release Notes from October 8, 2026 document downbeat detection improvements, shift-drag clip timestretching, adjustable fade curves and pop-out windows. Exact feature availability, UI wording and credit costs may change; check the current release notes.
+Suno Studio Release Notes from October 8, 2026 document downbeat detection improvements, shift-drag clip timestretching and adjustable fade curves. The October 29, 2026 Studio update adds a clearer Clip Settings sidebar, Clip Info, optional auto-stretching of added audio, fine pitch adjustment and hide/show track controls. These are Suno Studio features, not Workbench tools. Exact availability, UI wording and credit costs may change; check current release notes.
+
+## Using Suno with Workbench v5.3
+
+- Use the **Styles Compiler** for deterministic text planning or Fix Existing Prompt. Copy prohibited elements into Suno's separate **Exclude** control.
+- Use **Prompt Fidelity Inspector** to compare your original brief against generated Styles, or the pre-Fix prompt against its repair. It reports recognized text facts, not audio results.
+- For controlled comparisons of exact Style tags in Suno v6, the vendor recommends **Variety = 0**. Style Influence and other settings still affect generation; Workbench does not set or capture those controls.
+- Use **Lyrics Studio** to arrange original supplied words; use Suno to generate, edit or perform the music. A planned lyric bar slot does not establish an audible bar length.
 
 ## Official references
 
