@@ -300,13 +300,32 @@ export function arrangeLyrics(
     const pool = chosen.length ? chosen : (target.sourceId ? [] : originalLines);
     if (!pool.length) throw new Error("A target references a missing or empty source section.");
     const candidates = pool.flatMap(line => fragments(line, target.mode));
-    const locked = pool.every(line => sections.find(s => s.id === line.sectionId)?.locked);
-    // Preserve adjacent rhyme pairs when requested; shuffle paired groups instead
-    // of breaking up every line. No spelling-based rhyme assumption is guaranteed.
-    const groupSize = options.preserveRhyme ? 2 : 1;
+    const locked = pool.some(line => sections.find(s => s.id === line.sectionId)?.locked);
+    // Keep recognizable four-line ABAB/AABB or adjacent AA rhyme patterns intact.
+    // Orthographic rhyme is only an approximation; unmatched lines may shuffle.
     const groups: Candidate[][] = [];
-    for (let i = 0; i < candidates.length; i += groupSize) {
-      groups.push(candidates.slice(i, i + groupSize));
+    for (let i = 0; i < candidates.length;) {
+      if (options.preserveRhyme && target.mode === "whole" && i + 3 < candidates.length) {
+        const keys = candidates.slice(i, i + 4).map(x => approximateRhymeKey(x.text));
+        const abab = keys[0] && keys[1] && keys[0] === keys[2] && keys[1] === keys[3];
+        const aabb = keys[0] && keys[2] && keys[0] === keys[1] && keys[2] === keys[3];
+        if (abab || aabb) {
+          groups.push(candidates.slice(i, i + 4));
+          i += 4;
+          continue;
+        }
+      }
+      if (options.preserveRhyme && target.mode === "whole" && i + 1 < candidates.length) {
+        const a = approximateRhymeKey(candidates[i].text);
+        const b = approximateRhymeKey(candidates[i + 1].text);
+        if (a && a === b) {
+          groups.push(candidates.slice(i, i + 2));
+          i += 2;
+          continue;
+        }
+      }
+      groups.push([candidates[i]]);
+      i++;
     }
     const ordered = (locked ? groups : shuffle(groups, rnd)).flat();
     const lines: LyricSpan[] = [];
@@ -341,7 +360,7 @@ export function arrangeLyrics(
     warnings.push("The destination tempo is over 20% faster than the optional source tempo. Delivery may need shorter phrases, rests, or half-time interpretation.");
   }
   if (options.preserveRhyme) {
-    warnings.push("Adjacent source phrase pairs are kept together where possible. Rhyme is only approximated from spelling; phonetic, stressed, and internal rhymes are not guaranteed.");
+    warnings.push("Recognizable AABB, ABAB or adjacent end-rhyme groups are kept together where possible. Spelling-based rhyme is approximate; phrase chopping, truncation, phonetic and internal rhymes are not guaranteed.");
   }
   const arranged: ArrangementResult = {
     sections: result,
