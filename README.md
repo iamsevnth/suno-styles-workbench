@@ -7,7 +7,7 @@
 [![Test and deploy](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml)
 [![README Score](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml)
 
-A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles prompts, repairs existing prompts that need a clearer musical hierarchy, builds lyrics around a user-controlled song structure, and includes a locally searchable production guide. Creative content stays in the browser.
+A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles prompts, repairs existing prompts, rearranges lyrics supplied by the user without creating new lyrical words, and includes a locally searchable production guide. Creative content stays in the browser.
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
@@ -19,12 +19,12 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 | Tool | What It Does |
 | --- | --- |
 | **Styles Compiler** | Creates one to six 800–975 character Styles prompts from a short brief, or rebuilds an existing Suno Styles prompt in **Fix Existing Prompt** mode. |
-| **Lyrics Studio** | Builds a song section by section with exact line counts, custom section ordering, Suno section tags, and American-English phonetic respelling. |
+| **Lyrics Studio** | Rearranges original user-supplied lyrics into a manual or suggested section sequence using planned bar slots, chopping, repetition, verified source spans, local project saves, and optional American-English phonetic conversion. No new lyric words are generated. |
 | **Guide** | Provides a complete, locally searchable reference manual with chapter navigation, the 59-section sonic encyclopedia, recipes, genre and lexicon appendices, verified guidance, and official Suno v6 controls. |
 | **Offline Build** | Produces a self-contained <code>dist/suno-workbench.html</code> file that runs directly from disk without a server. |
 | **Privacy-First Runtime** | Uses no application server, account system, analytics service, cookies, API keys, or AI API calls. |
 
-The hosted app and offline build are designed to keep briefs, lyrics, Styles text, and generated content on the user's device. Session state and Styles history use browser storage only.
+The hosted app and offline build are designed to keep briefs, lyrics, Styles text, and generated content on the user's device. Session state and Styles history use browser storage only. Lyrics Studio saves its source texts to local browser storage only when the user explicitly selects Save to Browser.
 
 ## Installation
 
@@ -90,15 +90,11 @@ Use **Fix Existing Prompt** when a prompt already produces something useful but 
 
 ### Lyrics Studio
 
-Lyrics Studio treats the ordered section sequence as the structural source of truth.
+Lyrics Studio now arranges **existing user-supplied lyrics only**. Paste an entire song using optional section headings, or supply separately labeled source sections. Choose a suggested arrangement or create your own Intro → Chorus → Build Up → Drop → Breakdown → Drop sequence. Each destination uses explicit **planned bar slots**, a source selection, and either original-line rearrangement or source-phrase chopping.
 
-Example custom sequence:
+For example, an original 16-line chorus can supply an eight-slot buildup and a sixteen-slot drop by reusing the original words. One input line is **not intrinsically one musical bar**. The app gives timing and repetition warnings rather than claiming it can transcribe audio or guarantee the result at a particular BPM. Every output lyric phrase is checked against the exact source spans; output is read-only and includes a Source Map.
 
-```text
-Intro → Verse 1 → Pre-Chorus → Chorus → Verse 2 → Chorus → Bridge → Drop → Final Chorus → Outro
-```
-
-Sections can be added, duplicated, reordered, and assigned their own line counts before generation. The longer-term overhaul plan is documented in [docs/LYRICS_STUDIO_OVERHAUL.md](docs/LYRICS_STUDIO_OVERHAUL.md).
+Use **Save to Browser** for an explicit local save, **Export Project JSON** for backups, and **Copy to Suno** for the verified output. No AI service, API, model downloads, or new lyric generation is involved. The optional Phonetics Converter remains accessible in its separate tab. See [Lyrics Studio details](docs/LYRICS_STUDIO_OVERHAUL.md).
 
 ### Guide
 
@@ -137,9 +133,11 @@ Paste a Styles prompt that already ran in Suno. Fix mode reparses the musical in
 
 ## Lyrics Studio
 
-Lyrics Studio includes the **Modular Song Structure Order (Custom Sequence)** builder. Sections can be added, duplicated, reordered, and assigned their own line counts before generation.
+Lyrics Studio is a **source-preserving song arrangement workspace**, not a lyric writer. Users provide all lyric words. The arranger may reorder, repeat and chop original lines, while source IDs, line numbers and character offsets demonstrate where each output phrase originated. An integrity check blocks unverified output.
 
-The design direction is intentionally structure-first: the section sequence should remain stable while lyrics are generated or revised around it. See [docs/LYRICS_STUDIO_OVERHAUL.md](docs/LYRICS_STUDIO_OVERHAUL.md) for the detailed implementation plan.
+The user configures destination sections, optional source section mappings and 1–64 planned bar slots. The engine uses seeded variation and optional approximate end-rhyme grouping, with conservative order preservation for locked material. BPM and syllable-density estimates are advisory, **not proven audio or cadence analysis**.
+
+Projects can be explicitly saved to the current browser and exported as validated JSON for backup; TXT and clipboard export produce Suno-ready text. The existing American Phonetics Converter remains available. See [design details and limitations](docs/LYRICS_STUDIO_OVERHAUL.md) and [v5.2.0 release notes](docs/releases/v5.2.0.md).
 
 ## Guide and Suno Create Mode Reference
 
@@ -190,7 +188,7 @@ The build process creates clean hosted route files, <code>404.html</code>, <code
 | Path | Responsibility |
 | --- | --- |
 | <code>src/lib/suno/</code> | Styles parsing, planning, rendering, and Suno-oriented logic |
-| <code>src/lib/lyrics/</code> | Lyrics generation and structure logic |
+| <code>src/lib/lyrics/</code> | Source-preserving arrangement, provenance checks, local project schema, legacy generator tests and phonetics |
 | <code>src/lib/browser/</code> | Browser-local persistence and runtime helpers |
 | <code>src/content/guide/</code> | Guide source material and verified reference content |
 | <code>scripts/build-routes.mjs</code> | Hosted clean-route generation |
@@ -238,6 +236,7 @@ src/
     studio/
     styles/
     LyricsStudio.tsx
+    ArrangerStudio.tsx
   hooks/
   lib/
     suno/
@@ -278,7 +277,7 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.1.1**. This patch corrects Dancehall/Reggae genre validation, improves preservation of supported source details during Fix Mode recompilation, and reports possible omissions for review. See [v5.1.1 release notes](docs/releases/v5.1.1.md) and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
+The current package version is **5.2.0**. This release redesigns Lyrics Studio around source-preserving lyric arrangement, custom destination sections and bar slots, source-traceable phrase chopping and repetition, reproducible variation, rhythm/rhyme estimates, and local project recovery. No lyric writing API is added. See [v5.2.0 release notes](docs/releases/v5.2.0.md), [v5.1.1 maintenance notes](docs/releases/v5.1.1.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
 
 There is not currently a standalone <code>CHANGELOG.md</code>. Future release notes should be recorded in GitHub Releases or a dedicated changelog when the project begins maintaining formal release milestones.
 
