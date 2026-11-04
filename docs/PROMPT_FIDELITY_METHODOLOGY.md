@@ -23,7 +23,7 @@ Counts are **counts of detected source facts**, never a complete-coverage percen
 ### Original / pre-Fix / fixed comparison
 
 - Create From Brief: the original user's brief is the source; each generated candidate is compared separately.
-- Fix Existing Prompt: the unmodified input is shown as the **pre-Fix baseline**, including length and detected target/context musical facts. The inspector compares the original input with each fixed candidate.
+- Fix Existing Prompt: the unmodified input is shown as the **pre-Fix baseline**, including length and detected target/context musical facts. By default, that pre-Fix text is compared against the final Fix candidate. An optional **original-intent brief** can be entered to compare both the pre-Fix and the repaired text against the same earlier instructions. The optional brief remains in component memory, not persistent storage.
 - The pre-Fix baseline is not a self-comparison claiming improvement. There is no before/after quality score. A phrase written as `no choir` in Styles is not proof the separate Exclude field is configured.
 - Input is sourced from the compiler's saved parsed original, not the currently editable brief field, so changing inputs without generating does not silently change what earlier results are audited against.
 - Export Findings JSON includes the original input, final candidate, separate Exclude value, item-level match observations, status, caveats, and referenced official documentation. This file is downloaded locally.
