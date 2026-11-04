@@ -4,7 +4,7 @@ This Guide preserves the author's long-form **157-page source manuscript** as an
 
 **Current baseline:** Suno Workbench **v5.3.0**, checked November 4, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
 
-## Changes reconciled through v5.3
+## Changes Reconciled Through v5.3
 
 1. **Retired Skills Studio and old Lyrics Remixer UI:** The dedicated Skills Studio chapter is excluded. Old Lyrics Remixer descriptions remain historical only. The shipped v5.2 **source-preserving Lyrics Arranger** replaces the generic lyric-generation UI, and preserves the American Phonetics Converter.
 2. **Current song-structure workflow:** Users can paste whole lyrics or separate sections and manually/suggestedly map existing words to destination bar slots. Source spans, repetition, approximate rhyme and BPM warnings, explicit save/export and phonetics are present. The historical claim that a complete automatic arranger is only a plan is now obsolete.
@@ -18,7 +18,7 @@ This Guide preserves the author's long-form **157-page source manuscript** as an
 10. **Browser-only privacy:** Workbench's current app operates without its own analytics or remote generation API. Its persistent project save and exported files are user-directed. See the dedicated [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data handling.
 11. **Official v5.3 offline release:** A self-contained HTML build is distributed with the official tag `v5.3.0` as `suno-workbench-sevnthlabs-v5.3.html`; the release is built from the tagged commit and accompanied by a SHA-256 checksum when available.
 
-## Evidentiary labels
+## Evidentiary Labels
 
 **Current Workbench:** Checked against the active repository implementation and release commit.
 
@@ -28,17 +28,17 @@ This Guide preserves the author's long-form **157-page source manuscript** as an
 
 **Producer guidance:** Practical musical judgment or experiment starting point, not a guaranteed audible result.
 
-## Reading the Guide safely
+## Reading the Guide Safely
 
 Search the full manuscript and appendices for conceptual and production vocabulary, but rely on the **current v5.3 chapters** for user-facing controls and supported features. Earlier descriptions of “lock,” provenance, source preservation, role rotation and blend bands do not establish that those exact historical components still exist.
 
 The included illustrations of vocal character budgeting and genre-family coverage remain historical or illustrative where not matched against current code. No static visual diagram proves an external audio outcome.
 
-## Maintenance rule
+## Maintenance Rule
 
 When Workbench changes, first update the current chapters, Guide manifest/index, source-status notes, source-backed references, release documentation and README. Keep historical manuscripts intact and separately labeled; do not erase the source record to conceal disagreement.
 
-## Relevant references
+## Relevant References
 
 - [Workbench repository](https://github.com/iamsevnth/suno-styles-workbench)
 - [v5.3 Release Notes](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/releases/v5.3.0.md)

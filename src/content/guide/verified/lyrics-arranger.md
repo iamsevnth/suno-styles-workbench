@@ -1,19 +1,19 @@
 # Lyrics Studio — Source-Preserving Arranger v5.2+
 
-## What changed in Lyrics Studio
+## What Changed in Lyrics Studio
 
 Lyrics Studio now **rearranges lyrics supplied by you**, rather than composing new lyrical words. It works entirely in the browser. User-provided source lines can be reordered, repeated, or divided into existing-word fragments; every output phrase is mapped back to the original input.
 
 The separate **American Phonetics Converter** remains available. Its phonetic rendering is a text transformation, not a certification of real-world pronunciation or Suno performance.
 
-## Choose an input workflow
+## Choose an Input Workflow
 
 - **Paste Entire Song:** Paste your original authorized draft into one box. Optional labels such as `[Verse]`, `[Chorus]`, `[Build Up]` and `[Drop]` identify source groups.
 - **Separate Sections:** Paste source material into individually labeled section boxes. Each source can have a genre-neutral structural label and an optional **Keep Order** setting.
 
 The tool does not create new lyrical words. Section headings added to export are structural metadata, not authored lyric lines. Only use material you wrote or are authorized to transform.
 
-## Configure the destination structure
+## Configure the Destination Structure
 
 1. Use **Suggest Structure** or manually add destination sections.
 2. Assign each destination a type, source section, operation, and requested **bar slots**. Reorder the destination sections to create your preferred song structure.
@@ -24,13 +24,13 @@ The tool does not create new lyrical words. Section headings added to export are
 
 **Important:** The arranger treats one existing line or fragment as one **planned bar slot**. This is not the same as verifying that a sung line fits one performed musical bar. Cadence, stressed syllables, melodic phrasing and delivery must be evaluated by ear.
 
-## Example: 16-line chorus to buildup and drop
+## Example: 16-Line Chorus to Buildup and Drop
 
 A single original 16-line chorus may become an **8-slot Build Up** followed by a **16-slot Drop**. Twenty-four planned slots exceed the sixteen unique source lines, so the arranger must repeat original wording or subdivide phrases. It does not secretly generate eight new lyric lines.
 
 To retain a phrase's original order, use **Keep Order** on the source; otherwise the seeded arrangement can reorder source groups. The source map identifies the source section ID, line number, character span and repeated segments.
 
-## Save and restore your project
+## Save and Restore Your Project
 
 - **Save to Browser:** Opt-in local storage. Saving is never automatic.
 - **Restore Saved / Clear Saved Copy:** Read or remove the local project stored in that browser profile.
@@ -40,7 +40,7 @@ To retain a phrase's original order, use **Keep Order** on the source; otherwise
 
 The arranger verifies output phrases against exact source character ranges before enabling copy/export. This is a **text-integrity guarantee within its source mapping**, not a guarantee that the lyrics will rhyme, flow or fit the intended musical meter.
 
-## Accuracy and privacy boundaries
+## Accuracy and Privacy Boundaries
 
 - Rhyme detection uses approximate **spelled** word endings, not complete phonetic dictionaries or stress-aware analysis.
 - Syllable counts and BPM-related warnings are approximations, not audio transcription.

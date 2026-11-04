@@ -1,12 +1,12 @@
 # Prompt Fidelity Inspector — v5.3 Field Guide
 
-## What this inspector measures
+## What This Inspector Measures
 
 The v5.3 **Prompt Fidelity Inspector** compares the musical requirements the app can recognize in your source text with the wording in a generated or repaired Styles prompt. It also checks that recognized negative instructions appear in the **separate Suno Exclude field** rather than being treated as positive instructions.
 
 The report is **textual evidence**, not a music-quality score. A matching instrument name does not prove that Suno will produce the audible instrument; an unmatched phrase does not prove the underlying musical idea was lost.
 
-## Inspect a generated Styles prompt
+## Inspect a Generated Styles Prompt
 
 1. Open the **Styles Compiler**, choose **Create From Brief**, and provide your original directions. Include explicit details that matter: target BPM, musical key or meter if necessary, genre, voice, instruments, groove, arrangement and Mix/FX priorities.
 2. Select the desired variation controls and press **Generate Styles**. Merely editing a brief or selecting an example never compiles a new result.
@@ -15,7 +15,7 @@ The report is **textual evidence**, not a music-quality score. A matching instru
 5. Review the original and produced Styles text side by side. Each row identifies the detected source phrase, the output observation where available, and why the tool assigned its status.
 6. Select **Export Findings JSON** to save a local audit containing the original input, generated text, separate Exclude value, findings and references. The file may include confidential creative work; share it deliberately.
 
-## Inspect a fixed prompt
+## Inspect a Fixed Prompt
 
 1. Switch the compiler to **Fix Existing Prompt**, paste the pre-Fix Styles text, and select **Fix Prompt**.
 2. Expand the inspector beneath the resulting fixed candidate. By default, it compares the **original pre-Fix prompt** with the fixed Styles text.
@@ -24,7 +24,7 @@ The report is **textual evidence**, not a music-quality score. A matching instru
 
 Without an original-intent brief, **before vs. after musical improvement cannot be inferred**: the pre-Fix prompt is the only known baseline. The optional earlier brief is held in the open inspector UI and is not added to persistent history.
 
-## Interpret the four result categories
+## Interpret the Four Result Categories
 
 - **Text Matched:** A supported source fact or narrowly normalized equivalent is present in Styles or Exclude. This confirms wording, not audio.
 - **Explicit Difference:** An incompatible value or text-level conflict is observed, such as an original 145 BPM requirement paired with 160 BPM in the output.
@@ -33,7 +33,7 @@ Without an original-intent brief, **before vs. after musical improvement cannot 
 
 A result with **zero findings is not perfect fidelity**. The detector only counts recognized requirements; there is no justified denominator for a percentage of all musical intent.
 
-## Examples for interpretation
+## Examples for Interpretation
 
 Original: `145 BPM, C# minor, female alto, Rhodes, second drop, no choir.`
 
@@ -43,7 +43,7 @@ The inspector can confirm the explicit BPM, key, female voice, Rhodes and choir 
 
 A source reference such as `original sample at 90 BPM` must not silently become a required final 90 BPM track tempo. Explicit target BPM and contextual/reference BPM are distinct.
 
-## Evidence boundaries and citations
+## Evidence Boundaries and Citations
 
 Suno's official [Exclude documentation](https://help.suno.com/en/articles/3161921) describes entering unwanted elements in Advanced Options. The [Creative Sliders guide](https://help.suno.com/en/articles/6141377) describes Style Influence and related controls. Suno's [v6 FAQ](https://help.suno.com/en/articles/13924481) explains that Variety may modify style prompts; set Variety to zero when exact Styles tags are a controlled-test requirement.
 
