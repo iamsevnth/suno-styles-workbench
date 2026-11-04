@@ -159,13 +159,13 @@ export default function GuidePage() {
         <LogoFull width={190} />
         <p className="label-caps eyebrow">Complete Reference Manual · v4</p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--fg)]">
-          The complete Suno Workbench Guide
+          The Complete Suno Workbench Guide
         </h1>
         <p className="text-sm sm:text-base text-[var(--fg-muted)] leading-relaxed max-w-3xl">
           A searchable, chapter-based edition of the full production and engineering manuscript, with verified v4
           guidance and authoritative Suno v6 updates separated from historical reference material.
         </p>
-        <label className="guide-doc-search-label" htmlFor="guide-search">Search every chapter, recipe and appendix</label>
+        <label className="guide-doc-search-label" htmlFor="guide-search">Search Every Chapter, Recipe and Appendix</label>
         <input
           id="guide-search"
           type="search"
@@ -177,7 +177,7 @@ export default function GuidePage() {
           aria-controls="guide-search-results"
         />
         <div className="guide-doc-metrics" aria-label="Guide and compiler facts">
-          <span>{GUIDE_CONTENT.length} chapters &amp; reference parts</span>
+          <span>{GUIDE_CONTENT.length} chapters & reference parts</span>
           <span>{LIBRARY_STATS.genres} recognized genres</span>
           <span>{MIN_CHARS}–{MAX_CHARS} Styles characters</span>
           <span>Offline searchable</span>
@@ -196,7 +196,7 @@ export default function GuidePage() {
             </div>
             <div className="guide-reader-mobile-nav">
               <button type="button" className="guide-manual-mobile-toggle" onClick={() => setMobileOpen((value) => !value)} aria-expanded={mobileOpen}>
-                Browse chapters {mobileOpen ? "−" : "+"}
+                Browse Chapters {mobileOpen ? "−" : "+"}
               </button>
               {mobileOpen && <ChapterNav activeId={active.id} onChoose={chooseChapter} />}
               <label htmlFor="guide-chapter-select" className="sr-only">Select guide chapter</label>
@@ -211,7 +211,7 @@ export default function GuidePage() {
           {search.trim() && (
             <section id="guide-search-results" className="guide-search-results" aria-live="polite">
               <div className="guide-search-results-head">
-                <h2>Search results</h2>
+                <h2>Search Results</h2>
                 <span>{hits.length} matching chapters</span>
               </div>
               {hits.length ? (
@@ -245,7 +245,7 @@ export default function GuidePage() {
                   Historical manuscript reference: this section preserves the author's detailed source material.
                   Its older UI instructions and numeric prescriptions may not match v4.
                   {active.note ? ` ${active.note}` : ""}
-                  {" "}Start with <button type="button" onClick={() => chooseChapter("reconciliation")}>Reconciliation &amp; Source Status</button> when in doubt.
+                  {" "}Start with <button type="button" onClick={() => chooseChapter("reconciliation")}>Reconciliation & Source Status</button> when in doubt.
                 </p>
               )}
               {active.status === "official" && (
