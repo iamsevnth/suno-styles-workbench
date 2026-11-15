@@ -40,7 +40,7 @@ The build must continue to produce both the hosted site and the self-contained o
 
 Preserve the compiler's core contracts unless the change explicitly modifies them:
 
-- 925–975 character Styles output;
+- 800–975 character Styles output;
 - one whole-number BPM;
 - preservation of recognized genres, named instruments, and important vocal details;
 - coherent genre hierarchy;

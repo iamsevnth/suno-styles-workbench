@@ -67,8 +67,8 @@ describe("complete Guide manuscript", () => {
     assert.match(current, /^# Suno Workbench v5\.3/m);
     assert.match(current, /Prompt Fidelity Inspector/);
     assert.match(current, /source-preserving Lyrics Arranger/i);
-    assert.match(current, /suno-workbench-sevnthlabs-v5\.3\.html/);
-    assert.match(status, /v5\.3\.0/);
+    assert.match(current, /suno-workbench-sevnthlabs-v5\.3\.1\.html/);
+    assert.match(status, /v5\.3\.1/);
     assert.match(status, /archiv/i);
   });
 

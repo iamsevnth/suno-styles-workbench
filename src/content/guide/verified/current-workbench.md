@@ -73,7 +73,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.3 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.html`. The GitHub release is [v5.3.0](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.0); the tag corresponds to the v5.3.0 package. Verify the SHA-256 checksum before redistribution when provided.
+The **official v5.3.1 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.1.html`. The GitHub release is [v5.3.1](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.1); the tag corresponds to the v5.3.1 package (Guide Title Case sync on top of v5.3.0). Verify the SHA-256 checksum before redistribution when provided.
 
 ## Source Status and Official Documentation
 

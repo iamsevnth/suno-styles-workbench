@@ -1,7 +1,8 @@
-name: Official v5.3 release (standalone HTML)
+name: Official v5.3.1 release (standalone HTML)
 
 # Publish only after the trusted main-branch production pipeline completes.
 # This workflow never consumes PR artifacts or executes code from fork branches.
+# v5.3.0 assets remain immutable; this publisher creates the v5.3.1 tag only.
 on:
   workflow_run:
     workflows: ["Test and deploy"]
@@ -13,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: official-release-v5.3.0
+  group: official-release-v5.3.1
   cancel-in-progress: false
 
 jobs:
@@ -39,8 +40,8 @@ jobs:
       - name: Check exact release version
         run: |
           set -euo pipefail
-          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json","utf8")); const l=JSON.parse(fs.readFileSync("package-lock.json","utf8")); if(p.version!=="5.3.0" || l.version!=="5.3.0" || l.packages[""].version!=="5.3.0") { throw new Error("Not the approved v5.3.0 package/lockfile"); }'
-          grep -Fq 'The current package version is **5.3.0**' README.md
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json","utf8")); const l=JSON.parse(fs.readFileSync("package-lock.json","utf8")); if(p.version!=="5.3.1" || l.version!=="5.3.1" || l.packages[""].version!=="5.3.1") { throw new Error("Not the approved v5.3.1 package/lockfile"); }'
+          grep -Fq 'The current package version is **5.3.1**' README.md
           test -s src/content/guide/verified/fidelity-inspector.md
           test -s src/content/guide/verified/lyrics-arranger.md
           git rev-parse HEAD
@@ -67,7 +68,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          readonly ASSET="suno-workbench-sevnthlabs-v5.3.html"
+          readonly ASSET="suno-workbench-sevnthlabs-v5.3.1.html"
           test -s dist/suno-workbench.html
           test "$(wc -c < dist/suno-workbench.html)" -gt 100000
           cp dist/suno-workbench.html "dist/$ASSET"
@@ -85,9 +86,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          readonly TAG="v5.3.0"
-          readonly ASSET="suno-workbench-sevnthlabs-v5.3.html"
-          readonly RELEASE_TITLE="suno-workbench-sevnthlabs-v5.3"
+          readonly TAG="v5.3.1"
+          readonly ASSET="suno-workbench-sevnthlabs-v5.3.1.html"
+          readonly RELEASE_TITLE="suno-workbench-sevnthlabs-v5.3.1"
           readonly COMMIT_SHA="$(git rev-parse HEAD)"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release already exists; checking asset names without overwriting."
@@ -96,7 +97,7 @@ jobs:
           else
             gh release create "$TAG" "dist/$ASSET" "dist/$ASSET.sha256" \
               --title "$RELEASE_TITLE" \
-              --notes-file docs/releases/v5.3.0.md \
+              --notes-file docs/releases/v5.3.1.md \
               --target "$COMMIT_SHA" \
               --latest
           fi
