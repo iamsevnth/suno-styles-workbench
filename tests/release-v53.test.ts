@@ -6,18 +6,19 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const load = (filename: string) => readFileSync(path.join(root, filename), "utf8");
-const asset = "suno-workbench-sevnthlabs-v5.3.html";
+const asset = "suno-workbench-sevnthlabs-v5.3.1.html";
 
-describe("official v5.3 release packaging contract", () => {
+describe("official v5.3.1 release packaging contract", () => {
   it("matches the version in the package, lockfile and release documentation", () => {
     const pkg = JSON.parse(load("package.json"));
     const lock = JSON.parse(load("package-lock.json"));
-    assert.equal(pkg.version, "5.3.0");
-    assert.equal(lock.version, "5.3.0");
-    assert.equal(lock.packages[""].version, "5.3.0");
-    const notes = load("docs/releases/v5.3.0.md");
+    assert.equal(pkg.version, "5.3.1");
+    assert.equal(lock.version, "5.3.1");
+    assert.equal(lock.packages[""].version, "5.3.1");
+    const notes = load("docs/releases/v5.3.1.md");
     assert.ok(notes.includes(asset));
     assert.ok(notes.includes(asset + ".sha256"));
+    assert.ok(notes.includes("Title Case"));
   });
 
   it("provides a trusted, minimally privileged release workflow after successful production deploy", () => {
@@ -38,8 +39,8 @@ describe("official v5.3 release packaging contract", () => {
     assert.ok(workflow.includes(asset));
     assert.ok(workflow.includes('"dist/$ASSET.sha256"'));
     assert.ok(workflow.includes('sha256sum "$ASSET" > "$ASSET.sha256"'));
-    assert.ok(workflow.includes("suno-workbench-sevnthlabs-v5.3"));
-    assert.ok(workflow.includes("v5.3.0"));
+    assert.ok(workflow.includes("suno-workbench-sevnthlabs-v5.3.1"));
+    assert.ok(workflow.includes("v5.3.1"));
     assert.match(workflow, /--target "\$COMMIT_SHA"/);
     assert.match(workflow, /ref: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/);
     assert.doesNotMatch(workflow, /pull_request:/);
