@@ -28,7 +28,7 @@ export const ROUTE_META: Record<RouteId, { title: string; description: string }>
   lyrics: {
     title: "Lyrics Studio | Suno Workbench",
     description:
-      "Lay out a song section by section, generate or finish lyrics with Suno section tags, and respell them the way they are spoken in American English.",
+      "Rearrange your own lyrics section by section with Suno section tags, without adding new words, and respell them the way they are spoken in American English.",
   },
   guide: {
     title: "Guide | Suno Workbench",

@@ -33,7 +33,7 @@ const TOOLS: {
   {
     route: "lyrics",
     title: "Lyrics Studio",
-    body: "Lay out a song section by section with exact line counts, generate or finish lyrics, then convert them to American English phonetic spellings so Suno pronounces every word the way you mean it.",
+    body: "Rearrange your own lyrics section by section into planned bar slots, without adding new words, then convert them to American English phonetic spellings so Suno pronounces every word the way you mean it.",
     cta: "Open Lyrics Studio",
     icon: "music",
     tile: "blue",
@@ -215,14 +215,19 @@ export default function HomePage() {
       <Section eyebrow="What every prompt includes" title="Built to the rules Suno responds to">
         <dl className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
           {GUARANTEES.map(([term, detail, icon, tile]) => (
-            <div key={term} className="flex gap-3.5">
-              <span className={`icon-tile tile-${tile} w-10 h-10 rounded-full`} aria-hidden="true">
-                <Icon name={icon} size={18} />
-              </span>
-              <div>
-                <dt className="text-sm font-semibold text-[var(--fg)]">{term}</dt>
-                <dd className="text-sm text-[var(--fg-muted)] leading-relaxed mt-0.5">{detail}</dd>
-              </div>
+            // A <dl> may only group <dt>/<dd> pairs in a single <div>, so the decorative icon sits
+            // inside the term and is positioned beside the pair.
+            <div key={term} className="relative pl-[3.375rem]">
+              <dt className="text-sm font-semibold text-[var(--fg)]">
+                <span
+                  className={`icon-tile tile-${tile} w-10 h-10 rounded-full absolute left-0 top-0`}
+                  aria-hidden="true"
+                >
+                  <Icon name={icon} size={18} />
+                </span>
+                {term}
+              </dt>
+              <dd className="text-sm text-[var(--fg-muted)] leading-relaxed mt-0.5">{detail}</dd>
             </div>
           ))}
         </dl>

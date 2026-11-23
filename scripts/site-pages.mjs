@@ -22,7 +22,7 @@ export const PAGES = [
     path: "/lyrics",
     title: "Lyrics Studio | Suno Workbench",
     description:
-      "Lay out a song section by section, generate or finish lyrics with Suno section tags, and respell them the way they are spoken in American English.",
+      "Rearrange your own lyrics section by section with Suno section tags, without adding new words, and respell them the way they are spoken in American English.",
   },
   {
     id: "guide",

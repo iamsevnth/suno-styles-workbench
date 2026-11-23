@@ -174,7 +174,7 @@ export default function GuidePage() {
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Try: Phrygian, vocal budget, sidechain, studio, 140 BPM..."
           className="guide-doc-search"
-          aria-controls="guide-search-results"
+          aria-controls={search.trim() ? "guide-search-results" : undefined}
         />
         <div className="guide-doc-metrics" aria-label="Guide and compiler facts">
           <span>{GUIDE_CONTENT.length} chapters & reference parts</span>
@@ -233,7 +233,7 @@ export default function GuidePage() {
             <div className="guide-doc-article-head">
               <StatusPill status={active.status} />
               <p className="guide-doc-position">Chapter {activeIndex + 1} of {GUIDE_CONTENT.length}</p>
-              <h1 id="guide-active-title"><MarkedText value={active.title} highlight={highlight} /></h1>
+              <h2 id="guide-active-title"><MarkedText value={active.title} highlight={highlight} /></h2>
               {highlight && (
                 <p className="guide-doc-match-notice">
                   Highlighting search: <strong>{highlight}</strong>

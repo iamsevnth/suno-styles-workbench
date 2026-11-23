@@ -230,7 +230,10 @@ npm ci
 npm run lint
 npm test
 npm run build
+npm run test:browser   # first run: npx playwright install chromium
 ```
+
+The browser tests open every page of the built site, plus the offline file from disk, in desktop and mobile Chromium. They check for console errors, requests to other origins and axe WCAG 2.1 A/AA violations, and run one Styles Compiler and one Lyrics Studio workflow. CI runs them before deploying.
 
 To preview the production build locally:
 
