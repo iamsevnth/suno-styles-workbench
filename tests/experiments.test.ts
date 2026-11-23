@@ -6,6 +6,8 @@ import {
   EXPERIMENT_LIMITS,
   type Experiment,
   ExperimentFormatError,
+  type Migration,
+  migrateDocument,
   parseExperimentJSON,
   serializeExperiment,
   validateExperiment,
@@ -89,6 +91,31 @@ describe("Experiment schema v1", () => {
     const doc = JSON.parse(fixture("controlled.v1.json")) as { runs: Record<string, unknown>[] } & Record<string, unknown>;
     const withBytes = { ...doc, runs: [{ ...doc.runs[0], audio: [{ sha256: ref.sha256, data: "UklGRg==" }] }, doc.runs[1]] };
     assert.equal("data" in validateExperiment(withBytes).runs[0]!.audio[0]!, false);
+  });
+});
+
+describe("Schema migrations", () => {
+  it("applies each step in order up to the target version", () => {
+    const steps = new Map<number, Migration>([
+      [1, (d) => ({ ...d, schemaVersion: 2, renamed: d.old })],
+      [2, (d) => ({ ...d, schemaVersion: 3 })],
+    ]);
+    assert.deepEqual(migrateDocument({ schemaVersion: 1, old: "x" }, 1, 3, steps), {
+      schemaVersion: 3,
+      old: "x",
+      renamed: "x",
+    });
+  });
+
+  it("fails loudly on a missing or faulty migration instead of looping", () => {
+    assert.throws(() => migrateDocument({ schemaVersion: 1 }, 1, 2, new Map()), /no migration from version 1/);
+    const stuck = new Map<number, Migration>([[1, (d) => ({ ...d })]]);
+    assert.throws(() => migrateDocument({ schemaVersion: 1 }, 1, 2, stuck), /did not produce version 2/);
+  });
+
+  it("is a no-op for the current version", () => {
+    const doc = { schemaVersion: 1 };
+    assert.equal(migrateDocument(doc, 1), doc);
   });
 });
 

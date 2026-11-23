@@ -124,17 +124,43 @@ export class ExperimentFormatError extends Error {
   }
 }
 
-/**
- * Upgrades older documents one version at a time. Key N converts version N to N + 1.
- * Version 1 is the first published version, so the table is empty; keep it so later
- * versions have a single, tested place to add migrations.
- */
-export const MIGRATIONS: Readonly<Record<number, (doc: Record<string, unknown>) => Record<string, unknown>>> = {};
-
 type Obj = Record<string, unknown>;
+export type Migration = (doc: Obj) => Obj;
 
-const isObj = (value: unknown): value is Obj =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+/**
+ * Upgrades older documents one version at a time: the entry for N converts version N to N + 1.
+ * Version 1 is the first published version, so the table is empty; keep it so later versions
+ * have a single, tested place to add migrations. A Map (not an object) so a version number from
+ * a file can only select a registered migration.
+ */
+export const MIGRATIONS: ReadonlyMap<number, Migration> = new Map();
+
+/**
+ * Applies migrations from the document's version up to `target`. Each step must produce exactly
+ * the next version, so a faulty migration fails loudly instead of looping or skipping a step.
+ */
+export function migrateDocument(
+  doc: Obj,
+  version: number,
+  target: number = EXPERIMENT_SCHEMA_VERSION,
+  migrations: ReadonlyMap<number, Migration> = MIGRATIONS,
+): Obj {
+  let current = doc;
+  for (let from = version; from < target; from += 1) {
+    const migrate = migrations.get(from);
+    if (!migrate) throw new ExperimentFormatError(`has no migration from version ${from}`, "schemaVersion");
+    const next = migrate(current);
+    if (!isObj(next) || next.schemaVersion !== from + 1) {
+      throw new ExperimentFormatError(`migration from version ${from} did not produce version ${from + 1}`, "schemaVersion");
+    }
+    current = next;
+  }
+  return current;
+}
+
+function isObj(value: unknown): value is Obj {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function text(value: unknown, path: string, max: number, { optional = false } = {}): string {
   if (value === undefined && optional) return "";
@@ -281,23 +307,17 @@ function run(value: unknown, path: string): ExperimentRun {
 export function validateExperiment(value: unknown): Experiment {
   if (!isObj(value)) throw new ExperimentFormatError("Not an experiment document", "");
   if (value.schema !== EXPERIMENT_SCHEMA) throw new ExperimentFormatError(`must be "${EXPERIMENT_SCHEMA}"`, "schema");
-  let doc: Obj = value;
-  let version = doc.schemaVersion;
-  if (!Number.isSafeInteger(version) || (version as number) < 1) {
+  const version = value.schemaVersion;
+  if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 1) {
     throw new ExperimentFormatError("must be a positive whole number", "schemaVersion");
   }
-  if ((version as number) > EXPERIMENT_SCHEMA_VERSION) {
+  if (version > EXPERIMENT_SCHEMA_VERSION) {
     throw new ExperimentFormatError(
       `is ${String(version)}, but this Workbench reads up to ${EXPERIMENT_SCHEMA_VERSION}. Update Workbench to open it.`,
       "schemaVersion",
     );
   }
-  while ((version as number) < EXPERIMENT_SCHEMA_VERSION) {
-    const migrate = MIGRATIONS[version as number];
-    if (!migrate) throw new ExperimentFormatError(`has no migration from version ${String(version)}`, "schemaVersion");
-    doc = migrate(doc);
-    version = doc.schemaVersion;
-  }
+  const doc = migrateDocument(value, version);
 
   const runs = list(doc.runs, "runs", EXPERIMENT_LIMITS.runs, run);
   const ids = new Set<string>();
