@@ -1,10 +1,14 @@
 // Serves dist/ the way GitHub Pages does: "/compiler" → compiler.html, unknown paths → 404.html.
 // Used only by the browser tests (e2e/playwright.config.ts). Run `npm run build` first.
-import { createReadStream, existsSync, statSync } from 'node:fs';
+//
+// Request paths never become filesystem paths: dist/ is indexed once at startup and requests are
+// looked up in that allowlist, so traversal ("/../", encoded or not) cannot reach other files.
+import { readdirSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve } from 'node:path';
+import { extname, join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = resolve(process.argv[2] ?? 'dist');
+const root = fileURLToPath(new URL('../dist/', import.meta.url));
 const port = Number(process.env.PORT ?? 4173);
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -20,30 +24,46 @@ const TYPES = {
   '.webmanifest': 'application/manifest+json',
 };
 
-if (!existsSync(join(root, 'index.html'))) {
-  console.error(`serve-dist: ${root}/index.html is missing; run npm run build first.`);
+/** Maps every URL path GitHub Pages would answer to the dist/ file it serves. */
+function indexDist(dir) {
+  const routes = new Map();
+  const walk = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const file = join(current, entry.name);
+      if (entry.isDirectory()) {
+        walk(file);
+        continue;
+      }
+      const urlPath = '/' + relative(dir, file).split(sep).join('/');
+      routes.set(urlPath, file);
+      if (urlPath.endsWith('.html')) routes.set(urlPath.slice(0, -'.html'.length), file);
+      if (urlPath.endsWith('/index.html')) routes.set(urlPath.slice(0, -'index.html'.length), file);
+    }
+  };
+  walk(dir);
+  return routes;
+}
+
+let routes;
+try {
+  routes = indexDist(root);
+} catch {
+  routes = new Map();
+}
+const notFound = routes.get('/404.html');
+if (!routes.has('/') || !notFound) {
+  console.error(`serve-dist: ${root} has no built site; run npm run build first.`);
   process.exit(1);
 }
 
-function resolveFile(urlPath) {
-  const clean = normalize(decodeURIComponent(urlPath.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
-  const candidates = clean.endsWith('/')
-    ? [join(clean, 'index.html')]
-    : [clean, `${clean}.html`, join(clean, 'index.html')];
-  for (const candidate of candidates) {
-    const file = join(root, candidate);
-    if (file.startsWith(root) && existsSync(file) && statSync(file).isFile()) return file;
-  }
-  return null;
-}
-
 createServer((request, response) => {
-  const file = resolveFile(request.url ?? '/');
-  const target = file ?? join(root, '404.html');
+  const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
+  const file = routes.get(pathname);
+  const target = file ?? notFound;
   response.writeHead(file ? 200 : 404, {
     'content-type': TYPES[extname(target)] ?? 'application/octet-stream',
   });
-  createReadStream(target).pipe(response);
+  response.end(readFileSync(target));
 }).listen(port, '127.0.0.1', () => {
-  console.log(`serve-dist: http://127.0.0.1:${port}/ → ${root}`);
+  console.log(`serve-dist: http://127.0.0.1:${port}/ → ${root} (${routes.size} routes)`);
 });

@@ -25,7 +25,7 @@ export default defineConfig({
     { name: 'chromium-mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: 'node e2e/serve-dist.mjs dist',
+    command: 'node e2e/serve-dist.mjs',
     cwd: '..',
     url: `http://127.0.0.1:${PORT}/`,
     env: { PORT: String(PORT) },
