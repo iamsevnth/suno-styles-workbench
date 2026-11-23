@@ -1,0 +1,49 @@
+{
+  "schema": "suno-workbench.experiment",
+  "schemaVersion": 1,
+  "id": "exp-weirdness",
+  "title": "Does Weirdness change the bass texture?",
+  "brief": "Warm neo-soul ballad at 78 BPM with Rhodes piano, upright bass and brushed drums.",
+  "createdAt": "2026-11-23T10:00:00Z",
+  "updatedAt": "2026-11-23T11:30:00.250Z",
+  "baselineRunId": "run-a",
+  "tags": ["neo-soul", "weirdness"],
+  "hypotheses": ["Higher Weirdness adds bass saturation without changing tempo."],
+  "runs": [
+    {
+      "id": "run-a",
+      "label": "Baseline, Weirdness 30",
+      "createdAt": "2026-11-23T10:00:00Z",
+      "workbenchVersion": "5.3.1",
+      "seed": 12345,
+      "promptVariant": "v1",
+      "styles": "Warm neo-soul ballad, 78 BPM, Rhodes piano, upright bass, brushed drums, breathy female lead vocal.",
+      "exclude": "trap hi-hats",
+      "settings": { "model": "v5", "weirdness": 30, "styleInfluence": 60, "maxMode": false, "extra": { "Persona": "none" } },
+      "changedFields": [],
+      "observations": [
+        { "id": "obs-1", "createdAt": "2026-11-23T10:10:00Z", "note": "Clean bass, steady groove.", "confidence": "medium", "labels": ["bass"], "blindLabel": "Clip 2" }
+      ],
+      "audio": [
+        { "sha256": "a3f5c2b9e1d4078f6a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081", "fileName": "baseline-take1.mp3", "durationSec": 184.2,
+          "analysis": { "tool": "SonicLens", "version": "0.1.1", "values": { "tempoBpm": 78, "key": "F minor" } } }
+      ]
+    },
+    {
+      "id": "run-b",
+      "label": "Weirdness 70",
+      "createdAt": "2026-11-23T11:00:00Z",
+      "workbenchVersion": "5.3.1",
+      "seed": 12345,
+      "promptVariant": "v1",
+      "styles": "Warm neo-soul ballad, 78 BPM, Rhodes piano, upright bass, brushed drums, breathy female lead vocal.",
+      "exclude": "trap hi-hats",
+      "settings": { "model": "v5", "weirdness": 70, "styleInfluence": 60, "maxMode": false, "extra": { "Persona": "none" } },
+      "changedFields": ["settings.weirdness"],
+      "observations": [
+        { "id": "obs-2", "createdAt": "2026-11-23T11:10:00Z", "note": "Bass is grittier; tempo unchanged.", "confidence": "low", "labels": ["bass", "texture"] }
+      ],
+      "audio": []
+    }
+  ]
+}
