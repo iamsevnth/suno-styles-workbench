@@ -111,6 +111,11 @@ describe("Schema migrations", () => {
     assert.throws(() => migrateDocument({ schemaVersion: 1 }, 1, 2, new Map()), /no migration from version 1/);
     const stuck = new Map<number, Migration>([[1, (d) => ({ ...d })]]);
     assert.throws(() => migrateDocument({ schemaVersion: 1 }, 1, 2, stuck), /did not produce version 2/);
+    const gap = new Map<number, Migration>([
+      [1, (d) => ({ ...d, schemaVersion: 2 })],
+      [3, (d) => ({ ...d, schemaVersion: 4 })],
+    ]);
+    assert.throws(() => migrateDocument({ schemaVersion: 1 }, 1, 4, gap), /no migration from version 2/);
   });
 
   it("is a no-op for the current version", () => {

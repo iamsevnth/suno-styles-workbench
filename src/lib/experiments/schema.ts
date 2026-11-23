@@ -145,16 +145,22 @@ export function migrateDocument(
   target: number = EXPERIMENT_SCHEMA_VERSION,
   migrations: ReadonlyMap<number, Migration> = MIGRATIONS,
 ): Obj {
+  // Walk the registered migrations in order rather than looking one up by the document's
+  // version, so file content can never choose which function runs.
   let current = doc;
-  for (let from = version; from < target; from += 1) {
-    const migrate = migrations.get(from);
-    if (!migrate) throw new ExperimentFormatError(`has no migration from version ${from}`, "schemaVersion");
+  let expected = version;
+  for (const [from, migrate] of [...migrations.entries()].sort(([a], [b]) => a - b)) {
+    if (from < version) continue;
+    if (from >= target) break;
+    if (from !== expected) break;
     const next = migrate(current);
     if (!isObj(next) || next.schemaVersion !== from + 1) {
       throw new ExperimentFormatError(`migration from version ${from} did not produce version ${from + 1}`, "schemaVersion");
     }
     current = next;
+    expected = from + 1;
   }
+  if (expected < target) throw new ExperimentFormatError(`has no migration from version ${expected}`, "schemaVersion");
   return current;
 }
 
