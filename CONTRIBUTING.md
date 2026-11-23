@@ -30,7 +30,10 @@ Before opening a pull request, run:
 npm run lint
 npm test
 npm run build
+npm run test:browser
 ```
+
+`npm run test:browser` serves the built `dist/` the way GitHub Pages does and checks every page in desktop and mobile Chromium: no console errors, no requests to other origins, no axe WCAG 2.1 A/AA violations, a Styles Compiler run, a Lyrics Studio arrangement that adds no words, and the offline file opened from disk. The first run needs `npx playwright install chromium`.
 
 The build must continue to produce both the hosted site and the self-contained offline file.
 

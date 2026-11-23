@@ -61,9 +61,7 @@ export default function StudioTabs({ active }: { active: StudioRouteId }) {
               </span>
             </span>
             <span
-              className={`hidden sm:inline text-[11px] px-2 py-0.5 rounded-md font-semibold tint tile-${tab.tile} ${
-                isActive ? "" : "opacity-80"
-              }`}
+              className={`hidden sm:inline text-[11px] px-2 py-0.5 rounded-md font-semibold tint tile-${tab.tile}`}
             >
               {tab.badge}
             </span>

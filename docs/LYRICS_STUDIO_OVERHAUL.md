@@ -1,6 +1,6 @@
 # Lyrics Studio — Source-Preserving Arrangement
 
-Status: v5.2 MVP implemented on a development branch; production release requires passing CI and review.
+Status: released in v5.2.0 and current in v5.3.1 (see [release notes](releases/v5.2.0.md)).
 
 ## Product decision
 

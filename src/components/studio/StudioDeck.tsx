@@ -16,7 +16,7 @@ const HEADINGS: Record<StudioRouteId, { title: string; intro: string; chip: stri
   lyrics: {
     title: "Lyrics Studio",
     intro:
-      "Build a song structure with exact section and line counts, draft or finish lyrics, then convert them to American English phonetic spellings for Suno's Lyrics field.",
+      "Rearrange your own lyrics into a section-by-section structure with planned bar slots, without adding new words, then convert them to American English phonetic spellings for Suno's Lyrics field.",
     chip: "Structure & phonetics",
   },
 };
