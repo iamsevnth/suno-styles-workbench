@@ -183,12 +183,33 @@ function id(value: unknown, path: string): string {
   return s;
 }
 
+const TIMESTAMP = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?Z$/;
+
+/**
+ * ISO 8601 UTC timestamp for a real calendar date and time. Date.parse alone is not enough: it
+ * turns 2026-02-31 into March 3 instead of rejecting it, so every field is checked against the
+ * instant it parses to.
+ */
 function timestamp(value: unknown, path: string): string {
   const s = text(value, path, 40);
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(s) || Number.isNaN(Date.parse(s))) {
-    throw new ExperimentFormatError("must be an ISO 8601 UTC timestamp", path);
-  }
+  const m = TIMESTAMP.exec(s);
+  const ms = Date.parse(s);
+  if (!m || Number.isNaN(ms)) throw new ExperimentFormatError("must be an ISO 8601 UTC timestamp", path);
+  const d = new Date(ms);
+  const same =
+    d.getUTCFullYear() === Number(m[1]) &&
+    d.getUTCMonth() + 1 === Number(m[2]) &&
+    d.getUTCDate() === Number(m[3]) &&
+    d.getUTCHours() === Number(m[4]) &&
+    d.getUTCMinutes() === Number(m[5]) &&
+    d.getUTCSeconds() === Number(m[6]);
+  if (!same) throw new ExperimentFormatError("must be a real calendar date and time", path);
   return s;
+}
+
+/** Milliseconds since 1970 for a timestamp validated by `timestamp`. */
+export function timestampMs(value: string): number {
+  return Date.parse(value);
 }
 
 function list<T>(value: unknown, path: string, max: number, each: (item: unknown, path: string) => T): T[] {

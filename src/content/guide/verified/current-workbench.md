@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.3.2 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -45,6 +45,10 @@ In Fix Mode, an optional **Original Intent / Brief** lets you compare both the p
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
+### v5.3.2: Accessibility and Accuracy Maintenance
+
+Fixes found by new automated browser and WCAG 2.1 A/AA scans: Home page list markup, Studio tab badge contrast, and Guide chapter headings and controls. Page descriptions now say plainly that Lyrics Studio arranges lyrics you supply rather than writing them. No compiler, Inspector or Lyrics Studio behavior changed.
+
 ## Genre, Timing and Production Interpretation
 
 - **BPM and musical key:** A recognized integer BPM and optional named key can be carried into the compiler plan. Treat reference/source tempos differently from requested target tempo.
@@ -73,7 +77,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.3.1 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.1.html`. The GitHub release is [v5.3.1](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.1); the tag corresponds to the v5.3.1 package (Guide Title Case sync on top of v5.3.0). Verify the SHA-256 checksum before redistribution when provided.
+The **official v5.3.2 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.2.html`. The GitHub release is [v5.3.2](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.2), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 

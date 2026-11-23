@@ -2,7 +2,7 @@
 
 This Guide preserves the author's long-form **157-page source manuscript** as an archive of production practices, examples, charts and lexicon material. Chapters marked **Source manuscript** are not independently re-certified to describe the current Workbench code or current Suno controls.
 
-**Current baseline:** Suno Workbench **v5.3.1**, checked November 15, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
+**Current baseline:** Suno Workbench **v5.3.2**, checked November 23, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
 
 ## Changes Reconciled Through v5.3
 
@@ -16,8 +16,9 @@ This Guide preserves the author's long-form **157-page source manuscript** as an
 8. **Controls and percentages:** Weirdness, Style Influence, Audio Influence and Variety refer to Suno controls, not Workbench sliders. The 800–975-character compiler target and the old manuscript's suggested slider percentages are not empirically certified performance optima. Set Variety to zero **for controlled exact-tag experiments**, not as a universal musical recommendation.
 9. **Historical prompt examples:** Some examples labeled 925–975 characters exceed that window. They remain instructive archival text but are **not validated paste-ready Styles output**.
 10. **Browser-only privacy:** Workbench's current app operates without its own analytics or remote generation API. Its persistent project save and exported files are user-directed. See the dedicated [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data handling.
-11. **Official v5.3 offline release:** A self-contained HTML build is distributed with the official tag `v5.3.1` as `suno-workbench-sevnthlabs-v5.3.1.html` (superseding the immutable v5.3.0 asset for current downloads); the release is built from the tagged commit and accompanied by a SHA-256 checksum when available.
+11. **Official v5.3 offline release:** A self-contained HTML build is distributed with the official tag `v5.3.2` as `suno-workbench-sevnthlabs-v5.3.2.html` (superseding the immutable v5.3.1 and v5.3.0 assets for current downloads); the release is built from the validated commit and accompanied by a SHA-256 checksum.
 12. **v5.3.1 Guide Title Case:** Guide page hero, search label, and verified chapter section headers use Title Case consistent with the rest of the site; no compiler or Lyrics Studio behavior changed.
+13. **v5.3.2 maintenance:** accessibility fixes (Home list markup, Studio badge contrast, Guide headings and controls) and accurate Lyrics Studio descriptions; Experiment Project schema groundwork for v5.4 without UI. No compiler or Lyrics Studio behavior changed.
 
 ## Evidentiary Labels
 
@@ -42,6 +43,7 @@ When Workbench changes, first update the current chapters, Guide manifest/index,
 ## Relevant References
 
 - [Workbench repository](https://github.com/iamsevnth/suno-styles-workbench)
+- [v5.3.2 Release Notes](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/releases/v5.3.2.md)
 - [v5.3.1 Release Notes](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/releases/v5.3.1.md)
 - [v5.3.0 Release Notes](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/releases/v5.3.0.md)
 - [Prompt Fidelity Methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md)

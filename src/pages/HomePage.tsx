@@ -23,7 +23,7 @@ const TOOLS: {
   {
     route: "styles",
     title: "Styles Compiler",
-    body: `Creates one to six production prompts for Suno's Styles field, or repairs an existing prompt in Fix Existing Prompt mode. Each result names the tempo, genres, groove, bass, harmony, vocals, mix and instruments in ${MIN_CHARS}–${MAX_CHARS} characters.`,
+    body: `Creates one to six production prompts for Suno's Styles field, or repairs an existing prompt in Fix Existing Prompt mode. Each result names the tempo, genres, groove, bass, harmony, vocals, mix and instruments in ${MIN_CHARS}–${MAX_CHARS} characters, and its Prompt Fidelity Inspector shows what carried over from your brief.`,
     cta: "Open the compiler",
     icon: "wand",
     tile: "magenta",
@@ -55,7 +55,7 @@ const STEPS: { title: string; body: string; tile: TileColor }[] = [
   },
   {
     title: "Paste into Suno",
-    body: "Copy a result into the Styles field in Advanced mode. Set Variety to Off so Suno uses your Styles text word for word, and generate.",
+    body: "Copy a result into the Styles field in Advanced mode. Set Variety to Off so Suno uses your Styles tags as written instead of reinterpreting them, and generate.",
     tile: "coral",
   },
 ];
@@ -69,7 +69,7 @@ const GUARANTEES: [string, string, IconName, TileColor][] = [
   ],
   [
     "Keeps your words",
-    "The genres, BPM, instruments and vocal description in your brief carry into every variation.",
+    "The genres, BPM, instruments and vocal description in your brief are carried into each variation; the Fidelity Inspector flags anything it can't find.",
     "settings",
     "violet",
   ],
@@ -131,7 +131,7 @@ export default function HomePage() {
             </h1>
             <p className="text-base text-[var(--fg-muted)] max-w-2xl leading-relaxed">
               Suno Workbench compiles a short creative brief into detailed production prompts that fit the Styles field,
-              then helps you finish the lyrics and the rest of the song.
+              then arranges the lyrics you wrote into Suno-ready sections.
             </p>
             <div className="flex flex-wrap gap-3">
               <ButtonLink href={hrefFor("styles")} primary>
