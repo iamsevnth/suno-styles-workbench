@@ -1,5 +1,5 @@
 import { readRaw, writeRaw, type WriteResult } from "../browser/storage.ts";
-import { type Experiment, validateExperiment } from "./schema.ts";
+import { type Experiment, timestampMs, validateExperiment } from "./schema.ts";
 
 /**
  * Local persistence for Experiment Projects. Like Styles history, everything read back is
@@ -34,7 +34,8 @@ export function loadExperiments(storage: Storage | null): LoadedExperiments {
 export function saveExperiments(storage: Storage | null, experiments: readonly Experiment[]): WriteResult {
   const valid = experiments
     .map((e) => validateExperiment(e))
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    // Compare instants, not text: "10:00:00Z" sorts after "10:00:00.999Z" as text.
+    .sort((a, b) => timestampMs(b.updatedAt) - timestampMs(a.updatedAt))
     .slice(0, MAX_SAVED_EXPERIMENTS);
   return writeRaw(storage, EXPERIMENTS_KEY, valid);
 }

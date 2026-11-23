@@ -1,6 +1,6 @@
 # Lyrics Studio — Source-Preserving Arrangement
 
-Status: released in v5.2.0 and current in v5.3.1 (see [release notes](releases/v5.2.0.md)).
+Status: released in v5.2.0 and current in v5.3.2 (see [release notes](releases/v5.2.0.md)).
 
 ## Product decision
 

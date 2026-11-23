@@ -67,8 +67,10 @@ describe("complete Guide manuscript", () => {
     assert.match(current, /^# Suno Workbench v5\.3/m);
     assert.match(current, /Prompt Fidelity Inspector/);
     assert.match(current, /source-preserving Lyrics Arranger/i);
-    assert.match(current, /suno-workbench-sevnthlabs-v5\.3\.1\.html/);
-    assert.match(status, /v5\.3\.1/);
+    // The download and baseline name the current package version (see tests/release.test.ts).
+    const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version as string;
+    assert.ok(current.includes(`suno-workbench-sevnthlabs-v${version}.html`));
+    assert.ok(status.includes(`v${version}`));
     assert.match(status, /archiv/i);
   });
 

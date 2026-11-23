@@ -55,6 +55,17 @@ describe("Experiment schema v1", () => {
     assert.equal("extraField" in (parsed.runs as Record<string, unknown>[])[0]!, false);
   });
 
+  it("rejects impossible calendar dates that Date.parse would roll over", () => {
+    const doc = JSON.parse(fixture("minimal.v1.json")) as Record<string, unknown>;
+    for (const bad of ["2026-02-31T10:00:00Z", "2026-02-29T10:00:00Z", "2026-04-31T00:00:00Z", "2026-11-23T24:00:00Z", "2026-13-01T00:00:00Z"]) {
+      rejects({ ...doc, updatedAt: bad }, "updatedAt");
+    }
+    rejects({ ...doc, createdAt: "2026-11-23 10:00:00Z" }, "createdAt");
+    for (const good of ["2028-02-29T23:59:59Z", "2026-11-23T10:00:00.5Z", "2026-12-31T00:00:00.999Z"]) {
+      assert.equal(validateExperiment({ ...doc, updatedAt: good }).updatedAt, good);
+    }
+  });
+
   it("rejects other document types and newer schema versions with a clear message", () => {
     const doc = JSON.parse(fixture("minimal.v1.json")) as Record<string, unknown>;
     rejects({ ...doc, schema: "something-else" }, "schema");
@@ -194,6 +205,15 @@ describe("Experiment storage", () => {
     assert.deepEqual(loaded.experiments.map((e) => e.id), ["exp-weirdness", "exp-minimal"]);
     assert.deepEqual(loaded.experiments[0], newer);
     assert.equal(loaded.dropped, 0);
+  });
+
+  it("orders by instant, not text, when milliseconds are present on only one", () => {
+    const storage = new MemoryStorage();
+    const base = parseExperimentJSON(fixture("minimal.v1.json"));
+    const whole = { ...clone(base), id: "whole-second", updatedAt: "2026-11-23T10:00:00Z" };
+    const later = { ...clone(base), id: "later-in-second", updatedAt: "2026-11-23T10:00:00.999Z" };
+    saveExperiments(storage, [whole, later]);
+    assert.deepEqual(loadExperiments(storage).experiments.map((e) => e.id), ["later-in-second", "whole-second"]);
   });
 
   it("drops corrupt entries and reports how many", () => {

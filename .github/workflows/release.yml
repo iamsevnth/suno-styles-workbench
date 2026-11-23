@@ -1,8 +1,9 @@
-name: Official v5.3.1 release (standalone HTML)
+name: Official release (standalone HTML)
 
 # Publish only after the trusted main-branch production pipeline completes.
 # This workflow never consumes PR artifacts or executes code from fork branches.
-# v5.3.0 assets remain immutable; this publisher creates the v5.3.1 tag only.
+# The version comes from package.json. A release is created the first time a version reaches
+# main; existing tags and assets are never overwritten, so earlier releases stay immutable.
 on:
   workflow_run:
     workflows: ["Test and deploy"]
@@ -14,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: official-release-v5.3.1
+  group: official-release
   cancel-in-progress: false
 
 jobs:
@@ -37,13 +38,19 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
 
-      - name: Check exact release version
+      - name: Check release version, notes and documentation
+        id: version
         run: |
           set -euo pipefail
-          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync("package.json","utf8")); const l=JSON.parse(fs.readFileSync("package-lock.json","utf8")); if(p.version!=="5.3.1" || l.version!=="5.3.1" || l.packages[""].version!=="5.3.1") { throw new Error("Not the approved v5.3.1 package/lockfile"); }'
-          grep -Fq 'The current package version is **5.3.1**' README.md
+          VERSION="$(node -p 'require("./package.json").version')"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Unexpected version $VERSION"; exit 1; }
+          VERSION="$VERSION" node --input-type=module -e 'import fs from "node:fs"; const v=process.env.VERSION; const l=JSON.parse(fs.readFileSync("package-lock.json","utf8")); if(l.version!==v || l.packages[""].version!==v) { throw new Error("package-lock.json does not match package.json " + v); }'
+          grep -Fq "The current package version is **$VERSION**" README.md
+          test -s "docs/releases/v$VERSION.md"
+          grep -Fq "suno-workbench-sevnthlabs-v$VERSION.html" "docs/releases/v$VERSION.md"
           test -s src/content/guide/verified/fidelity-inspector.md
           test -s src/content/guide/verified/lyrics-arranger.md
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           git rev-parse HEAD
 
       - name: Set up Node.js
@@ -66,9 +73,11 @@ jobs:
 
       - name: Package and verify standalone release HTML
         shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          readonly ASSET="suno-workbench-sevnthlabs-v5.3.1.html"
+          readonly ASSET="suno-workbench-sevnthlabs-v${VERSION}.html"
           test -s dist/suno-workbench.html
           test "$(wc -c < dist/suno-workbench.html)" -gt 100000
           cp dist/suno-workbench.html "dist/$ASSET"
@@ -84,20 +93,25 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          readonly TAG="v5.3.1"
-          readonly ASSET="suno-workbench-sevnthlabs-v5.3.1.html"
-          readonly RELEASE_TITLE="suno-workbench-sevnthlabs-v5.3.1"
+          readonly TAG="v${VERSION}"
+          readonly ASSET="suno-workbench-sevnthlabs-v${VERSION}.html"
+          readonly RELEASE_TITLE="suno-workbench-sevnthlabs-v${VERSION}"
           readonly COMMIT_SHA="$(git rev-parse HEAD)"
           if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = "true" ]; then
+              echo "::error::A draft release $TAG exists. Publish or delete it, then re-run this workflow."
+              exit 1
+            fi
             echo "Release already exists; checking asset names without overwriting."
             gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET"
             gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fx "$ASSET.sha256"
           else
             gh release create "$TAG" "dist/$ASSET" "dist/$ASSET.sha256" \
               --title "$RELEASE_TITLE" \
-              --notes-file docs/releases/v5.3.1.md \
+              --notes-file "docs/releases/v${VERSION}.md" \
               --target "$COMMIT_SHA" \
               --latest
           fi

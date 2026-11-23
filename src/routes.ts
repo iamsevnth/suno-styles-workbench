@@ -18,7 +18,7 @@ export const ROUTE_META: Record<RouteId, { title: string; description: string }>
   home: {
     title: "Suno Workbench: Styles Compiler and Lyrics Studio",
     description:
-      "Free, browser-only tools for Suno v6: compile or repair detailed Styles prompts and build structured lyrics. Everything stays in your browser.",
+      "Free, browser-only tools for Suno v6: compile or repair detailed Styles prompts and arrange your own lyrics into Suno sections. Everything stays in your browser.",
   },
   styles: {
     title: "Styles Compiler | Suno Workbench",
@@ -33,7 +33,7 @@ export const ROUTE_META: Record<RouteId, { title: string; description: string }>
   guide: {
     title: "Guide | Suno Workbench",
     description:
-      "Search the complete Suno Workbench production manual, v4 compiler documentation, Suno Create controls, 30 recipes, genre tables, and the 59-section sonic encyclopedia.",
+      "Search the current Suno Workbench v5.3 documentation and Suno v6 Create controls, plus the historical production manual with 30 recipes, genre tables and the 59-section sonic encyclopedia.",
   },
   privacy: {
     title: "Privacy Policy | Suno Workbench",

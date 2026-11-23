@@ -6,23 +6,26 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const load = (filename: string) => readFileSync(path.join(root, filename), "utf8");
-const asset = "suno-workbench-sevnthlabs-v5.3.1.html";
+const version: string = JSON.parse(load("package.json")).version;
+const asset = `suno-workbench-sevnthlabs-v${version}.html`;
 
-describe("official v5.3.1 release packaging contract", () => {
-  it("matches the version in the package, lockfile and release documentation", () => {
-    const pkg = JSON.parse(load("package.json"));
+describe("official release packaging contract", () => {
+  it("matches the version in the package, lockfile, README, Guide and release notes", () => {
     const lock = JSON.parse(load("package-lock.json"));
-    assert.equal(pkg.version, "5.3.1");
-    assert.equal(lock.version, "5.3.1");
-    assert.equal(lock.packages[""].version, "5.3.1");
-    const notes = load("docs/releases/v5.3.1.md");
+    assert.match(version, /^\d+\.\d+\.\d+$/);
+    assert.equal(lock.version, version);
+    assert.equal(lock.packages[""].version, version);
+    const notes = load(`docs/releases/v${version}.md`);
     assert.ok(notes.includes(asset));
     assert.ok(notes.includes(asset + ".sha256"));
-    assert.ok(notes.includes("Title Case"));
+    assert.ok(load("README.md").includes(`The current package version is **${version}**`));
+    assert.ok(load("README.md").includes(`releases/tag/v${version}`));
+    assert.ok(load("src/content/guide/verified/current-workbench.md").includes(asset));
+    assert.ok(load("src/content/guide/verified/reconciliation.md").includes(`**v${version}**`));
   });
 
   it("provides a trusted, minimally privileged release workflow after successful production deploy", () => {
-    const workflow = load(".github/workflows/release-v53.yml");
+    const workflow = load(".github/workflows/release.yml");
     assert.match(workflow, /workflow_run:/);
     assert.match(workflow, /workflows: \["Test and deploy"\]/);
     assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
@@ -36,11 +39,14 @@ describe("official v5.3.1 release packaging contract", () => {
     assert.match(workflow, /cmp -s dist\/suno-workbench\.html/);
     assert.match(workflow, /sha256sum --check/);
     assert.match(workflow, /gh release create/);
-    assert.ok(workflow.includes(asset));
+    // The version is read from package.json, never hard-coded.
+    assert.ok(workflow.includes('ASSET="suno-workbench-sevnthlabs-v${VERSION}.html"'));
+    assert.ok(workflow.includes('TAG="v${VERSION}"'));
+    assert.ok(workflow.includes('--notes-file "docs/releases/v${VERSION}.md"'));
+    assert.doesNotMatch(workflow, /sevnthlabs-v\d|TAG="v\d|"\d+\.\d+\.\d+"/);
+    assert.match(workflow, /isDraft/);
     assert.ok(workflow.includes('"dist/$ASSET.sha256"'));
     assert.ok(workflow.includes('sha256sum "$ASSET" > "$ASSET.sha256"'));
-    assert.ok(workflow.includes("suno-workbench-sevnthlabs-v5.3.1"));
-    assert.ok(workflow.includes("v5.3.1"));
     assert.match(workflow, /--target "\$COMMIT_SHA"/);
     assert.match(workflow, /ref: \$\{\{ github\.event\.workflow_run\.head_sha \|\| github\.sha \}\}/);
     assert.doesNotMatch(workflow, /pull_request:/);
