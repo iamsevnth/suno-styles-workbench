@@ -1,0 +1,19 @@
+{
+  "schema": "suno-workbench.experiment",
+  "schemaVersion": 1,
+  "id": "exp-minimal",
+  "title": "Single run",
+  "createdAt": "2026-11-23T10:00:00Z",
+  "updatedAt": "2026-11-23T10:00:00Z",
+  "runs": [
+    {
+      "id": "run-a",
+      "label": "Baseline",
+      "createdAt": "2026-11-23T10:00:00Z",
+      "workbenchVersion": "5.3.1",
+      "seed": 12345,
+      "styles": "Warm neo-soul ballad, 78 BPM, Rhodes piano, upright bass, brushed drums, breathy female lead vocal."
+    }
+  ],
+  "baselineRunId": "run-a"
+}

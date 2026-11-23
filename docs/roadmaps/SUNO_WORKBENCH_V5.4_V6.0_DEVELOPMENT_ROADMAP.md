@@ -42,6 +42,8 @@ This roadmap takes Suno Workbench from the current v5.3.1 evidence-bound text to
 
 ## v5.4 - Prompt Experiment Lab
 
+**Progress (2026-11-23):** Slice 1 (contract and fixtures) is implemented. It covers the Experiment Project schema v1 with strict validation, migrations and newer-version rejection; lossless export/import; local persistence; a comparability check; and test fixtures. See [docs/experiments/SCHEMA-v1.md](../experiments/SCHEMA-v1.md). The `/experiments` UI starts with slice 2.
+
 **Mission:** Create the reproducible evidence-capture layer that future Workbench recommendations can rely on, without claiming audio quality or introducing remote content processing.
 
 ### Target outcomes
