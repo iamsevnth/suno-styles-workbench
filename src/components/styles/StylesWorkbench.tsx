@@ -5,6 +5,8 @@ import BriefPanel from "./BriefPanel.tsx";
 import HistoryPanel from "./HistoryPanel.tsx";
 import PromptCard from "./PromptCard.tsx";
 import { changedMusicalAxes } from "../../lib/suno/semantic.ts";
+import { useEffect, useState } from "react";
+import { aiAvailability, loadAiPref, saveAiPref, type AiAvailability } from "../../lib/ai/on-device.ts";
 import Icon from "../icons/Icon.tsx";
 import { IconTile } from "../content/Content.tsx";
 
@@ -18,6 +20,16 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
       ? "No Variations Yet"
       : `${wb.prompts.length} Prompt${wb.prompts.length === 1 ? "" : "s"}${wb.generation > 0 ? ` · Run ${wb.generation}` : ""}`;
 
+  // Experimental on-device AI: shown only when Chrome offers its built-in model; off until turned on.
+  const [aiState, setAiState] = useState<AiAvailability>("unavailable");
+  const [aiPref, setAiPref] = useState(loadAiPref);
+  useEffect(() => {
+    let live = true;
+    aiAvailability().then((a) => live && setAiState(a));
+    return () => { live = false; };
+  }, []);
+  const aiOn = aiPref && aiState !== "unavailable";
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
@@ -29,6 +41,12 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               <Icon name="zap" size={16} className="text-[var(--tile-violet-fg)]" />
               {heading}
             </h2>
+            {aiState !== "unavailable" && (
+              <label className="flex items-center gap-2 text-xs text-[var(--fg-muted)]" title="Chrome runs Google's Gemini Nano model on this computer. The Workbench sends nothing to an AI service.">
+                <input type="checkbox" checked={aiPref} onChange={(e) => { setAiPref(e.target.checked); saveAiPref(e.target.checked); }} />
+                On-device AI (experimental){aiState !== "available" ? " · Chrome downloads its model on first use" : ""}
+              </label>
+            )}
             {wb.prompts.length > 0 && (
               <div className="flex items-center gap-2">
                 <button type="button" onClick={wb.downloadAllPrompts} className={`${SMALL_BUTTON} hover:bg-[var(--bg-subtle)]`}>
@@ -72,6 +90,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
                 onCopy={wb.copyStyle}
                 sourceText={wb.parsed?.raw ?? ""}
                 changedFromFirst={i > 0 ? changedMusicalAxes(wb.prompts[0].plan, p.plan) : undefined}
+                aiOn={aiOn}
               />
             ))
           )}

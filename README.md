@@ -11,7 +11,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
-**Official v5.4.1 Release:** [suno-workbench-sevnthlabs-v5.4.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.1)  
+**Official v5.5.0 Release:** [suno-workbench-sevnthlabs-v5.5.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.5.0)  
 **Privacy Policy:** https://sunoworkbench.com/privacy-policy  
 **Security Policy:** [SECURITY.md](SECURITY.md)
 
@@ -23,7 +23,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 | **Lyrics Studio** | Rearranges original user-supplied lyrics into a manual or suggested section sequence using planned bar slots, chopping, repetition, verified source spans, local project saves, and optional American-English phonetic conversion. No new lyric words are generated. |
 | **Guide** | Includes current v5.3 getting-started instructions, dedicated Prompt Fidelity Inspector and v5.2 Lyrics Arranger walkthroughs, documented Suno v6 controls, and a separately labeled historical manuscript with searchable recipes and a 59-section sonic encyclopedia. |
 | **Offline Build** | Produces a self-contained <code>dist/suno-workbench.html</code> file that runs directly from disk without a server. |
-| **Privacy-First Runtime** | Uses no application server, account system, analytics service, cookies, API keys, or AI API calls. |
+| **Privacy-First Runtime** | Uses no application server, account system, analytics service, cookies, API keys, or AI API calls. An optional, experimental on-device AI rewording uses Chrome's built-in model on your computer (off by default). |
 
 The hosted app and offline build are designed to keep briefs, lyrics, Styles text, and generated content on the user's device. Session state and Styles history use browser storage only. Lyrics Studio saves its source texts to local browser storage only when the user explicitly selects Save to Browser.
 
@@ -70,16 +70,16 @@ dist/suno-workbench.html
 
 Open that file directly in a current desktop browser. The offline builder inlines the application assets and rewrites the Content Security Policy to permit only the exact inlined scripts and styles by SHA-256 hash.
 
-### Official v5.4.1 Standalone Download
+### Official v5.5.0 Standalone Download
 
-The official [GitHub v5.4.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.1) is titled **suno-workbench-sevnthlabs-v5.4.1** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.4.0 and v5.3.x offline packages for current downloads.
+The official [GitHub v5.5.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.5.0) is titled **suno-workbench-sevnthlabs-v5.5.0** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.4.x and v5.3.x offline packages for current downloads.
 
-- **[suno-workbench-sevnthlabs-v5.4.1.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.4.1/suno-workbench-sevnthlabs-v5.4.1.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
-- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.4.1/suno-workbench-sevnthlabs-v5.4.1.html.sha256)** — allows verification of the downloaded HTML.
+- **[suno-workbench-sevnthlabs-v5.5.0.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.5.0/suno-workbench-sevnthlabs-v5.5.0.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
+- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.5.0/suno-workbench-sevnthlabs-v5.5.0.html.sha256)** — allows verification of the downloaded HTML.
 
 The standalone file is rebuilt from the validated release commit with `npm run build`, the complete test suite, TypeScript checking and the offline Content Security Policy validator before publication. No installation or account is needed for core offline use; external links to Suno documentation need an internet connection.
 
-To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.4.1.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.4.1.html` and compare its digest with the checksum file.
+To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.5.0.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.5.0.html` and compare its digest with the checksum file.
 
 ## Usage and Examples
 
@@ -103,6 +103,8 @@ Choose how many prompts to create (one to six) and a **Variation Strategy**:
 - **A/B Lab — Change Bass Articulation Only:** exactly two prompts with the same plan except one bass-articulation phrase, for a controlled comparison in Suno. It needs a compatible alternate in the matched genre bank.
 
 **Hybrid Bass Profile** blends in the built-in hybrid bass library when the brief leaves genres or moods open. Each result shows its ten-digit plan seed, BPM, key and character count. From the second result on, each card names the musical axes (rhythm, bass, sound design, arrangement, vocals) where it differs from the first. In Precision and Exploration, results that differ in fewer than two are rejected and regenerated; A/B Lab's second result changes the bass articulation only, by design.
+
+**On-Device AI (experimental)** appears above the results only in desktop Chrome versions with Chrome's built-in AI (the Prompt API with Gemini Nano). It is off until you turn it on. Each result then has **Reword on This Device**: the model proposes new wording for that prompt, and the Workbench shows it only if it passes the same checks as its own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words). Anything that fails is discarded with the reasons. The model never changes the plan, genres or roles; it only rewords.
 
 **Brief Check** reads the brief as you type (nothing is generated) and flags what it leaves ambiguous, with a suggested rewrite: three or more genres with no roles, a tempo far from the genre's usual range, a 2-step and a four-on-the-floor kick at once, four or more competing bass sources, continuous 32nd-note hats in a sparse groove, electronic hats requested while all hats are excluded, no named hook in an electronic or bass-music brief, and a second drop described only as "bigger". The checks come from the [prompt-engine research of 11/23/2026](docs/research/prompt-engine-rules-2026-11-23.json); they are production heuristics, not Suno rules, and never block generation.
 
@@ -200,6 +202,7 @@ The dedicated [Privacy Policy](https://sunoworkbench.com/privacy-policy) explain
 - prompts, lyrics, Styles text, and generated content are processed locally;
 - SEVNTHLABS does not receive that creative content;
 - session state and Styles history use browser storage on the user's device;
+- the optional, experimental On-Device AI (desktop Chrome only, off by default) gives the prompt to the model Chrome runs on your computer; the Workbench sends it to no AI service, and Chrome downloads its model from Google on first use;
 - the site itself uses no cookies, analytics, or tracking; and
 - GitHub Pages may process limited hosting/security logs under GitHub's own infrastructure and policies.
 
@@ -319,7 +322,9 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.4.1**. v5.4.1 is a Brief Check accuracy patch: role advice counts only roles a genre names, a section word near a bass no longer hides a bass stack, briefs that aren't electronic don't get the hook note, any hat request conflicts with a blanket hat exclusion, a "melodic" genre name isn't a hook, and bare "UKG" isn't read as a 2-step kick. Generation is unchanged. The official **[v5.4.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.1)** is titled **suno-workbench-sevnthlabs-v5.4.1**; see the [v5.4.1 release notes](docs/releases/v5.4.1.md).
+The current package version is **5.5.0**. v5.5.0 adds the optional, experimental **On-Device AI** rewording (desktop Chrome's built-in model, off by default; every AI wording must pass the Workbench's checks or it is discarded). Generation is unchanged. The official **[v5.5.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.5.0)** is titled **suno-workbench-sevnthlabs-v5.5.0**; see the [v5.5.0 release notes](docs/releases/v5.5.0.md).
+
+v5.4.1 was a Brief Check accuracy patch: role advice counts only roles a genre names, a section word near a bass no longer hides a bass stack, briefs that aren't electronic don't get the hook note, any hat request conflicts with a blanket hat exclusion, a "melodic" genre name isn't a hook, and bare "UKG" isn't read as a 2-step kick. Generation was unchanged; see the [v5.4.1 release notes](docs/releases/v5.4.1.md).
 
 v5.4.0 added **Brief Check** (deterministic brief linting from the 11/23/2026 prompt-engine research), **role owners** in the Sonic Plan, and **named variation changes** on each result; generation itself is unchanged. The official **[v5.4.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.0)** is titled **suno-workbench-sevnthlabs-v5.4.0**; see the [v5.4.0 release notes](docs/releases/v5.4.0.md). The repository was renamed from `suno-styles-workbench` to `suno-workbench`; old links redirect.
 

@@ -79,6 +79,42 @@ test('Brief Check flags a conflicting brief, and variants name what changed', as
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });
 
+test('On-device AI rewording is hidden without the API, and shows only checked wording', async ({ page }) => {
+  // Browsers without the Prompt API (Safari, Firefox, older Chrome) never see the option.
+  await page.addInitScript(() => { delete (window as unknown as { LanguageModel?: unknown }).LanguageModel; });
+  await page.goto(ROUTE_PATHS.styles);
+  await expect(page.getByLabel(/On-device AI/)).toHaveCount(0);
+
+  // Stand-in for Chrome's Prompt API: first a valid reordering, then wording that breaks the rules.
+  await page.addInitScript(() => {
+    let calls = 0;
+    (window as unknown as { LanguageModel: unknown }).LanguageModel = {
+      availability: async () => 'available',
+      create: async () => ({
+        prompt: async (text: string) => {
+          calls++;
+          return calls === 1 ? text.split(/(?<=\.)\s+/).reverse().join(' ') : 'No drums, avoid bass.';
+        },
+        destroy() {},
+      }),
+    };
+  });
+  await page.reload();
+  const toggle = page.getByLabel(/On-device AI/);
+  await expect(toggle).not.toBeChecked();
+  await toggle.check();
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const first = page.getByTestId('ai-reword').first();
+  await first.getByRole('button', { name: 'Reword on This Device' }).click();
+  await expect(first.getByTestId('ai-accepted')).toContainText('Passed the Workbench checks');
+  await first.getByRole('button', { name: 'Try Again' }).click();
+  await expect(first.getByTestId('ai-rejected')).toContainText('Discarded');
+  await expect(first.getByTestId('ai-accepted')).toHaveCount(0);
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
+});
+
 test('Lyrics Studio arranges supplied lyrics without adding words and verifies the source', async ({
   page,
 }) => {
