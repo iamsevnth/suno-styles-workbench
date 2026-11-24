@@ -54,10 +54,11 @@ export default function PrivacyPolicyPage() {
       <Section id="privacy-on-device-ai" title="Optional On-Device AI (Experimental)">
         <Prose>
           <p>
-            In desktop Chrome versions that include Chrome's built-in AI, the Styles Compiler offers an optional,
-            experimental On-Device AI setting. It is off until you turn it on, and it is not offered in other browsers.
-            When you choose Reword on This Device, the Styles prompt is given to the model that Chrome runs on your
-            computer. Suno Workbench does not send that text to SEVNTHLABS or to any AI service.
+            The Styles Compiler has an optional, experimental AI Assist section. AI is off until you turn it on and agree
+            in a permission dialog, and it works only in desktop Chrome versions that include Chrome's built-in AI; other
+            browsers show it as not available. With AI on, AI runs only when you click Reword with AI on a result: that
+            Styles prompt is given to the model Chrome runs on your computer, and the new wording is labeled AI wording.
+            Suno Workbench does not send that text to SEVNTHLABS or to any AI service.
           </p>
           <p>
             The first time a site uses Chrome's built-in model, Chrome downloads the model from Google. That download,

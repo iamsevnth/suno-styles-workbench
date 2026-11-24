@@ -1,6 +1,7 @@
 import { useState } from "react";
 import FidelityInspector from "./FidelityInspector.tsx";
 import AiReword from "./AiReword.tsx";
+import type { OnDeviceAi } from "../../hooks/useOnDeviceAi.ts";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 import { ownershipMap } from "../../lib/suno/lint.ts";
 import type { SemanticAxis } from "../../lib/suno/semantic.ts";
@@ -27,14 +28,14 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, aiOn }: {
+export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, ai }: {
   prompt: PromptCandidate;
   onCopy: (styles: string) => void;
   sourceText: string;
   /** Musical axes that differ from the first variant; undefined for the first one. */
   changedFromFirst?: SemanticAxis[];
-  /** Show the experimental on-device AI rewording (only when the browser has it and the user turned it on). */
-  aiOn?: boolean;
+  /** On-device AI state; the Reword with AI section appears only when the user turned AI on. */
+  ai?: OnDeviceAi;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const plan = prompt.plan;
@@ -85,8 +86,13 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
           </button>
         </div>
       ) : null}
+      <div className="px-4 pt-3 -mb-2">
+        <span data-testid="engine-badge" className="inline-flex items-center gap-1 rounded-full border border-[var(--border)] px-2 py-0.5 text-[11px] text-[var(--fg-muted)]">
+          Workbench engine · no AI
+        </span>
+      </div>
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
-      {aiOn && <AiReword prompt={prompt} onCopy={onCopy} />}
+      {ai?.on && <AiReword prompt={prompt} onCopy={onCopy} availability={ai.availability} />}
 
       <button
         type="button"

@@ -1,33 +1,48 @@
 import { useEffect, useRef, useState } from "react";
 import type { PromptCandidate } from "../../lib/suno/types.ts";
 import { checkAiRewrite, type AiCheck } from "../../lib/ai/check.ts";
-import { rewordOnDevice } from "../../lib/ai/on-device.ts";
+import { rewordOnDevice, type AiAvailability } from "../../lib/ai/on-device.ts";
+import Icon from "../icons/Icon.tsx";
 
 type State =
   | { kind: "idle" }
+  | { kind: "confirm-download" }
   | { kind: "working"; note: string }
   | { kind: "done"; check: AiCheck }
   | { kind: "error"; message: string };
 
+const BTN = "h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]";
+
 /**
- * Experimental: asks Chrome's on-device model for new wording of this prompt. The result is shown
- * only if it passes the same checks as the Workbench's own prompts; otherwise it is discarded.
+ * Experimental: asks Chrome's on-device model for new wording of this prompt, only when the user
+ * clicks. The result is shown, labeled as AI wording, only if it passes the Workbench's checks.
  */
-export default function AiReword({ prompt, onCopy }: { prompt: PromptCandidate; onCopy: (text: string) => void }) {
+export default function AiReword({ prompt, onCopy, availability }: {
+  prompt: PromptCandidate;
+  onCopy: (text: string) => void;
+  availability: AiAvailability;
+}) {
   const [state, setState] = useState<State>({ kind: "idle" });
+  const [downloadOk, setDownloadOk] = useState(availability === "available");
   const abort = useRef<AbortController | null>(null);
   // Cancel a request still running when the card goes away (new results, Clear Results).
   useEffect(() => () => abort.current?.abort(), []);
+
+  function start() {
+    // Chrome downloads its model from Google the first time: ask before that happens.
+    if (!downloadOk) return setState({ kind: "confirm-download" });
+    void run();
+  }
 
   async function run() {
     abort.current?.abort();
     const ctl = new AbortController();
     abort.current = ctl;
-    setState({ kind: "working", note: "Rewording on this device…" });
+    setState({ kind: "working", note: "AI is rewording this prompt on your device…" });
     try {
       const raw = await rewordOnDevice(prompt, {
         signal: ctl.signal,
-        onDownload: (f) => setState({ kind: "working", note: `Chrome is downloading its on-device model (${Math.round(f * 100)}%)…` }),
+        onDownload: (f) => setState({ kind: "working", note: `Chrome is downloading its AI model (${Math.round(f * 100)}%)…` }),
       });
       if (!ctl.signal.aborted) setState({ kind: "done", check: checkAiRewrite(raw, prompt) });
     } catch (e) {
@@ -35,43 +50,62 @@ export default function AiReword({ prompt, onCopy }: { prompt: PromptCandidate; 
     }
   }
 
+  const working = state.kind === "working";
   return (
-    <div className="mx-4 mb-3 rounded-[var(--r-md)] border border-dashed border-[var(--border)] p-3 text-xs text-[var(--fg-muted)]" data-testid="ai-reword">
+    <section aria-label="AI wording" data-testid="ai-reword" aria-busy={working}
+      className="mx-4 mb-3 rounded-[var(--r-md)] border-2 border-[var(--tile-violet-fg)] bg-[var(--tile-violet-bg)] p-3 text-xs text-[var(--fg-muted)]">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span>
-          <span className="font-semibold text-[var(--fg)]">On-device AI rewording</span> (experimental): same plan, new wording, checked like every prompt.
+        <span className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--tile-violet-fg)] px-2 py-0.5 text-[11px] font-semibold text-white">
+            <Icon name="sparkles" size={12} /> AI
+          </span>
+          <span className="text-[var(--fg)]">Optional: new wording for this prompt, made on your device when you click.</span>
         </span>
-        {state.kind === "working" ? (
-          <button type="button" onClick={() => { abort.current?.abort(); setState({ kind: "idle" }); }}
-            className="h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
-            Stop
-          </button>
-        ) : (
-          <button type="button" onClick={run}
-            className="h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
-            {state.kind === "done" ? "Try Again" : "Reword on This Device"}
+        {working ? (
+          <button type="button" className={BTN} onClick={() => { abort.current?.abort(); setState({ kind: "idle" }); }}>Stop AI</button>
+        ) : state.kind !== "confirm-download" && (
+          <button type="button" className={BTN} onClick={start}>
+            {state.kind === "done" ? "Reword with AI Again" : "Reword with AI"}
           </button>
         )}
       </div>
+
+      {state.kind === "confirm-download" && (
+        <div className="mt-2 flex flex-col gap-2" data-testid="ai-download-confirm">
+          <p className="m-0 text-[var(--fg)]">
+            Chrome needs to download its AI model from Google before the first rewording. This happens once, in Chrome; the Workbench sends nothing.
+          </p>
+          <div className="flex gap-2">
+            <button type="button" className={BTN} onClick={() => setState({ kind: "idle" })}>Cancel</button>
+            <button type="button" className={`${BTN} font-semibold`} onClick={() => { setDownloadOk(true); void run(); }}>
+              Download Model and Reword
+            </button>
+          </div>
+        </div>
+      )}
+
       <div role="status" aria-live="polite" className="mt-2">
-        {state.kind === "working" && <p className="m-0">{state.note}</p>}
+        {working && (
+          <p className="m-0 flex items-center gap-2 text-[var(--fg)] font-medium" data-testid="ai-working">
+            <span className="h-2 w-2 rounded-full bg-[var(--tile-violet-fg)] animate-pulse" aria-hidden="true" />
+            {state.note}
+          </p>
+        )}
         {state.kind === "error" && <p className="m-0 text-[var(--danger)]">{state.message}</p>}
         {state.kind === "done" && !state.check.ok && (
           <p className="m-0" data-testid="ai-rejected">
-            Discarded: {state.check.problems.join("; ")}. Try again for different wording.
+            The AI wording was discarded: {state.check.problems.join("; ")}. The prompt above is unchanged.
           </p>
         )}
       </div>
+
       {state.kind === "done" && state.check.ok && (
         <div className="mt-2" data-testid="ai-accepted">
-          <p className="m-0 text-[var(--fg)]">Passed the Workbench checks · {state.check.text.length} characters</p>
-          <p className="m-0 mt-1 whitespace-pre-wrap text-sm leading-relaxed">{state.check.text}</p>
-          <button type="button" onClick={() => onCopy(state.check.text)}
-            className="mt-2 h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]">
-            Copy AI Wording
-          </button>
+          <p className="m-0 font-semibold text-[var(--fg)]">AI wording · passed the Workbench checks · {state.check.text.length} characters</p>
+          <p className="m-0 mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg)]">{state.check.text}</p>
+          <button type="button" onClick={() => onCopy(state.check.text)} className={`${BTN} mt-2`}>Copy AI Wording</button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

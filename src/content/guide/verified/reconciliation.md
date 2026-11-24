@@ -2,7 +2,7 @@
 
 This Guide preserves the author's long-form **157-page source manuscript** as an archive of production practices, examples, charts and lexicon material. Chapters marked **Source manuscript** are not independently re-certified to describe the current Workbench code or current Suno controls.
 
-**Current baseline:** Suno Workbench **v5.6.0**, checked November 23, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
+**Current baseline:** Suno Workbench **v5.7.0**, checked November 23, 2026. The primary current chapters are **Workbench v5.3 — Start Here**, **Prompt Fidelity Inspector — v5.3**, **Lyrics Studio Arranger — v5.2+**, and the officially sourced **Create Mode — Suno v6 Controls**.
 
 ## Changes Reconciled Through v5.3
 
@@ -16,13 +16,14 @@ This Guide preserves the author's long-form **157-page source manuscript** as an
 8. **Controls and percentages:** Weirdness, Style Influence, Audio Influence and Variety refer to Suno controls, not Workbench sliders. The 800–975-character compiler target and the old manuscript's suggested slider percentages are not empirically certified performance optima. Set Variety to zero **for controlled exact-tag experiments**, not as a universal musical recommendation.
 9. **Historical prompt examples:** Some examples labeled 925–975 characters exceed that window. They remain instructive archival text but are **not validated paste-ready Styles output**.
 10. **Browser-only privacy:** Workbench's current app operates without its own analytics or remote generation API; the optional On-Device AI (v5.5.0) uses Chrome's built-in model on the device. Its persistent project save and exported files are user-directed. See the dedicated [/privacy-policy](https://sunoworkbench.com/privacy-policy) for hosting and data handling.
-11. **Official offline release:** A self-contained HTML build is distributed with the official tag `v5.6.0` as `suno-workbench-sevnthlabs-v5.6.0.html` (superseding the immutable v5.5.0, v5.4.x and v5.3.x assets for current downloads); the release is built from the validated commit and accompanied by a SHA-256 checksum.
+11. **Official offline release:** A self-contained HTML build is distributed with the official tag `v5.7.0` as `suno-workbench-sevnthlabs-v5.7.0.html` (superseding the immutable v5.6.0, v5.5.0, v5.4.x and v5.3.x assets for current downloads); the release is built from the validated commit and accompanied by a SHA-256 checksum.
 12. **v5.3.1 Guide Title Case:** Guide page hero, search label, and verified chapter section headers use Title Case consistent with the rest of the site; no compiler or Lyrics Studio behavior changed.
 13. **v5.3.2 maintenance:** accessibility fixes (Home list markup, Studio badge contrast, Guide headings and controls) and accurate Lyrics Studio descriptions; Experiment Project schema groundwork for v5.4 without UI. No compiler or Lyrics Studio behavior changed.
 14. **v5.4.0 Brief Check:** deterministic brief notes from the 11/23/2026 prompt-engine research, role owners in the Sonic Plan, and named variation changes per result. Generation is unchanged.
 15. **v5.4.1 Brief Check accuracy:** six notes made more precise after review (genre-named roles, per-source bass sections, hook check only for electronic genres, any hat request, "melodic" not a hook, bare UKG not 2-step). Generation is unchanged.
 16. **v5.5.0 On-Device AI (experimental):** optional rewording by desktop Chrome's built-in model, off by default and absent in other browsers; every AI wording must pass the Workbench's prompt checks or it is discarded. The Workbench sends nothing to an AI service.
 17. **v5.6.0 Instrumental toggle:** briefs that never mention vocals stay instrumental when it's on; any vocal mention in the brief wins.
+18. **v5.7.0 Visible AI:** always-visible AI Assist with status, a permission dialog before AI turns on, a prompt before the model download, and labels for engine prompts and AI wording.
 
 ## Evidentiary Labels
 
@@ -47,6 +48,7 @@ When Workbench changes, first update the current chapters, Guide manifest/index,
 ## Relevant References
 
 - [Workbench repository](https://github.com/iamsevnth/suno-workbench)
+- [v5.7.0 Release Notes](https://github.com/iamsevnth/suno-workbench/blob/main/docs/releases/v5.7.0.md)
 - [v5.6.0 Release Notes](https://github.com/iamsevnth/suno-workbench/blob/main/docs/releases/v5.6.0.md)
 - [v5.5.0 Release Notes](https://github.com/iamsevnth/suno-workbench/blob/main/docs/releases/v5.5.0.md)
 - [v5.4.1 Release Notes](https://github.com/iamsevnth/suno-workbench/blob/main/docs/releases/v5.4.1.md)

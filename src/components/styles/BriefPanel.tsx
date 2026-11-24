@@ -1,6 +1,8 @@
 import { StylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
 import Icon from "../icons/Icon.tsx";
 import BriefCheck from "./BriefCheck.tsx";
+import AiAssistPanel from "./AiAssistPanel.tsx";
+import type { OnDeviceAi } from "../../hooks/useOnDeviceAi.ts";
 import { mentionsVocals } from "../../lib/suno/parse.ts";
 import { useDeferredValue, useMemo } from "react";
 
@@ -10,7 +12,7 @@ const TRUST_NOTES = [
   "Export History downloads a uniquely dated JSON file to your computer",
 ];
 
-export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
+export default function BriefPanel({ wb, ai }: { wb: StylesWorkbench; ai: OnDeviceAi }) {
   const showParsed = wb.prompts.length > 0 || wb.input.trim().length > 0;
   const fixing = wb.compilerMode === "fix";
   const briefText = useDeferredValue(wb.input);
@@ -183,6 +185,8 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
           </label>
         )}
       </div>
+
+      {!fixing && <AiAssistPanel ai={ai} />}
 
       {!fixing && (
         <div className="flex flex-col gap-2">
