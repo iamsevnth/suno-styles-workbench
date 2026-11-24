@@ -8,6 +8,10 @@ export interface OnDeviceAi {
   on: boolean;
   /** The permission dialog is open. */
   asking: boolean;
+  /** Chrome has its model (or the user already agreed to the download this visit): no download prompt. */
+  modelReady: boolean;
+  /** The user agreed to the model download; applies to every result card. */
+  allowDownload: () => void;
   /** Opens the permission dialog; AI stays off until the user agrees. */
   requestOn: () => void;
   agree: () => void;
@@ -20,6 +24,7 @@ export function useOnDeviceAi(): OnDeviceAi {
   const [availability, setAvailability] = useState<AiAvailability>("unavailable");
   const [pref, setPref] = useState(loadAiPref);
   const [asking, setAsking] = useState(false);
+  const [downloadAllowed, setDownloadAllowed] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -38,6 +43,8 @@ export function useOnDeviceAi(): OnDeviceAi {
     availability,
     on: pref && availability !== "unavailable",
     asking,
+    modelReady: availability === "available" || downloadAllowed,
+    allowDownload: () => setDownloadAllowed(true),
     requestOn: () => setAsking(true),
     agree: () => {
       set(true);

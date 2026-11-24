@@ -59,9 +59,15 @@ export async function rewordOnDevice(
   }
 }
 
-const PREF = "suno-workbench:on-device-ai";
+/**
+ * "on" is stored only after the user agrees in the permission dialog (v5.7.0+). The v5.5/v5.6
+ * key was set by a plain checkbox, so it is ignored and removed: those users are asked again.
+ */
+const PREF = "suno-workbench:on-device-ai-consented";
+const LEGACY_PREF = "suno-workbench:on-device-ai";
 export function loadAiPref(): boolean {
   try {
+    window.localStorage.removeItem(LEGACY_PREF);
     return window.localStorage.getItem(PREF) === "on";
   } catch {
     return false;

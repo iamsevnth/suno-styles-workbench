@@ -11,7 +11,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
-**Official v5.7.0 Release:** [suno-workbench-sevnthlabs-v5.7.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.0)  
+**Official v5.7.1 Release:** [suno-workbench-sevnthlabs-v5.7.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1)  
 **Privacy Policy:** https://sunoworkbench.com/privacy-policy  
 **Security Policy:** [SECURITY.md](SECURITY.md)
 
@@ -70,16 +70,16 @@ dist/suno-workbench.html
 
 Open that file directly in a current desktop browser. The offline builder inlines the application assets and rewrites the Content Security Policy to permit only the exact inlined scripts and styles by SHA-256 hash.
 
-### Official v5.7.0 Standalone Download
+### Official v5.7.1 Standalone Download
 
-The official [GitHub v5.7.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.0) is titled **suno-workbench-sevnthlabs-v5.7.0** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.6.0, v5.5.0, v5.4.x and v5.3.x offline packages for current downloads.
+The official [GitHub v5.7.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1) is titled **suno-workbench-sevnthlabs-v5.7.1** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.7.0, v5.6.0, v5.5.0, v5.4.x and v5.3.x offline packages for current downloads.
 
-- **[suno-workbench-sevnthlabs-v5.7.0.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.0/suno-workbench-sevnthlabs-v5.7.0.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
-- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.0/suno-workbench-sevnthlabs-v5.7.0.html.sha256)** — allows verification of the downloaded HTML.
+- **[suno-workbench-sevnthlabs-v5.7.1.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.1/suno-workbench-sevnthlabs-v5.7.1.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
+- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.1/suno-workbench-sevnthlabs-v5.7.1.html.sha256)** — allows verification of the downloaded HTML.
 
 The standalone file is rebuilt from the validated release commit with `npm run build`, the complete test suite, TypeScript checking and the offline Content Security Policy validator before publication. No installation or account is needed for core offline use; external links to Suno documentation need an internet connection.
 
-To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.7.0.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.7.0.html` and compare its digest with the checksum file.
+To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.7.1.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.7.1.html` and compare its digest with the checksum file.
 
 ## Usage and Examples
 
@@ -104,7 +104,7 @@ Choose how many prompts to create (one to six) and a **Variation Strategy**:
 
 **Hybrid Bass Profile** blends in the built-in hybrid bass library when the brief leaves genres or moods open. **Instrumental** (off by default, Create mode) keeps a brief that never mentions vocals instrumental; if the brief mentions vocals in any form, the brief wins and a note says the toggle doesn't apply. Each result shows its ten-digit plan seed, BPM, key and character count. From the second result on, each card names the musical axes (rhythm, bass, sound design, arrangement, vocals) where it differs from the first. In Precision and Exploration, results that differ in fewer than two are rejected and regenerated; A/B Lab's second result changes the bass articulation only, by design.
 
-**AI Assist (optional, experimental)** sits in the brief panel and always shows its status: **AI Off**, **AI On** or **Not Available** (with the reason: it needs desktop Chrome with Chrome's built-in AI). AI is off until you switch it on and agree in a permission dialog that says exactly what it will and won't do. Every result is labeled **Workbench engine · no AI**, and the results header says **No AI Used** or **AI On · runs only when you click**. With AI on, each result gets a violet **AI** section with **Reword with AI**: the model runs only when you click, on this device, and Chrome asks again before downloading its model the first time. AI wording is shown, labeled **AI wording**, only if it passes the same checks as the Workbench's own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words); anything else is discarded with the reasons. The model never changes the plan, genres or roles; it only rewords.
+**AI Assist (optional, experimental)** sits in the brief panel (Create and Fix modes) and always shows its status: **AI Off**, **AI On** or **Not Available** (with the reason: it needs desktop Chrome with Chrome's built-in AI). AI is off until you switch it on and agree in a permission dialog that says exactly what it will and won't do. Every result is labeled **Workbench engine · no AI**, and the results header says **No AI Used** or **AI On · runs only when you click**. With AI on, each result gets a violet **AI** section with **Reword with AI**: the model runs only when you click, on this device, and Chrome asks again before downloading its model the first time. AI wording is shown, labeled **AI wording**, only if it passes the same checks as the Workbench's own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words); anything else is discarded with the reasons. The model never changes the plan, genres or roles; it only rewords.
 
 **Brief Check** reads the brief as you type (nothing is generated) and flags what it leaves ambiguous, with a suggested rewrite: three or more genres with no roles, a tempo far from the genre's usual range, a 2-step and a four-on-the-floor kick at once, four or more competing bass sources, continuous 32nd-note hats in a sparse groove, electronic hats requested while all hats are excluded, no named hook in an electronic or bass-music brief, and a second drop described only as "bigger". The checks come from the [prompt-engine research of 11/23/2026](docs/research/prompt-engine-rules-2026-11-23.json); they are production heuristics, not Suno rules, and never block generation.
 
@@ -322,7 +322,9 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.7.0**. v5.7.0 makes AI use visible: an always-visible **AI Assist** section with its status, a permission dialog before AI turns on, a second prompt before Chrome downloads its model, and labels that say which prompts were written without AI and which wording came from AI. The official **[v5.7.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.0)** is titled **suno-workbench-sevnthlabs-v5.7.0**; see the [v5.7.0 release notes](docs/releases/v5.7.0.md).
+The current package version is **5.7.1**. v5.7.1 fixes the AI permission flow: an AI setting saved by v5.5/v5.6 is no longer carried over without the new permission dialog, the model-download question is asked once rather than on every result, keyboard focus stays in the permission dialog, and AI Assist is also shown in Fix mode so AI can always be turned off. See the [v5.7.1 release notes](docs/releases/v5.7.1.md); the official **[v5.7.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1)** is titled **suno-workbench-sevnthlabs-v5.7.1**.
+
+v5.7.0 made AI use visible: an always-visible **AI Assist** section with its status, a permission dialog before AI turns on, a second prompt before Chrome downloads its model, and labels that say which prompts were written without AI and which wording came from AI. See the [v5.7.0 release notes](docs/releases/v5.7.0.md).
 
 v5.6.0 added an **Instrumental** toggle: when it's on, a brief that never mentions vocals stays instrumental (no singer is added), while any mention of vocals in the brief (a singer, rap, a voice, vocal chops, a choir, a male or female lead) keeps them. See the [v5.6.0 release notes](docs/releases/v5.6.0.md).
 

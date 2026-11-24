@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PromptCandidate } from "../../lib/suno/types.ts";
 import { checkAiRewrite, type AiCheck } from "../../lib/ai/check.ts";
-import { rewordOnDevice, type AiAvailability } from "../../lib/ai/on-device.ts";
+import { rewordOnDevice } from "../../lib/ai/on-device.ts";
 import Icon from "../icons/Icon.tsx";
 
 type State =
@@ -17,20 +17,25 @@ const BTN = "h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-x
  * Experimental: asks Chrome's on-device model for new wording of this prompt, only when the user
  * clicks. The result is shown, labeled as AI wording, only if it passes the Workbench's checks.
  */
-export default function AiReword({ prompt, onCopy, availability }: {
+export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }: {
   prompt: PromptCandidate;
   onCopy: (text: string) => void;
-  availability: AiAvailability;
+  /** Shared across cards: once the user agrees to the download, no card asks again. */
+  modelReady: boolean;
+  onAllowDownload: () => void;
 }) {
   const [state, setState] = useState<State>({ kind: "idle" });
-  const [downloadOk, setDownloadOk] = useState(availability === "available");
   const abort = useRef<AbortController | null>(null);
   // Cancel a request still running when the card goes away (new results, Clear Results).
   useEffect(() => () => abort.current?.abort(), []);
+  // A download question left open here closes once the user agrees on another result.
+  useEffect(() => {
+    if (modelReady) setState((s) => (s.kind === "confirm-download" ? { kind: "idle" } : s));
+  }, [modelReady]);
 
   function start() {
     // Chrome downloads its model from Google the first time: ask before that happens.
-    if (!downloadOk) return setState({ kind: "confirm-download" });
+    if (!modelReady) return setState({ kind: "confirm-download" });
     void run();
   }
 
@@ -77,7 +82,7 @@ export default function AiReword({ prompt, onCopy, availability }: {
           </p>
           <div className="flex gap-2">
             <button type="button" className={BTN} onClick={() => setState({ kind: "idle" })}>Cancel</button>
-            <button type="button" className={`${BTN} font-semibold`} onClick={() => { setDownloadOk(true); void run(); }}>
+            <button type="button" className={`${BTN} font-semibold`} onClick={() => { onAllowDownload(); void run(); }}>
               Download Model and Reword
             </button>
           </div>
