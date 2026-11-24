@@ -136,7 +136,7 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
 function tempoRule(original: PromptCandidate): string {
   const named = tempoGenreNumbers(original.styles).includes(original.bpm);
   if (!named) return `the tempo written exactly as "${original.bpm} BPM"`;
-  const label = /\b(?:deep[ -])?1[34]\d(?: UKG Dubstep| Bass)?\b|\b(?:deep|wubby|wobble)[ -]1[34]\d\b/i.exec(original.styles)?.[0] ?? String(original.bpm);
+  const label = /\b(?:deep[ -])?1[34]\d(?: UKG Dubstep| Bass| Grime| Halftime)?\b|\b(?:deep|wubby|wobble)[ -]1[34]\d\b/i.exec(original.styles)?.[0] ?? String(original.bpm);
   return `the genre name "${label}" written exactly like that, which already states the tempo (never add a separate BPM)`;
 }
 

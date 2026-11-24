@@ -45,6 +45,7 @@ interface SessionSnapshot {
   lastAction: string;
   prompts: PromptCandidate[];
   parsed: Parsed | null;
+  wordings: Record<number, ActiveWording>;
 }
 
 type StorageArea = "session" | "local";
@@ -84,7 +85,21 @@ function readSession(): StoredSession {
     lastAction: str(r.lastAction),
     hasResults: r.hasResults === true && isRestorableResult(r.result),
     result: isRestorableResult(r.result) ? (r.result as StoredSession["result"]) : undefined,
+    wordings: readWordings(r.wordings),
   };
+}
+
+/** Stored card wordings (Rephrase or an assistant's answer), keeping only well-formed entries. */
+function readWordings(v: unknown): Record<number, ActiveWording> {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return {};
+  const out: Record<number, ActiveWording> = {};
+  for (const [k, w] of Object.entries(v as Record<string, unknown>)) {
+    const i = Number(k);
+    if (!Number.isInteger(i) || i < 0 || typeof w !== "object" || w === null) continue;
+    const { text, source } = w as Record<string, unknown>;
+    if (typeof text === "string" && text && (source === "rephrase" || source === "assistant")) out[i] = { text, source };
+  }
+  return out;
 }
 
 interface StoredSession {
@@ -100,6 +115,7 @@ interface StoredSession {
   lastAction?: string;
   hasResults?: boolean;
   result?: { prompts: PromptCandidate[]; parsed: Parsed };
+  wordings?: Record<number, ActiveWording>;
 }
 
 function saveSession(s: SessionSnapshot): void {
@@ -116,6 +132,7 @@ function saveSession(s: SessionSnapshot): void {
     lastAction: s.lastAction,
     hasResults: s.prompts.length > 0,
     result: s.prompts.length && s.parsed ? { prompts: s.prompts, parsed: s.parsed } : undefined,
+    wordings: s.prompts.length ? s.wordings : undefined,
   };
   writeJson("session", STORAGE_KEY, stored);
 }
@@ -177,13 +194,13 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storageFor("local")));
   const [isGenerating, setIsGenerating] = useState(false);
   // Per result (by position): the wording on the card when it isn't the engine's. Cleared with new results.
-  const [wordings, setWordings] = useState<Record<number, ActiveWording>>({});
+  const [wordings, setWordings] = useState<Record<number, ActiveWording>>(restored ? stored.wordings ?? {} : {});
   const briefRef = useRef<HTMLTextAreaElement>(null);
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed, wordings });
+  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed, wordings]);
 
   const generate = () => {
     const brief = input.trim();

@@ -54,8 +54,10 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, ai, onWordingChange }: {
+export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, ai, onWordingChange, initialWording }: {
   prompt: PromptCandidate;
+  /** The wording this card showed before a reload or a page change, restored from the session. */
+  initialWording?: ActiveWording;
   /** Reports the wording the card shows, so Download All Prompts and the results status match the cards. */
   onWordingChange?: (wording: ActiveWording | null) => void;
   onCopy: (styles: string) => void;
@@ -66,7 +68,10 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
   ai?: OnDeviceAi;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
-  const [view, setViewState] = useState<Wording>({ text: prompt.styles, source: "engine", wording: 0, seen: [] });
+  const [view, setViewState] = useState<Wording>(() =>
+    initialWording
+      ? { text: initialWording.text, source: initialWording.source, wording: 0, seen: initialWording.source === "rephrase" ? [initialWording.text] : [] }
+      : { text: prompt.styles, source: "engine", wording: 0, seen: [] });
   const setView = (next: Wording) => {
     setViewState(next);
     onWordingChange?.(next.source === "engine" ? null : { text: next.text, source: next.source });

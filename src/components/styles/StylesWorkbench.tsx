@@ -89,6 +89,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
                 changedFromFirst={i > 0 ? changedMusicalAxes(wb.prompts[0].plan, p.plan) : undefined}
                 ai={ai}
                 onWordingChange={(w) => wb.setWording(i, w)}
+                initialWording={wb.wordings[i]}
               />
             ))
           )}

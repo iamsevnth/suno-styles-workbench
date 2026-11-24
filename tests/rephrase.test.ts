@@ -40,6 +40,8 @@ describe("Rephrase (no AI)", () => {
           assert.notEqual(r.text, p.styles);
           assert.ok(!seen.includes(r.text), "repeats an earlier rephrasing");
           assert.ok(criticalGatesPass(validatePrompt(r.text, p.plan).hardGates), r.text);
+          // Inside the chosen window's target, not just the 1,000-character field limit (Codex review).
+          assert.ok(r.text.length <= (length === "tight" ? 850 : 975), String(r.text.length));
           assert.ok(briefFaithfulness(r.text, p.plan) >= briefFaithfulness(p.styles, p.plan), r.text);
           seen.push(r.text);
           after = r.wording;
@@ -103,6 +105,13 @@ describe("Reword with your own assistant", () => {
     assert.match(req, /"150 BPM"/);
     assert.match(req, /Write between 800 and 975 characters/);
     assert.ok(req.endsWith(p.styles));
+  });
+
+  it("names \"140 Grime\" and \"140 Halftime\" in full when the genre carries the tempo (Codex review)", () => {
+    for (const [brief, label] of [["140 Grime", /"1[34]\d Grime"/], ["140 Halftime, dark", /"1[34]\d Halftime"/]] as const) {
+      const g = generateStylesPrompts(brief, { count: 1, seed: 7 }).prompts[0];
+      assert.match(assistantRequest(g), label, assistantRequest(g).slice(0, 300));
+    }
   });
 
   it("a tight prompt asks for the tight window", () => {

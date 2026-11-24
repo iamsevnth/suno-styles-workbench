@@ -323,9 +323,14 @@ test('Rephrase rewords a result with no AI, labeled, and Show Original restores 
   await expect(badge).toHaveText('Rephrased by the Workbench engine · no AI · passed the checks');
   await expect(text).not.toHaveText(original ?? '');
   expect((await text.textContent())?.startsWith('Melodic dubstep at 150 BPM') || (await text.textContent())?.includes('150 BPM')).toBe(true);
+  // The chosen wording survives a reload, like the rest of the results (Codex review).
+  const rephrased = (await text.textContent()) ?? '';
+  await page.reload();
+  await expect(page.getByTestId('prompt-text').first()).toHaveText(rephrased);
+  await expect(page.getByTestId('engine-badge').first()).toHaveText('Rephrased by the Workbench engine · no AI · passed the checks');
   await page.getByRole('button', { name: 'Show Original' }).first().click();
-  await expect(text).toHaveText(original ?? '');
-  await expect(badge).toHaveText('Workbench engine · no AI');
+  await expect(page.getByTestId('prompt-text').first()).toHaveText(original ?? '');
+  await expect(page.getByTestId('engine-badge').first()).toHaveText('Workbench engine · no AI');
 });
 
 test('Reword with your own assistant: copy a request, paste the answer, and only a checked answer is used', async ({ page, context, browserName }) => {

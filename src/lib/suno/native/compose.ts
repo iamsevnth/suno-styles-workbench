@@ -597,8 +597,8 @@ function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   const tex = vary(nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]));
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
-  // Two or three production priorities, mastering talk last: a few consequential choices read better than a stack.
-  const mixes = take([...s.mix].sort((a, b) => Number(/\bmaster/i.test(a)) - Number(/\bmaster/i.test(b))), Math.min(d.mix, 2));
+  // Two or three production priorities and no mastering buzzwords: a few consequential choices read better than a stack.
+  const mixes = take(s.mix.filter((x) => !/\bmaster/i.test(x)), Math.min(d.mix, 2));
   const prod = [...take(s.era, d.era), ...vary(mixes)];
   if (prod.length) out.push(sentence(`${PRODUCTION_HEADINGS[frame]}: ${listOf(prod)}`));
 

@@ -37,6 +37,9 @@ export function rephrase(candidate: PromptCandidate, after = 0, seen: string[] =
   for (let wording = after + 1; wording <= after + ATTEMPTS; wording++) {
     const text = renderStyles(plan, wording);
     if (known.has(text.toLowerCase())) continue;
+    // The selected window's target (975 Detailed, 850 Tight), not only the 1,000-character field limit.
+    const window = lengthWindow(plan.length);
+    if (text.length < window.min || text.length > window.max) continue;
     if (!criticalGatesPass(validatePrompt(text, plan).hardGates)) continue;
     if (briefFaithfulness(text, plan) < keep) continue;
     // The vocal share cap of the chosen length (25% Detailed, 15% Tight) holds for new wording too.

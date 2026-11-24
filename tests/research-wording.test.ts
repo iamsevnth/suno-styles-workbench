@@ -88,6 +88,15 @@ describe("research wording: two or three production priorities (§3 Part 5)", ()
     }
   });
 
+  it("native prompts carry no mastering phrase (Codex review)", () => {
+    for (const brief of [...NATIVE_BASS, "future bass + pop", "house, uplifting, piano", "pop, bright, female vocals"]) {
+      for (const p of prompts(brief)) {
+        const prod = /Production: ([^.]*)\./.exec(p.styles)?.[1] ?? "";
+        assert.doesNotMatch(prod, /\bmaster/i, `${brief}: ${prod}`);
+      }
+    }
+  });
+
   it("native prompts list at most three production phrases", () => {
     for (const brief of NATIVE_BASS) {
       for (const p of prompts(brief)) {
