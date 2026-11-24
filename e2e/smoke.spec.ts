@@ -79,40 +79,87 @@ test('Brief Check flags a conflicting brief, and variants name what changed', as
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });
 
-test('On-device AI rewording is hidden without the API, and shows only checked wording', async ({ page }) => {
-  // Browsers without the Prompt API (Safari, Firefox, older Chrome) never see the option.
+const mockLanguageModel = (availability: string) => {
+  // Stand-in for Chrome's Prompt API: first a valid reordering, then wording that breaks the rules.
+  (window as unknown as { __aiCalls: number }).__aiCalls = 0;
+  (window as unknown as { LanguageModel: unknown }).LanguageModel = {
+    availability: async () => availability,
+    create: async () => ({
+      prompt: async (text: string) => {
+        const w = window as unknown as { __aiCalls: number };
+        w.__aiCalls++;
+        return w.__aiCalls === 1 ? text.split(/(?<=\.)\s+/).reverse().join(' ') : 'No drums, avoid bass.';
+      },
+      destroy() {},
+    }),
+  };
+};
+
+test('AI Assist is always visible and says when AI is not available', async ({ page }) => {
   await page.addInitScript(() => { delete (window as unknown as { LanguageModel?: unknown }).LanguageModel; });
   await page.goto(ROUTE_PATHS.styles);
-  await expect(page.getByLabel(/On-device AI/)).toHaveCount(0);
+  const panel = page.getByTestId('ai-assist');
+  await expect(panel).toBeVisible();
+  await expect(page.getByTestId('ai-status')).toHaveText('Not Available');
+  await expect(page.getByRole('switch', { name: 'Use on-device AI' })).toBeDisabled();
+  await expect(panel).toContainText("This browser doesn't offer on-device AI");
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  await expect(page.getByTestId('results-ai-status')).toHaveText('No AI Used');
+  await expect(page.getByTestId('engine-badge')).toHaveCount(3);
+  await expect(page.getByTestId('ai-reword')).toHaveCount(0);
+});
 
-  // Stand-in for Chrome's Prompt API: first a valid reordering, then wording that breaks the rules.
-  await page.addInitScript(() => {
-    let calls = 0;
-    (window as unknown as { LanguageModel: unknown }).LanguageModel = {
-      availability: async () => 'available',
-      create: async () => ({
-        prompt: async (text: string) => {
-          calls++;
-          return calls === 1 ? text.split(/(?<=\.)\s+/).reverse().join(' ') : 'No drums, avoid bass.';
-        },
-        destroy() {},
-      }),
-    };
-  });
-  await page.reload();
-  const toggle = page.getByLabel(/On-device AI/);
-  await expect(toggle).not.toBeChecked();
-  await toggle.check();
+test('AI turns on only after the user agrees, and AI wording is labeled and checked', async ({ page }) => {
+  await page.addInitScript(mockLanguageModel, 'available');
+  await page.goto(ROUTE_PATHS.styles);
+  const sw = page.getByRole('switch', { name: 'Use on-device AI' });
+  await expect(page.getByTestId('ai-status')).toHaveText('AI Off');
+  await sw.click();
+  const dialog = page.getByRole('dialog', { name: 'Turn On On-Device AI?' });
+  await expect(dialog).toBeVisible();
+  let results = await new AxeBuilder({ page }).include('[role=dialog]').withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+  await dialog.getByRole('button', { name: 'Keep AI Off' }).click();
+  await expect(page.getByTestId('ai-status')).toHaveText('AI Off');
+  await expect(sw).toHaveAttribute('aria-checked', 'false');
+
+  await sw.click();
+  await page.getByRole('button', { name: 'Turn On AI' }).click();
+  await expect(page.getByTestId('ai-status')).toHaveText('AI On');
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  await expect(page.getByTestId('results-ai-status')).toContainText('AI On');
+  expect(await page.evaluate(() => (window as unknown as { __aiCalls: number }).__aiCalls)).toBe(0);
+  const first = page.getByTestId('ai-reword').first();
+  await first.getByRole('button', { name: 'Reword with AI' }).click();
+  await expect(first.getByTestId('ai-accepted')).toContainText('AI wording · passed the Workbench checks');
+  await first.getByRole('button', { name: 'Reword with AI Again' }).click();
+  await expect(first.getByTestId('ai-rejected')).toContainText('discarded');
+  results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
+
+  // Turning AI off removes every AI control at once.
+  await page.getByRole('switch', { name: 'Use on-device AI' }).click();
+  await expect(page.getByTestId('ai-reword')).toHaveCount(0);
+  await expect(page.getByTestId('results-ai-status')).toHaveText('No AI Used');
+});
+
+test('AI asks again before Chrome downloads its model', async ({ page }) => {
+  await page.addInitScript(mockLanguageModel, 'downloadable');
+  await page.goto(ROUTE_PATHS.styles);
+  await page.getByRole('switch', { name: 'Use on-device AI' }).click();
+  await page.getByRole('button', { name: 'Turn On AI' }).click();
   await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
   await page.getByRole('button', { name: 'Generate Styles' }).click();
   const first = page.getByTestId('ai-reword').first();
-  await first.getByRole('button', { name: 'Reword on This Device' }).click();
-  await expect(first.getByTestId('ai-accepted')).toContainText('Passed the Workbench checks');
-  await first.getByRole('button', { name: 'Try Again' }).click();
-  await expect(first.getByTestId('ai-rejected')).toContainText('Discarded');
-  await expect(first.getByTestId('ai-accepted')).toHaveCount(0);
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
+  await first.getByRole('button', { name: 'Reword with AI' }).click();
+  await expect(first.getByTestId('ai-download-confirm')).toBeVisible();
+  await first.getByRole('button', { name: 'Cancel' }).click();
+  expect(await page.evaluate(() => (window as unknown as { __aiCalls: number }).__aiCalls)).toBe(0);
+  await first.getByRole('button', { name: 'Reword with AI' }).click();
+  await first.getByRole('button', { name: 'Download Model and Reword' }).click();
+  await expect(first.getByTestId('ai-accepted')).toBeVisible();
 });
 
 test('Instrumental toggle keeps vocal-free briefs instrumental and yields to vocal briefs', async ({ page }) => {

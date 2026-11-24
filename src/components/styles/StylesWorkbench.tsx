@@ -5,8 +5,8 @@ import BriefPanel from "./BriefPanel.tsx";
 import HistoryPanel from "./HistoryPanel.tsx";
 import PromptCard from "./PromptCard.tsx";
 import { changedMusicalAxes } from "../../lib/suno/semantic.ts";
-import { useEffect, useState } from "react";
-import { aiAvailability, loadAiPref, saveAiPref, type AiAvailability } from "../../lib/ai/on-device.ts";
+import { useOnDeviceAi } from "../../hooks/useOnDeviceAi.ts";
+import AiConsentDialog from "./AiConsentDialog.tsx";
 import Icon from "../icons/Icon.tsx";
 import { IconTile } from "../content/Content.tsx";
 
@@ -20,20 +20,13 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
       ? "No Variations Yet"
       : `${wb.prompts.length} Prompt${wb.prompts.length === 1 ? "" : "s"}${wb.generation > 0 ? ` · Run ${wb.generation}` : ""}`;
 
-  // Experimental on-device AI: shown only when Chrome offers its built-in model; off until turned on.
-  const [aiState, setAiState] = useState<AiAvailability>("unavailable");
-  const [aiPref, setAiPref] = useState(loadAiPref);
-  useEffect(() => {
-    let live = true;
-    aiAvailability().then((a) => live && setAiState(a));
-    return () => { live = false; };
-  }, []);
-  const aiOn = aiPref && aiState !== "unavailable";
+  // Optional on-device AI: off until the user turns it on and agrees; its state is always shown.
+  const ai = useOnDeviceAi();
 
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
-        <BriefPanel wb={wb} />
+        <BriefPanel wb={wb} ai={ai} />
 
         <section aria-label="Results" className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -41,12 +34,10 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               <Icon name="zap" size={16} className="text-[var(--tile-violet-fg)]" />
               {heading}
             </h2>
-            {aiState !== "unavailable" && (
-              <label className="flex items-center gap-2 text-xs text-[var(--fg-muted)]" title="Chrome runs Google's Gemini Nano model on this computer. The Workbench sends nothing to an AI service.">
-                <input type="checkbox" checked={aiPref} onChange={(e) => { setAiPref(e.target.checked); saveAiPref(e.target.checked); }} />
-                On-device AI (experimental){aiState !== "available" ? " · Chrome downloads its model on first use" : ""}
-              </label>
-            )}
+            <span data-testid="results-ai-status" title={ai.on ? "AI runs only when you click Reword with AI on a result." : "These prompts were written by the Workbench engine without AI."}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ai.on ? "bg-[var(--tile-violet-fg)] text-white" : "border border-[var(--border)] text-[var(--fg-muted)]"}`}>
+              {ai.on ? "AI On · runs only when you click" : "No AI Used"}
+            </span>
             {wb.prompts.length > 0 && (
               <div className="flex items-center gap-2">
                 <button type="button" onClick={wb.downloadAllPrompts} className={`${SMALL_BUTTON} hover:bg-[var(--bg-subtle)]`}>
@@ -90,7 +81,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
                 onCopy={wb.copyStyle}
                 sourceText={wb.parsed?.raw ?? ""}
                 changedFromFirst={i > 0 ? changedMusicalAxes(wb.prompts[0].plan, p.plan) : undefined}
-                aiOn={aiOn}
+                ai={ai}
               />
             ))
           )}
@@ -98,6 +89,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
       </div>
 
       <HistoryPanel history={wb.history} onCopy={wb.copyStyle} onExport={wb.exportHistory} onClear={wb.clearHistory} />
+      {ai.asking && <AiConsentDialog availability={ai.availability} onAgree={ai.agree} onDecline={ai.decline} />}
     </>
   );
 }

@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.6.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.7.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -45,13 +45,21 @@ In Fix Mode, an optional **Original Intent / Brief** lets you compare both the p
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
+### v5.7.0: Visible, Permission-Based AI
+
+- **AI Assist** is always in the brief panel (Create mode), with its status: **AI Off**, **AI On** or **Not Available**. When it's not available, it says why: on-device AI needs desktop Chrome with Chrome's built-in AI (Gemini Nano) on a computer that can run it.
+- **Use on-device AI** opens a permission dialog first. It explains that AI runs only when you click Reword with AI, changes only wording, is always labeled, and runs in Chrome on your computer. **Keep AI Off** is the default button.
+- **Labels:** every result says **Workbench engine · no AI**, and the results header says **No AI Used** or **AI On · runs only when you click**. AI wording sits in a violet **AI** section and is labeled **AI wording**. While the model works, the section says so, and **Stop AI** cancels it.
+- **Model download:** if Chrome doesn't have its model yet, the first Reword with AI asks before Chrome downloads it from Google.
+- Turning AI off removes every AI control at once.
+
 ### v5.6.0: Instrumental Toggle
 
 The brief panel has an **Instrumental** toggle next to Hybrid Bass Profile (Create mode, off by default). When it's on, a brief that never mentions vocals stays instrumental: no singer, rapper or vocal line is added, and the prompt checks reject any vocal wording, including On-Device AI rewording. If the brief mentions vocals in any form (a singer, rap, a voice, vocal chops, a choir, a male or female lead), the brief wins and a note under the brief says the toggle doesn't apply. "No vocals" and other exclusions don't count as a mention.
 
 ### v5.5.0: On-Device AI Rewording (Experimental)
 
-In desktop Chrome versions with Chrome's built-in AI, an **On-Device AI (experimental)** checkbox appears above the results. It is off by default and does not appear in other browsers. Turned on, each result gets **Reword on This Device**: Chrome's on-device model proposes new wording for that prompt, and the Workbench shows it only if it passes the same checks as its own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words). Anything that fails is discarded with the reasons. The model only rewords; the plan, genres and roles stay the Workbench's. The Workbench sends nothing to an AI service; Chrome downloads its model from Google the first time it is used.
+In desktop Chrome versions with Chrome's built-in AI, v5.5.0 added an **On-Device AI (experimental)** checkbox above the results (replaced in v5.7.0 by the always-visible AI Assist section). It is off by default. Turned on, each result gets **Reword on This Device**: Chrome's on-device model proposes new wording for that prompt, and the Workbench shows it only if it passes the same checks as its own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words). Anything that fails is discarded with the reasons. The model only rewords; the plan, genres and roles stay the Workbench's. The Workbench sends nothing to an AI service; Chrome downloads its model from Google the first time it is used.
 
 ### v5.4.1: Brief Check Accuracy
 
@@ -95,7 +103,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.6.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.6.0.html`. The GitHub release is [v5.6.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.6.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.7.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.7.0.html`. The GitHub release is [v5.7.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 
