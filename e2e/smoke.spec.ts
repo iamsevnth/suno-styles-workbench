@@ -64,6 +64,21 @@ test('Styles Compiler generates three 800–975 character prompts that keep the 
   }
 });
 
+test('Brief Check flags a conflicting brief, and variants name what changed', async ({ page }) => {
+  await page.goto(ROUTE_PATHS.styles);
+  const check = page.getByLabel('Brief Check');
+  await page.getByLabel('Your Creative Brief').fill('uk garage 2-step with four on the floor kicks, dark');
+  await expect(check.locator('[data-lint="TWO_PRIMARY_KICK_SYSTEMS"]')).toBeVisible();
+  await page.getByLabel('Your Creative Brief').fill('melodic dubstep, 150 BPM, female vocals, detuned pluck hook, emotional');
+  await expect(check).toContainText('No conflicts found');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  await expect(page.getByRole('heading', { name: /Seed #: \d+ \| BPM: \d+/ })).toHaveCount(3);
+  await expect(page.getByTestId('changed-axes')).toHaveCount(2);
+  for (const t of await page.getByTestId('changed-axes').allTextContents()) expect(t).toMatch(/Differs from the first in: /);
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
+});
+
 test('Lyrics Studio arranges supplied lyrics without adding words and verifies the source', async ({
   page,
 }) => {

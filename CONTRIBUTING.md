@@ -15,8 +15,8 @@ Thank you for helping improve Suno Workbench. Keep contributions focused, reprod
 Suno Workbench requires Node.js 22 or later.
 
 ```bash
-git clone https://github.com/iamsevnth/suno-styles-workbench.git
-cd suno-styles-workbench
+git clone https://github.com/iamsevnth/suno-workbench.git
+cd suno-workbench
 npm ci
 ```
 

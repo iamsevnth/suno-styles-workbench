@@ -1,12 +1,12 @@
 {
-  "name": "suno-styles-workbench",
+  "name": "suno-workbench",
   "private": true,
-  "version": "5.3.2",
+  "version": "5.4.0",
   "description": "Browser-only Suno v6 toolkit: Styles compiler with source-based Prompt Fidelity Inspector, source-preserving Lyrics Arranger, and production guide.",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/iamsevnth/suno-styles-workbench.git"
+    "url": "https://github.com/iamsevnth/suno-workbench.git"
   },
   "homepage": "https://sunoworkbench.com/",
   "scripts": {

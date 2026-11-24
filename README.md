@@ -4,14 +4,14 @@
 
 # Suno Workbench
 
-[![Test and deploy](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/deploy.yml)
-[![README Score](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml/badge.svg)](https://github.com/iamsevnth/suno-styles-workbench/actions/workflows/readme-score.yml)
+[![Test and deploy](https://github.com/iamsevnth/suno-workbench/actions/workflows/deploy.yml/badge.svg)](https://github.com/iamsevnth/suno-workbench/actions/workflows/deploy.yml)
+[![README Score](https://github.com/iamsevnth/suno-workbench/actions/workflows/readme-score.yml/badge.svg)](https://github.com/iamsevnth/suno-workbench/actions/workflows/readme-score.yml)
 
 A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles prompts, repairs existing prompts, audits detectable source-to-output prompt fidelity, rearranges lyrics supplied by the user without inventing lyric words, and includes a locally searchable production guide. Creative content stays in the browser.
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
-**Official v5.3.2 Release:** [suno-workbench-sevnthlabs-v5.3.2](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.2)  
+**Official v5.4.0 Release:** [suno-workbench-sevnthlabs-v5.4.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.0)  
 **Privacy Policy:** https://sunoworkbench.com/privacy-policy  
 **Security Policy:** [SECURITY.md](SECURITY.md)
 
@@ -44,8 +44,8 @@ Requirements:
 Clone the repository and install the exact dependency versions from <code>package-lock.json</code>:
 
 ```bash
-git clone https://github.com/iamsevnth/suno-styles-workbench.git
-cd suno-styles-workbench
+git clone https://github.com/iamsevnth/suno-workbench.git
+cd suno-workbench
 npm ci
 npm run dev
 ```
@@ -70,16 +70,16 @@ dist/suno-workbench.html
 
 Open that file directly in a current desktop browser. The offline builder inlines the application assets and rewrites the Content Security Policy to permit only the exact inlined scripts and styles by SHA-256 hash.
 
-### Official v5.3.2 Standalone Download
+### Official v5.4.0 Standalone Download
 
-The official [GitHub v5.3.2 Release](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.2) is titled **suno-workbench-sevnthlabs-v5.3.2** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.3.1 and v5.3.0 offline packages for current downloads.
+The official [GitHub v5.4.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.0) is titled **suno-workbench-sevnthlabs-v5.4.0** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.3.x offline packages for current downloads.
 
-- **[suno-workbench-sevnthlabs-v5.3.2.html](https://github.com/iamsevnth/suno-styles-workbench/releases/download/v5.3.2/suno-workbench-sevnthlabs-v5.3.2.html)** — one-file offline application with the v5.3 Guide, compiler, Fidelity Inspector, Lyrics Arranger and phonetics.
-- **[SHA-256 checksum](https://github.com/iamsevnth/suno-styles-workbench/releases/download/v5.3.2/suno-workbench-sevnthlabs-v5.3.2.html.sha256)** — allows verification of the downloaded HTML.
+- **[suno-workbench-sevnthlabs-v5.4.0.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.4.0/suno-workbench-sevnthlabs-v5.4.0.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
+- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.4.0/suno-workbench-sevnthlabs-v5.4.0.html.sha256)** — allows verification of the downloaded HTML.
 
 The standalone file is rebuilt from the validated release commit with `npm run build`, the complete test suite, TypeScript checking and the offline Content Security Policy validator before publication. No installation or account is needed for core offline use; external links to Suno documentation need an internet connection.
 
-To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.3.2.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.3.2.html` and compare its digest with the checksum file.
+To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.4.0.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.4.0.html` and compare its digest with the checksum file.
 
 ## Usage and Examples
 
@@ -102,7 +102,11 @@ Choose how many prompts to create (one to six) and a **Variation Strategy**:
 - **Exploration — Native Sonic Identities:** variations draw more on each genre's own sound vocabulary.
 - **A/B Lab — Change Bass Articulation Only:** exactly two prompts with the same plan except one bass-articulation phrase, for a controlled comparison in Suno. It needs a compatible alternate in the matched genre bank.
 
-**Hybrid Bass Profile** blends in the built-in hybrid bass library when the brief leaves genres or moods open. Each result shows its ten-digit plan seed, BPM, key and character count.
+**Hybrid Bass Profile** blends in the built-in hybrid bass library when the brief leaves genres or moods open. Each result shows its ten-digit plan seed, BPM, key and character count. From the second result on, each card names the musical axes (rhythm, bass, sound design, arrangement, vocals) where it differs from the first; results that differ in fewer than two are rejected and regenerated.
+
+**Brief Check** reads the brief as you type (nothing is generated) and flags what it leaves ambiguous, with a suggested rewrite: three or more genres with no roles, a tempo far from the genre's usual range, a 2-step and a four-on-the-floor kick at once, four or more competing bass sources, continuous 32nd-note hats in a sparse groove, electronic hats requested while all hats are excluded, no named hook in an electronic or bass-music brief, and a second drop described only as "bigger". The checks come from the [prompt-engine research of 11/23/2026](docs/research/prompt-engine-rules-2026-11-23.json); they are production heuristics, not Suno rules, and never block generation.
+
+The **Sonic Plan** on each result shows the **role owners**: which genre the engine gave the groove, the low end, the harmony and the hook (with the clause that carries each), and which genres only add color.
 
 ### Fix Existing Prompt
 
@@ -315,7 +319,9 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.3.2**. v5.3.2 is a maintenance patch: accessibility fixes found by the new automated browser and WCAG scans, accurate Home page, Lyrics Studio and Guide descriptions, the Experiment Project schema groundwork for v5.4 (no UI yet), and version-independent release automation. Feature behavior remains the v5.3 line (Prompt Fidelity Inspector, v5.2 source-preserving Lyrics Arranger, and prior compiler maintenance). The official **[v5.3.2 Release](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.2)** is titled **suno-workbench-sevnthlabs-v5.3.2** and packages the verified offline HTML and SHA-256 checksum. See [v5.3.2 release notes](docs/releases/v5.3.2.md), [v5.3.1 release notes](docs/releases/v5.3.1.md), [v5.3.0 release notes](docs/releases/v5.3.0.md), [Fidelity Inspector methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md), [v5.2.0 release notes](docs/releases/v5.2.0.md), and the [commit history](https://github.com/iamsevnth/suno-styles-workbench/commits/main/).
+The current package version is **5.4.0**. v5.4.0 adds **Brief Check** (deterministic brief linting from the 11/23/2026 prompt-engine research), **role owners** in the Sonic Plan, and **named variation changes** on each result; generation itself is unchanged. The official **[v5.4.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.0)** is titled **suno-workbench-sevnthlabs-v5.4.0**; see the [v5.4.0 release notes](docs/releases/v5.4.0.md). The repository was renamed from `suno-styles-workbench` to `suno-workbench`; old links redirect.
+
+v5.3.2 was a maintenance patch: accessibility fixes found by the new automated browser and WCAG scans, accurate Home page, Lyrics Studio and Guide descriptions, the Experiment Project schema groundwork for v5.4 (no UI yet), and version-independent release automation. Feature behavior remains the v5.3 line (Prompt Fidelity Inspector, v5.2 source-preserving Lyrics Arranger, and prior compiler maintenance). The official **[v5.3.2 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.3.2)** is titled **suno-workbench-sevnthlabs-v5.3.2** and packages the verified offline HTML and SHA-256 checksum. See [v5.3.2 release notes](docs/releases/v5.3.2.md), [v5.3.1 release notes](docs/releases/v5.3.1.md), [v5.3.0 release notes](docs/releases/v5.3.0.md), [Fidelity Inspector methodology](docs/PROMPT_FIDELITY_METHODOLOGY.md), [v5.2.0 release notes](docs/releases/v5.2.0.md), and the [commit history](https://github.com/iamsevnth/suno-workbench/commits/main/).
 
 There is not currently a standalone <code>CHANGELOG.md</code>. Future release notes should be recorded in GitHub Releases or a dedicated changelog when the project begins maintaining formal release milestones.
 
