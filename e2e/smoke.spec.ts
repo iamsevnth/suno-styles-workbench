@@ -115,6 +115,25 @@ test('On-device AI rewording is hidden without the API, and shows only checked w
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });
 
+test('Instrumental toggle keeps vocal-free briefs instrumental and yields to vocal briefs', async ({ page }) => {
+  await page.goto(ROUTE_PATHS.styles);
+  const toggle = page.getByLabel('Instrumental');
+  await expect(toggle).not.toBeChecked();
+  await toggle.check();
+  await page.getByLabel('Your Creative Brief').fill('deep dubstep, dark, 140 BPM');
+  await expect(page.getByTestId('instrumental-note')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  await expect(page.getByRole('heading', { name: /Seed #: \d+ \| BPM: \d+/ })).toHaveCount(3);
+  for (const t of await page.locator('article p.whitespace-pre-wrap').allTextContents()) {
+    expect(t).not.toMatch(/\b(?:vocals?|singer|singing|rap|voice)\b/i);
+  }
+  await page.getByLabel('Your Creative Brief').fill('deep dubstep with female vocals');
+  await expect(page.getByTestId('instrumental-note')).toBeVisible();
+  // The setting is kept for the session.
+  await page.reload();
+  await expect(page.getByLabel('Instrumental')).toBeChecked();
+});
+
 test('Lyrics Studio arranges supplied lyrics without adding words and verifies the source', async ({
   page,
 }) => {

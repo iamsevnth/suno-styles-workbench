@@ -1,6 +1,8 @@
 import { StylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
 import Icon from "../icons/Icon.tsx";
 import BriefCheck from "./BriefCheck.tsx";
+import { mentionsVocals } from "../../lib/suno/parse.ts";
+import { useDeferredValue, useMemo } from "react";
 
 const TRUST_NOTES = [
   "Only Generate Styles or Fix Prompt compiles prompts — examples, profile changes and the variation slider never run by themselves",
@@ -11,6 +13,8 @@ const TRUST_NOTES = [
 export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
   const showParsed = wb.prompts.length > 0 || wb.input.trim().length > 0;
   const fixing = wb.compilerMode === "fix";
+  const briefText = useDeferredValue(wb.input);
+  const vocalsMentioned = useMemo(() => mentionsVocals(briefText), [briefText]);
 
   return (
     <section aria-label="Brief and controls" className="surface rounded-[var(--r-xl)] p-5 flex flex-col gap-5">
@@ -69,8 +73,14 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
         </p>
       </div>
 
+      {!fixing && wb.instrumentalDefault && vocalsMentioned && (
+        <p className="m-0 text-xs text-[var(--fg-muted)]" data-testid="instrumental-note">
+          Your brief mentions vocals, so the Instrumental toggle doesn't apply to it.
+        </p>
+      )}
+
       {!fixing && (
-        <BriefCheck input={wb.input} profileEnabled={wb.profileEnabled} parsed={wb.parsed} plan={wb.prompts[0]?.plan} />
+        <BriefCheck input={wb.input} profileEnabled={wb.profileEnabled} instrumentalDefault={wb.instrumentalDefault} parsed={wb.parsed} plan={wb.prompts[0]?.plan} />
       )}
 
       {!fixing && (
@@ -155,6 +165,23 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
             className="w-4 h-4 accent-[var(--accent)] rounded cursor-pointer"
           />
         </label>
+        {!fixing && (
+          <label
+            className="flex h-11 items-center justify-between gap-3 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm cursor-pointer select-none self-end"
+            title="Keeps the prompt instrumental when the brief doesn't mention vocals. A brief that mentions vocals keeps them."
+          >
+            <span className="flex items-center gap-2 text-[var(--fg)] font-medium">
+              <Icon name="music" size={16} className="text-[var(--tile-violet-fg)]" />
+              Instrumental
+            </span>
+            <input
+              type="checkbox"
+              checked={wb.instrumentalDefault}
+              onChange={(e) => wb.toggleInstrumental(e.target.checked)}
+              className="w-4 h-4 accent-[var(--accent)] rounded cursor-pointer"
+            />
+          </label>
+        )}
       </div>
 
       {!fixing && (

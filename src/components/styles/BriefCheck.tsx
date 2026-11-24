@@ -8,9 +8,10 @@ import Icon from "../icons/Icon.tsx";
  * Checks the brief as it is typed. It only reads the brief; nothing is generated. After a
  * generation of the same brief, the genre advice names the roles the engine chose.
  */
-export default function BriefCheck({ input, profileEnabled, parsed, plan }: {
+export default function BriefCheck({ input, profileEnabled, instrumentalDefault, parsed, plan }: {
   input: string;
   profileEnabled: boolean;
+  instrumentalDefault?: boolean;
   parsed: ParsedInput | null;
   plan?: SonicPlan;
 }) {
@@ -18,7 +19,7 @@ export default function BriefCheck({ input, profileEnabled, parsed, plan }: {
   const findings = useMemo(() => {
     if (!text.trim()) return [];
     try {
-      const fresh = parseUserInput(text, { profileEnabled });
+      const fresh = parseUserInput(text, { profileEnabled, instrumentalDefault });
       // The parser strips exclusions from raw, so compare those too before reusing the plan.
       const same = !!parsed && parsed.raw === fresh.raw &&
         (parsed.exclusions ?? []).join("|") === (fresh.exclusions ?? []).join("|");
@@ -26,7 +27,7 @@ export default function BriefCheck({ input, profileEnabled, parsed, plan }: {
     } catch {
       return [];
     }
-  }, [text, profileEnabled, parsed, plan]);
+  }, [text, profileEnabled, instrumentalDefault, parsed, plan]);
 
   if (!text.trim()) return null;
   return (

@@ -19,6 +19,8 @@ export function generateStylesPrompts(
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
     avoidFingerprints?: string[];
     variationMode?: "precision" | "exploration" | "ab";
+    /** Instrumental toggle: keep a brief that never mentions vocals instrumental. */
+    instrumentalDefault?: boolean;
   } = {}
 ): GenerateResult {
   const parsed = parseUserInput(input, {
@@ -26,6 +28,7 @@ export function generateStylesPrompts(
     profileEnabled: options.profileEnabled ?? true,
     mode: options.mode,
     variationMode: options.variationMode,
+    instrumentalDefault: options.instrumentalDefault,
   });
 
   const abMode = options.variationMode === "ab" && options.mode !== "rewrite";

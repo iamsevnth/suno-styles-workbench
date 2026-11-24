@@ -30,6 +30,7 @@ interface SessionSnapshot {
   compilerMode: CompilerMode;
   count: number;
   profileEnabled: boolean;
+  instrumentalDefault: boolean;
   variationMode: "precision" | "exploration" | "ab";
   generation: number;
   seedUsed: number;
@@ -67,6 +68,7 @@ function readSession(): StoredSession {
     compilerMode: r.compilerMode === "fix" ? "fix" : "create",
     count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
     profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
+    instrumentalDefault: r.instrumentalDefault === true,
     variationMode: r.variationMode === "exploration" || r.variationMode === "ab" ? r.variationMode : "precision",
     generation: num(r.generation),
     seedUsed: num(r.seedUsed),
@@ -81,6 +83,7 @@ interface StoredSession {
   compilerMode?: CompilerMode;
   count?: number;
   profileEnabled?: boolean;
+  instrumentalDefault?: boolean;
   variationMode?: "precision" | "exploration" | "ab";
   generation?: number;
   seedUsed?: number;
@@ -95,6 +98,7 @@ function saveSession(s: SessionSnapshot): void {
     compilerMode: s.compilerMode,
     count: s.count,
     profileEnabled: s.profileEnabled,
+    instrumentalDefault: s.instrumentalDefault,
     variationMode: s.variationMode,
     generation: s.generation,
     seedUsed: s.seedUsed,
@@ -116,13 +120,14 @@ function initialSuggestions(): string[] {
   return fresh;
 }
 
-function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, prompts: PromptCandidate[]): HistoryEntry {
+function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, instrumentalDefault: boolean, prompts: PromptCandidate[]): HistoryEntry {
   return {
     id: `${Date.now()}-${seed}`,
     createdAt: new Date().toISOString(),
     brief,
     seed,
     profileEnabled,
+    instrumentalDefault,
     prompts: prompts.map((p) => ({
       title: p.title,
       seed: p.seed,
@@ -148,6 +153,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [compilerMode, setCompilerMode] = useState<CompilerMode>(stored.compilerMode ?? "create");
   const [count, setCount] = useState(stored.count ?? DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState(stored.profileEnabled ?? true);
+  const [instrumentalDefault, setInstrumentalDefault] = useState(stored.instrumentalDefault ?? false);
   const [variationMode, setVariationMode] = useState<"precision" | "exploration" | "ab">(stored.variationMode ?? "precision");
   const [generation, setGeneration] = useState(stored.generation ?? 0);
   const [seedUsed, setSeedUsed] = useState(stored.seedUsed ?? 0);
@@ -161,8 +167,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, compilerMode, count, profileEnabled, variationMode, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, compilerMode, count, profileEnabled, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed });
+  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
 
   const generate = () => {
     const brief = input.trim();
@@ -185,6 +191,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       const out = generateStylesPrompts(brief, {
         count,
         profileEnabled,
+        // Fix mode rewrites an existing prompt, so the toggle doesn't apply there.
+        instrumentalDefault: compilerMode === "fix" ? false : instrumentalDefault,
         seed,
         avoidFingerprints,
         mode: compilerMode === "fix" ? "rewrite" : undefined,
@@ -197,7 +205,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       setParsed(out.parsed);
       setGeneration(nextGeneration);
 
-      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, out.prompts)]);
+      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, compilerMode !== "fix" && instrumentalDefault, out.prompts)]);
       setHistory(saved.kept);
 
       const head = out.prompts[0]?.styles.slice(0, 48).replace(/\s+/g, " ") ?? "";
@@ -268,6 +276,15 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     );
   };
 
+  const toggleInstrumental = (enabled: boolean) => {
+    setInstrumentalDefault(enabled);
+    setLastAction(
+      enabled
+        ? "Instrumental on — briefs that don't mention vocals stay instrumental on the next Generate Styles."
+        : "Instrumental off — used on the next Generate Styles."
+    );
+  };
+
   const copyStyle = async (styles: string) => {
     const ok = await copyToClipboard(styles);
     showDialog(
@@ -320,6 +337,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     setCount,
     profileEnabled,
     toggleProfile,
+    instrumentalDefault,
+    toggleInstrumental,
     variationMode,
     setVariationMode,
     generation,

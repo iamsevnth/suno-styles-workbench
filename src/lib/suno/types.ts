@@ -30,6 +30,8 @@ export interface ParsedInput {
   references: string[];
   mandatory: string[];
   instrumental: boolean;
+  /** True when the Instrumental toggle (not the brief's own words) made this brief instrumental. */
+  instrumentalByToggle?: boolean;
   /** Scene words from the brief ("sunset rooftop"), carried into the prompt as written. */
   scenes?: string[];
   /** Textures the brief named ("vinyl crackle"). */
@@ -218,5 +220,7 @@ export interface HistoryEntry {
   brief: string;
   seed: number;
   profileEnabled: boolean;
+  /** The Instrumental toggle when this entry was generated (v5.6.0+). */
+  instrumentalDefault?: boolean;
   prompts: HistoryPromptItem[];
 }
