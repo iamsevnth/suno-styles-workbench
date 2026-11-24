@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PromptCandidate } from "../../lib/suno/types.ts";
 import { checkAiRewrite, type AiCheck } from "../../lib/ai/check.ts";
 import { rewordOnDevice } from "../../lib/ai/on-device.ts";
@@ -16,6 +16,8 @@ type State =
 export default function AiReword({ prompt, onCopy }: { prompt: PromptCandidate; onCopy: (text: string) => void }) {
   const [state, setState] = useState<State>({ kind: "idle" });
   const abort = useRef<AbortController | null>(null);
+  // Cancel a request still running when the card goes away (new results, Clear Results).
+  useEffect(() => () => abort.current?.abort(), []);
 
   async function run() {
     abort.current?.abort();
