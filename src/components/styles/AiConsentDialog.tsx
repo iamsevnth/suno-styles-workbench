@@ -9,17 +9,40 @@ export default function AiConsentDialog({ availability, onAgree, onDecline }: {
   onDecline: () => void;
 }) {
   const keepOff = useRef<HTMLButtonElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const declineRef = useRef(onDecline);
+  declineRef.current = onDecline;
   useEffect(() => {
+    // Return focus to whatever opened the dialog (the AI switch) when it closes.
+    const opener = document.activeElement as HTMLElement | null;
     keepOff.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onDecline();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return declineRef.current();
+      if (e.key !== "Tab" || !box.current) return;
+      // Keep Tab and Shift+Tab inside the dialog while the decision is pending.
+      const items = Array.from(box.current.querySelectorAll<HTMLElement>("button, a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])"));
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !box.current.contains(document.activeElement))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !box.current.contains(document.activeElement))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onDecline]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      opener?.focus?.();
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" role="dialog" aria-modal="true"
       aria-labelledby="ai-consent-title" aria-describedby="ai-consent-body">
-      <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] w-full max-w-lg p-5 flex flex-col gap-3">
+      <div ref={box} className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-[var(--r-xl)] shadow-[var(--shadow)] w-full max-w-lg p-5 flex flex-col gap-3">
         <h2 id="ai-consent-title" className="flex items-center gap-2 text-base font-semibold text-[var(--fg)] m-0">
           <Icon name="sparkles" size={18} className="text-[var(--tile-violet-fg)]" />
           Turn On On-Device AI?

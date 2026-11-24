@@ -162,6 +162,51 @@ test('AI asks again before Chrome downloads its model', async ({ page }) => {
   await expect(first.getByTestId('ai-accepted')).toBeVisible();
 });
 
+test('AI permission from v5.5/v5.6 is not carried over; the dialog keeps focus and returns it', async ({ page }) => {
+  await page.addInitScript(mockLanguageModel, 'available');
+  await page.addInitScript(() => { try { localStorage.setItem('suno-workbench:on-device-ai', 'on'); } catch { /* ignore */ } });
+  await page.goto(ROUTE_PATHS.styles);
+  await expect(page.getByTestId('ai-status')).toHaveText('AI Off');
+  expect(await page.evaluate(() => localStorage.getItem('suno-workbench:on-device-ai'))).toBe(null);
+
+  const sw = page.getByRole('switch', { name: 'Use on-device AI' });
+  await sw.click();
+  const dialog = page.getByRole('dialog', { name: 'Turn On On-Device AI?' });
+  await expect(dialog.getByRole('button', { name: 'Keep AI Off' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Turn On AI' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Keep AI Off' })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Turn On AI' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(sw).toBeFocused();
+  await expect(page.getByTestId('ai-status')).toHaveText('AI Off');
+});
+
+test('After one model download, no other result asks again; AI can be turned off in Fix mode', async ({ page }) => {
+  await page.addInitScript(mockLanguageModel, 'downloadable');
+  await page.goto(ROUTE_PATHS.styles);
+  await page.getByRole('switch', { name: 'Use on-device AI' }).click();
+  await page.getByRole('button', { name: 'Turn On AI' }).click();
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const cards = page.getByTestId('ai-reword');
+  await cards.nth(0).getByRole('button', { name: 'Reword with AI' }).click();
+  await cards.nth(0).getByRole('button', { name: 'Download Model and Reword' }).click();
+  await expect(cards.nth(0).getByTestId('ai-accepted')).toBeVisible();
+  await cards.nth(1).getByRole('button', { name: 'Reword with AI' }).click();
+  await expect(cards.nth(1).getByTestId('ai-download-confirm')).toHaveCount(0);
+  await expect(cards.nth(1).getByTestId('ai-rejected')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Fix Existing Prompt' }).click();
+  const sw = page.getByRole('switch', { name: 'Use on-device AI' });
+  await expect(sw).toBeVisible();
+  await sw.click();
+  await expect(page.getByTestId('ai-status')).toHaveText('AI Off');
+});
+
 test('Instrumental toggle keeps vocal-free briefs instrumental and yields to vocal briefs', async ({ page }) => {
   await page.goto(ROUTE_PATHS.styles);
   const toggle = page.getByLabel('Instrumental');

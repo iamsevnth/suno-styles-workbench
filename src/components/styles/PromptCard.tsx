@@ -92,7 +92,7 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
         </span>
       </div>
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
-      {ai?.on && <AiReword prompt={prompt} onCopy={onCopy} availability={ai.availability} />}
+      {ai?.on && <AiReword prompt={prompt} onCopy={onCopy} modelReady={ai.modelReady} onAllowDownload={ai.allowDownload} />}
 
       <button
         type="button"

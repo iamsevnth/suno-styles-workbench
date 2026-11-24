@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.7.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.7.1 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -45,9 +45,16 @@ In Fix Mode, an optional **Original Intent / Brief** lets you compare both the p
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
+### v5.7.1: AI Permission Fixes
+
+- An AI setting saved by v5.5 or v5.6 (a plain checkbox) is no longer carried over: AI starts off and asks permission in the new dialog.
+- Chrome's model download is asked about once; after you agree on one result, other results don't ask again.
+- Keyboard focus stays inside the permission dialog until you choose, and returns to the AI switch afterwards.
+- AI Assist is shown in Fix Existing Prompt mode too, so AI can always be turned off.
+
 ### v5.7.0: Visible, Permission-Based AI
 
-- **AI Assist** is always in the brief panel (Create mode), with its status: **AI Off**, **AI On** or **Not Available**. When it's not available, it says why: on-device AI needs desktop Chrome with Chrome's built-in AI (Gemini Nano) on a computer that can run it.
+- **AI Assist** is always in the brief panel (Create and Fix modes since v5.7.1), with its status: **AI Off**, **AI On** or **Not Available**. When it's not available, it says why: on-device AI needs desktop Chrome with Chrome's built-in AI (Gemini Nano) on a computer that can run it.
 - **Use on-device AI** opens a permission dialog first. It explains that AI runs only when you click Reword with AI, changes only wording, is always labeled, and runs in Chrome on your computer. **Keep AI Off** is the default button.
 - **Labels:** every result says **Workbench engine · no AI**, and the results header says **No AI Used** or **AI On · runs only when you click**. AI wording sits in a violet **AI** section and is labeled **AI wording**. While the model works, the section says so, and **Stop AI** cancels it.
 - **Model download:** if Chrome doesn't have its model yet, the first Reword with AI asks before Chrome downloads it from Google.
@@ -103,7 +110,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.7.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.7.0.html`. The GitHub release is [v5.7.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.7.1 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.7.1.html`. The GitHub release is [v5.7.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 

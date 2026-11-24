@@ -186,7 +186,7 @@ export default function BriefPanel({ wb, ai }: { wb: StylesWorkbench; ai: OnDevi
         )}
       </div>
 
-      {!fixing && <AiAssistPanel ai={ai} />}
+      <AiAssistPanel ai={ai} />
 
       {!fixing && (
         <div className="flex flex-col gap-2">
