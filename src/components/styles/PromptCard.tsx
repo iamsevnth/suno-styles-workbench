@@ -4,6 +4,8 @@ import AiReword from "./AiReword.tsx";
 import type { OnDeviceAi } from "../../hooks/useOnDeviceAi.ts";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 import { ownershipMap } from "../../lib/suno/lint.ts";
+import { vocalPortion } from "../../lib/suno/render.ts";
+import { lengthWindow } from "../../lib/suno/limits.ts";
 import type { SemanticAxis } from "../../lib/suno/semantic.ts";
 
 const AXIS_LABELS: Record<SemanticAxis, string> = {
@@ -21,6 +23,17 @@ function PlanCell({ label, value }: { label: string; value: string | number | un
       <div className="text-[var(--fg)] mt-0.5">{value || "—"}</div>
     </div>
   );
+}
+
+/** "Detailed · 912 characters · vocals 18% (cap 25%)": the prompt's length against its window. */
+function lengthReport(prompt: PromptCandidate): string {
+  const plan = prompt.plan;
+  const window = lengthWindow(plan.length);
+  const name = plan.length === "tight" ? "Tight" : "Detailed";
+  const vocals = plan.vocals?.present === false
+    ? "instrumental"
+    : `vocals ${Math.round((vocalPortion(prompt.styles, plan) / Math.max(1, prompt.characters)) * 100)}% (cap ${Math.round(window.vocalShare * 100)}%)`;
+  return `${name} · ${prompt.characters} characters · ${vocals}`;
 }
 
 function vocalSummary(plan: PromptCandidate["plan"]): string {
@@ -51,8 +64,8 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
               Fix: {prompt.fixStrategy === "recompiled" ? "recompiled from brief" : prompt.fixStrategy + " source instructions"}
             </span>
           ) : null}
-          <span className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
-            {prompt.characters} total characters
+          <span data-testid="length-report" className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
+            {lengthReport(prompt)}
           </span>
           {changedFromFirst && (
             <span className="inline-block mt-1 ml-2 text-xs text-[var(--fg-muted)]" data-testid="changed-axes">

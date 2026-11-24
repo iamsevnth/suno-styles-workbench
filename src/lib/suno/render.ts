@@ -11,12 +11,12 @@ import {
 import { mulberry32 } from "./rng.ts";
 import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
 import { renderNative } from "./native/compose.ts";
-import { MIN_CHARS, MAX_CHARS } from "./limits.ts";
+import { lengthWindow, vocalBudget } from "./limits.ts";
 export { MIN_CHARS, MAX_CHARS, HARD_MAX_CHARS } from "./limits.ts";
 import { SonicPlan } from "./types.ts";
 
 /**
- * The Styles target is 800–975 characters with an independent hard cap of 1,000.
+ * The Styles target is 800–975 characters (Detailed, hard cap 1,000) or 600–850 (Tight).
  * Renderers expand with meaningful production detail; never pad with arbitrary text.
  */
 
@@ -39,8 +39,15 @@ function hasRapVocal(plan: SonicPlan): boolean {
 /**
  * Characters the generated vocal sentence may use. The production carries a Styles prompt, so a
  * brief that only names the basics gets a short vocal line and the rest goes to the sonic plan.
+ * Either way the vocal never takes more than its share of the prompt (25% Detailed, 15% Tight; see
+ * limits.ts), so these are ceilings under that cap.
  */
 export const VOCAL_BUDGET = { compact: 150, detailed: 300 } as const;
+
+/** The vocal sentence's budget for a plan: its detail level, capped by the length's vocal share. */
+export function vocalBudgetFor(v: SonicPlan["vocals"], length: SonicPlan["length"]): number {
+  return Math.min(VOCAL_BUDGET[v.detail ?? "compact"], vocalBudget(length));
+}
 
 /**
  * The vocal sentence, built from the voice outward: who sings comes first, then the brief's own
@@ -51,9 +58,9 @@ function vocalSentence(
   identity: string,
   v: SonicPlan["vocals"],
   stylePhrase: string,
-  arc: string
+  arc: string,
+  budget: number
 ): string {
-  const budget = VOCAL_BUDGET[v.detail ?? "compact"];
   const procs = v.processing ?? [];
   const head = identity + (v.language ? ` in ${v.language}` : "");
   const parts: VocalParts = { head, procs: v.processingFromBrief ? procs.slice(0, 2) : [] };
@@ -116,6 +123,21 @@ function withCount(text: string): number {
 function hasRichVocalDescription(vocals: SonicPlan["vocals"]): boolean {
   const words = vocals.rawDescription?.trim().split(/\s+/).length ?? 0;
   return words >= 4;
+}
+
+const VOCAL_SENTENCE = /(?:^|(?<=[.!?]\s))(?:Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features)[^.]*\./;
+
+/**
+ * Characters the vocal description takes in a prompt: the vocal sentence, or the native "with <vocal>"
+ * clause. The Length setting caps this share (25% Detailed, 15% Tight).
+ */
+export function vocalPortion(styles: string, plan: SonicPlan): number {
+  if (plan.vocals.present === false) return 0;
+  if (plan.native) {
+    const v = plan.native.sections.vocal?.[0];
+    return v && styles.toLowerCase().includes(v.toLowerCase()) ? "with ".length + v.length : 0;
+  }
+  return VOCAL_SENTENCE.exec(styles)?.[0].length ?? 0;
 }
 
 export function renderStyles(plan: SonicPlan): string {
@@ -240,6 +262,8 @@ function compose(plan: SonicPlan): string {
   const detail: Detail = { ...FULL };
   const extras = missingIn(build(detail, []));
   let text = build(detail, extras);
+
+  const { min: MIN_CHARS, max: MAX_CHARS } = lengthWindow(plan.length);
 
   // 1. Over the window: remove detail, never an anchor the brief asked for.
   for (const strict of [true, false]) {
@@ -426,13 +450,13 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
       withCount(rawText) > 0 || withCount(room) > 0
         ? ["engineered for", "captured in", "finished in", "set in"]
         : ["engineered with", "captured with", "finished with", "balanced with"];
-    const intros = [
-      `Vocal performance features ${rawText}, ${joins[0]} ${room}.`,
-      `Lead vocals deliver ${rawText}, ${joins[1]} ${room}.`,
-      `Vocal delivery showcases ${rawText}, ${joins[2]} ${room}.`,
-      `Topline features ${rawText}, ${joins[3]} ${room}.`,
-    ];
-    return intros[variant % intros.length];
+    const heads = ["Vocal performance features", "Lead vocals deliver", "Vocal delivery showcases", "Topline features"];
+    const head = heads[variant % heads.length];
+    const budget = vocalBudgetFor(v, plan.length);
+    const full = `${head} ${rawText}, ${joins[variant % joins.length]} ${room}.`;
+    if (full.length <= budget) return full;
+    // Over the vocal share: the engineered room goes first, then the brief's own clauses from the end.
+    return fitClauses(head, rawText, budget);
   }
 
   const styleKey = v.style && VOCAL_STYLE[v.style] ? v.style : isRapStyle ? "rap" : "sung";
@@ -453,7 +477,20 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
       ? v.delivery
       : `${who} ${v.timbre ?? (isRapStyle ? "confident" : "expressive")} ${v.register ?? "mid-register"} delivery`;
   const intro = [`Vocal performance features`, `Lead vocals deliver`, `Vocals center on`][variant % 3];
-  return vocalSentence(intro, identity, v, stylePhrase, arc);
+  return vocalSentence(intro, identity, v, stylePhrase, arc, vocalBudgetFor(v, plan.length));
+}
+
+/** "<head> a, b, c." keeping as many of the brief's own clauses (from the start) as fit the budget. */
+function fitClauses(head: string, text: string, budget: number): string {
+  const clauses = text.split(/,\s*/).filter(Boolean);
+  while (clauses.length > 1 && `${head} ${clauses.join(", ")}.`.length > budget) clauses.pop();
+  let out = `${head} ${clauses.join(", ")}.`;
+  if (out.length > budget) {
+    const words = clauses[0].split(/\s+/);
+    while (words.length > 2 && `${head} ${words.join(" ")}.`.length > budget) words.pop();
+    out = `${head} ${words.join(" ")}.`;
+  }
+  return out;
 }
 
 function feelPhrase(feel: string, families: string[], rng: () => number): string {

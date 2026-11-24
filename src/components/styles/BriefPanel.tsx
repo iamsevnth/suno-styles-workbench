@@ -8,9 +8,14 @@ import { useDeferredValue, useMemo } from "react";
 
 const TRUST_NOTES = [
   "Only Generate Styles or Fix Prompt compiles prompts — examples, profile changes and the variation slider never run by themselves",
-  "Every prompt targets 800 to 975 characters (never over 1,000), with an integer BPM and no artist names",
+  "Every prompt targets 800–975 characters (Detailed) or 600–850 (Tight), never over 1,000, states its tempo once and names no artists",
   "Export History downloads a uniquely dated JSON file to your computer",
 ];
+
+const LENGTH_OPTIONS = [
+  { value: "detailed", label: "Detailed", range: "800–975" },
+  { value: "tight", label: "Tight", range: "600–850" },
+] as const;
 
 export default function BriefPanel({ wb, ai }: { wb: StylesWorkbench; ai: OnDeviceAi }) {
   const showParsed = wb.prompts.length > 0 || wb.input.trim().length > 0;
@@ -187,6 +192,40 @@ export default function BriefPanel({ wb, ai }: { wb: StylesWorkbench; ai: OnDevi
       </div>
 
       <AiAssistPanel ai={ai} />
+
+      {!fixing && (
+        <fieldset className="flex flex-col gap-2 border-0 p-0 m-0" data-testid="length-choice">
+          <legend className="text-sm font-semibold text-[var(--fg)] mb-2">Prompt Length</legend>
+          <div className="grid grid-cols-2 gap-2 rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--bg)] p-1">
+            {LENGTH_OPTIONS.map((o) => (
+              <label
+                key={o.value}
+                className={`flex flex-col items-center rounded-[calc(var(--r-md)-4px)] px-3 py-2 text-xs cursor-pointer transition-colors has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--accent)] ${
+                  wb.promptLength === o.value
+                    ? "bg-[var(--nav-active-bg)] text-[var(--nav-active-fg)]"
+                    : "text-[var(--fg-muted)] hover:text-[var(--fg)]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="prompt-length"
+                  value={o.value}
+                  checked={wb.promptLength === o.value}
+                  onChange={() => wb.changeLength(o.value)}
+                  className="sr-only"
+                />
+                <span className="font-semibold">{o.label}</span>
+                <span className="font-mono tabular-nums">{o.range}</span>
+              </label>
+            ))}
+          </div>
+          <p className="m-0 text-xs text-[var(--fg-muted)]">
+            {wb.promptLength === "tight"
+              ? "Shorter, denser prompts. Vocals take at most 15% of the characters."
+              : "Full production detail. Vocals take at most 25% of the characters."}
+          </p>
+        </fieldset>
+      )}
 
       {!fixing && (
         <div className="flex flex-col gap-2">

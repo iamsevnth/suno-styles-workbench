@@ -234,5 +234,7 @@ export interface HistoryEntry {
   profileEnabled: boolean;
   /** The Instrumental toggle when this entry was generated (v5.6.0+). */
   instrumentalDefault?: boolean;
+  /** The Length setting when this entry was generated (v5.8.0+). */
+  promptLength?: PromptLength;
   prompts: HistoryPromptItem[];
 }

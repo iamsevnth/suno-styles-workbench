@@ -15,7 +15,7 @@ import {
 import { generateStylesPrompts } from "../lib/suno/generate.ts";
 import { pickSuggestions, SURPRISE_BRIEF } from "../lib/suno/suggestions.ts";
 import { historyFileStamp } from "../lib/suno/title-case.ts";
-import { GenerateResult, HistoryEntry, PromptCandidate } from "../lib/suno/types.ts";
+import { GenerateResult, HistoryEntry, PromptCandidate, PromptLength } from "../lib/suno/types.ts";
 import { formatAllPromptsTxt } from "../lib/suno/v6.ts";
 
 const STORAGE_KEY = "suno-styles-generator:v1";
@@ -31,6 +31,7 @@ interface SessionSnapshot {
   count: number;
   profileEnabled: boolean;
   instrumentalDefault: boolean;
+  promptLength: PromptLength;
   variationMode: "precision" | "exploration" | "ab";
   generation: number;
   seedUsed: number;
@@ -69,6 +70,7 @@ function readSession(): StoredSession {
     count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
     profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
     instrumentalDefault: r.instrumentalDefault === true,
+    promptLength: r.promptLength === "tight" ? "tight" : "detailed",
     variationMode: r.variationMode === "exploration" || r.variationMode === "ab" ? r.variationMode : "precision",
     generation: num(r.generation),
     seedUsed: num(r.seedUsed),
@@ -84,6 +86,7 @@ interface StoredSession {
   count?: number;
   profileEnabled?: boolean;
   instrumentalDefault?: boolean;
+  promptLength?: PromptLength;
   variationMode?: "precision" | "exploration" | "ab";
   generation?: number;
   seedUsed?: number;
@@ -99,6 +102,7 @@ function saveSession(s: SessionSnapshot): void {
     count: s.count,
     profileEnabled: s.profileEnabled,
     instrumentalDefault: s.instrumentalDefault,
+    promptLength: s.promptLength,
     variationMode: s.variationMode,
     generation: s.generation,
     seedUsed: s.seedUsed,
@@ -120,7 +124,7 @@ function initialSuggestions(): string[] {
   return fresh;
 }
 
-function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, instrumentalDefault: boolean, prompts: PromptCandidate[]): HistoryEntry {
+function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, instrumentalDefault: boolean, promptLength: PromptLength, prompts: PromptCandidate[]): HistoryEntry {
   return {
     id: `${Date.now()}-${seed}`,
     createdAt: new Date().toISOString(),
@@ -128,6 +132,7 @@ function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, in
     seed,
     profileEnabled,
     instrumentalDefault,
+    promptLength,
     prompts: prompts.map((p) => ({
       title: p.title,
       seed: p.seed,
@@ -154,6 +159,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [count, setCount] = useState(stored.count ?? DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState(stored.profileEnabled ?? true);
   const [instrumentalDefault, setInstrumentalDefault] = useState(stored.instrumentalDefault ?? false);
+  const [promptLength, setPromptLength] = useState<PromptLength>(stored.promptLength ?? "detailed");
   const [variationMode, setVariationMode] = useState<"precision" | "exploration" | "ab">(stored.variationMode ?? "precision");
   const [generation, setGeneration] = useState(stored.generation ?? 0);
   const [seedUsed, setSeedUsed] = useState(stored.seedUsed ?? 0);
@@ -167,8 +173,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed });
+  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
 
   const generate = () => {
     const brief = input.trim();
@@ -193,6 +199,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
         profileEnabled,
         // Fix mode rewrites an existing prompt, so the toggle doesn't apply there.
         instrumentalDefault: compilerMode === "fix" ? false : instrumentalDefault,
+        // Fix mode keeps the pasted prompt's own Detailed window.
+        length: compilerMode === "fix" ? "detailed" : promptLength,
         seed,
         avoidFingerprints,
         mode: compilerMode === "fix" ? "rewrite" : undefined,
@@ -205,7 +213,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       setParsed(out.parsed);
       setGeneration(nextGeneration);
 
-      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, compilerMode !== "fix" && instrumentalDefault, out.prompts)]);
+      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, compilerMode !== "fix" && instrumentalDefault, compilerMode === "fix" ? "detailed" : promptLength, out.prompts)]);
       setHistory(saved.kept);
 
       const head = out.prompts[0]?.styles.slice(0, 48).replace(/\s+/g, " ") ?? "";
@@ -285,6 +293,15 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     );
   };
 
+  const changeLength = (length: PromptLength) => {
+    setPromptLength(length);
+    setLastAction(
+      length === "tight"
+        ? "Length: Tight (600–850 characters) — used on the next Generate Styles."
+        : "Length: Detailed (800–975 characters) — used on the next Generate Styles."
+    );
+  };
+
   const copyStyle = async (styles: string) => {
     const ok = await copyToClipboard(styles);
     showDialog(
@@ -339,6 +356,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     toggleProfile,
     instrumentalDefault,
     toggleInstrumental,
+    promptLength,
+    changeLength,
     variationMode,
     setVariationMode,
     generation,

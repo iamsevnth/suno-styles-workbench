@@ -1,5 +1,5 @@
 import { conceptsOf, reconcileMoods } from "../blend.ts";
-import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
+import { MIN_CHARS, MAX_CHARS, lengthWindow, vocalBudget } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
 import { applyTempoGenres, hasTempoGenre, inTempoWindow, windowTempo } from "../tempo-genre.ts";
@@ -11,8 +11,8 @@ import { NativeSub } from "./types.ts";
 
 export const NATIVE_MIN = MIN_CHARS;
 export const NATIVE_MAX = MAX_CHARS;
-/** A production-detail target comfortably inside the 800–975-character window. */
-const NATIVE_FILL = 875;
+/** A production-detail target comfortably inside each window: 875 of 800–975, 735 of 600–850. */
+const NATIVE_FILL = { detailed: 875, tight: 735 } as const;
 
 const subById = (id: string): NativeSub => NATIVE_SUBS.find((s) => s.id === id) ?? GENERAL_SUB;
 
@@ -274,6 +274,20 @@ function distinct(lists: string[][]): string[][] {
   });
 }
 
+/** Drops trailing comma parts of the vocal line, then trailing words, until it fits the budget. */
+function fitVocal(line: string, budget: number): string {
+  if (line.length <= budget) return line;
+  const parts = line.split(/,\s*/);
+  while (parts.length > 1 && parts.join(", ").length > budget) parts.pop();
+  let out = parts.join(", ");
+  if (out.length > budget) {
+    const words = out.split(/\s+/);
+    while (words.length > 2 && words.join(" ").length > budget) words.pop();
+    out = words.join(" ");
+  }
+  return out;
+}
+
 function nativeDetail(v: ParsedInput["vocals"]): "compact" | "detailed" {
   if (!v) return "compact";
   const traits = new Set([v.register, v.timbre, v.delivery, v.language, ...(v.descriptors ?? []), ...(v.processing ?? [])].filter(Boolean));
@@ -376,7 +390,8 @@ export function buildNativePlan(
 
   const vocalStyle = styleOf(parsed.vocals, primary.vocalStyle);
   const approaches = vocalStyle && RAP_KIND[vocalStyle] && (primary.rapVocals?.length || secondary?.rapVocals?.length) ? bank("rapVocals") : bank("vocals");
-  const vocalSentence = proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle));
+  // The vocal clause ("with <vocal line>") keeps within its share of the prompt (25% Detailed, 15% Tight).
+  const vocalSentence = fitVocal(proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle)), vocalBudget(parsed.length) - "with ".length);
   // A bass-music brief that already has "vocal chops" in its vocal line does not get them again as sound design.
   const noRepeatChops = (list: string[]) => (primary.edm && /\bchop/i.test(vocalSentence) ? list.filter((x) => !/\bchop/i.test(x)) : list);
   const [dLeads, dDrums, dBass, dHarmony, dTextures, dExtras] = distinct([
@@ -563,6 +578,8 @@ function compose(plan: SonicPlan, d: Detail): string {
 
 export function renderNative(plan: SonicPlan): string {
   const n = plan.native as NativeParts;
+  const fill = NATIVE_FILL[plan.length ?? "detailed"];
+  const { max } = lengthWindow(plan.length);
   const d: Detail = {
     leads: 1,
     drums: 1,
@@ -579,11 +596,11 @@ export function renderNative(plan: SonicPlan): string {
   let text = compose(plan, d);
   // Sparse banks (jazz) need more than one pass; later passes also deepen drums and bass.
   for (const key of [...GROW, ...GROW, "drums", "bass", "drums", "bass", "harmony", "leads"] as (keyof Detail)[]) {
-    if (text.length >= NATIVE_FILL) break;
+    if (text.length >= fill) break;
     const trial = { ...d, [key]: Math.min(d[key] + 1, key === "arrangement" || key === "ending" || key === "era" ? 1 : 4) };
     if (trial[key] === d[key]) continue;
     const next = compose(plan, trial);
-    if (next.length <= NATIVE_MAX) {
+    if (next.length <= max) {
       Object.assign(d, trial);
       text = next;
     }
