@@ -4,6 +4,7 @@ import { hrefFor } from "../../routes.ts";
 import BriefPanel from "./BriefPanel.tsx";
 import HistoryPanel from "./HistoryPanel.tsx";
 import PromptCard from "./PromptCard.tsx";
+import { changedMusicalAxes } from "../../lib/suno/semantic.ts";
 import Icon from "../icons/Icon.tsx";
 import { IconTile } from "../content/Content.tsx";
 
@@ -64,7 +65,15 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               </div>
             </div>
           ) : (
-            wb.prompts.map((p) => <PromptCard key={p.plan.recipeId} prompt={p} onCopy={wb.copyStyle} sourceText={wb.parsed?.raw ?? ""} />)
+            wb.prompts.map((p, i) => (
+              <PromptCard
+                key={p.plan.recipeId}
+                prompt={p}
+                onCopy={wb.copyStyle}
+                sourceText={wb.parsed?.raw ?? ""}
+                changedFromFirst={i > 0 ? changedMusicalAxes(wb.prompts[0].plan, p.plan) : undefined}
+              />
+            ))
           )}
         </section>
       </div>

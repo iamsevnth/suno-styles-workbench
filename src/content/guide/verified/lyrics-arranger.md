@@ -48,4 +48,4 @@ The arranger verifies output phrases against exact source character ranges befor
 - Source and output remain in the browser. There is no lyric-generation backend, third-party inference API or account requirement.
 - An exported JSON project or TXT file contains your lyric material, so protect it as you would any other creative manuscript.
 
-For implementation details and limitations, see [Lyrics Studio Design](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/LYRICS_STUDIO_OVERHAUL.md).
+For implementation details and limitations, see [Lyrics Studio Design](https://github.com/iamsevnth/suno-workbench/blob/main/docs/LYRICS_STUDIO_OVERHAUL.md).

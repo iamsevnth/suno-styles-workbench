@@ -51,4 +51,4 @@ These official pages describe **platform controls**, not empirical validation of
 
 **Limitations:** No audio is analyzed; synonyms and lyric content are not fully interpreted; status counts cannot predict listener preference. The legacy compiler's 0–100 internal ranking is likewise not an independently validated audio-quality score.
 
-For technical criteria, limitations and test methodology, see the repository's [Prompt Fidelity Methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
+For technical criteria, limitations and test methodology, see the repository's [Prompt Fidelity Methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).

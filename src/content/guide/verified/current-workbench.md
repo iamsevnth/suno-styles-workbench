@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.3.2 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.4.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -43,7 +43,13 @@ Its four evidence labels are **Text Matched**, **Explicit Difference**, **Not De
 
 In Fix Mode, an optional **Original Intent / Brief** lets you compare both the pre-Fix prompt and fixed output against that same earlier source. Without that separate brief, Workbench cannot determine whether the original pre-Fix prompt already diverged from the user's true intentions. Reports can be exported locally in JSON format.
 
-Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-styles-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
+Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
+
+### v5.4.0: Brief Check, Role Owners and Named Variation Changes
+
+- **Brief Check** sits under the brief in Create mode and updates as you type; it never generates anything. Each note says what the brief leaves ambiguous and how to say it more precisely: genres with no roles, a tempo far from the genre's range, two kick patterns at once, too many bass sources, constant 32nd-note hats, hats requested and excluded, no named hook (electronic and bass music), and a second drop that is only "bigger". The checks are production heuristics from the 11/23/2026 prompt-engine research, not Suno rules.
+- **Role owners:** open a result's **Sonic Plan** to see which genre owns the groove, the low end, the harmony and the hook, and which genres only add color.
+- **Named variation changes:** each result after the first says where it differs musically from the first (rhythm, bass, sound design, arrangement, vocals). In Precision and Exploration, results that differ in fewer than two of these are rejected and regenerated; A/B Lab's second result changes only the bass articulation, by design.
 
 ### v5.3.2: Accessibility and Accuracy Maintenance
 
@@ -77,7 +83,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.3.2 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.3.2.html`. The GitHub release is [v5.3.2](https://github.com/iamsevnth/suno-styles-workbench/releases/tag/v5.3.2), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.4.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.4.0.html`. The GitHub release is [v5.4.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 

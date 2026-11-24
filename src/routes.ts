@@ -82,4 +82,4 @@ export const NAV_ITEMS: { route: RouteId; label: string }[] = [
   { route: "guide", label: "Guide" },
 ];
 
-export const REPO_URL = "https://github.com/iamsevnth/suno-styles-workbench";
+export const REPO_URL = "https://github.com/iamsevnth/suno-workbench";

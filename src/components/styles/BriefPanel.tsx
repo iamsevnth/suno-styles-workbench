@@ -1,5 +1,6 @@
 import { StylesWorkbench } from "../../hooks/useStylesWorkbench.ts";
 import Icon from "../icons/Icon.tsx";
+import BriefCheck from "./BriefCheck.tsx";
 
 const TRUST_NOTES = [
   "Only Generate Styles or Fix Prompt compiles prompts — examples, profile changes and the variation slider never run by themselves",
@@ -67,6 +68,10 @@ export default function BriefPanel({ wb }: { wb: StylesWorkbench }) {
             : "Name genres, a BPM, vocals, instruments and mood. Ctrl+Enter (Cmd+Enter on a Mac) generates."}
         </p>
       </div>
+
+      {!fixing && (
+        <BriefCheck input={wb.input} profileEnabled={wb.profileEnabled} parsed={wb.parsed} plan={wb.prompts[0]?.plan} />
+      )}
 
       {!fixing && (
         <div>

@@ -1,6 +1,16 @@
 import { useState } from "react";
 import FidelityInspector from "./FidelityInspector.tsx";
 import { PromptCandidate } from "../../lib/suno/types.ts";
+import { ownershipMap } from "../../lib/suno/lint.ts";
+import type { SemanticAxis } from "../../lib/suno/semantic.ts";
+
+const AXIS_LABELS: Record<SemanticAxis, string> = {
+  rhythm: "Rhythm",
+  bass: "Bass",
+  soundDesign: "Sound design",
+  arrangement: "Arrangement",
+  vocals: "Vocals",
+};
 
 function PlanCell({ label, value }: { label: string; value: string | number | undefined }) {
   return (
@@ -16,7 +26,13 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy, sourceText }: { prompt: PromptCandidate; onCopy: (styles: string) => void; sourceText: string }) {
+export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst }: {
+  prompt: PromptCandidate;
+  onCopy: (styles: string) => void;
+  sourceText: string;
+  /** Musical axes that differ from the first variant; undefined for the first one. */
+  changedFromFirst?: SemanticAxis[];
+}) {
   const [planOpen, setPlanOpen] = useState(false);
   const plan = prompt.plan;
   const genreLine = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(" × ");
@@ -34,6 +50,13 @@ export default function PromptCard({ prompt, onCopy, sourceText }: { prompt: Pro
           <span className="inline-block mt-1 font-mono text-xs rounded-full border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 text-[var(--fg-muted)]">
             {prompt.characters} total characters
           </span>
+          {changedFromFirst && (
+            <span className="inline-block mt-1 ml-2 text-xs text-[var(--fg-muted)]" data-testid="changed-axes">
+              {changedFromFirst.length
+                ? <>Differs from the first in: <span className="text-[var(--fg)]">{changedFromFirst.map((a) => AXIS_LABELS[a]).join(" · ")}</span></>
+                : "Same musical axes as the first"}
+            </span>
+          )}
           {prompt.issues?.length ? (
             <p className="text-xs text-[var(--danger)] mt-1.5">{prompt.issues.join(" · ")}</p>
           ) : null}
@@ -78,10 +101,11 @@ export default function PromptCard({ prompt, onCopy, sourceText }: { prompt: Pro
           <PlanCell label="Metric Feel" value={plan.metricFeel} />
           <PlanCell label="Sonic Identity" value={plan.sonicIdentity} />
           <PlanCell label="A/B Changed Axis" value={plan.abAxis} />
-          <PlanCell label="Rhythm Donor" value={plan.donors?.rhythm} />
-          <PlanCell label="Bass Donor" value={plan.donors?.bass} />
+          {ownershipMap(plan).map((r) => (
+            <PlanCell key={r.role} label={`${r.role} Owner`} value={r.phrase ? `${r.owner} — ${r.phrase}` : r.owner} />
+          ))}
           <PlanCell label="Bass Stack" value={(plan.bass || []).slice(0, 3).join(", ")} />
-          <PlanCell label="Variant Axes" value={(plan.variantAxes || []).join(" · ")} />
+          <PlanCell label="Variation Recipe" value={(plan.variantAxes || []).filter((a) => !/^(?:seed|recipe):/.test(a)).join(" · ")} />
           <PlanCell label="Vocals" value={vocalSummary(plan)} />
         </div>
       )}

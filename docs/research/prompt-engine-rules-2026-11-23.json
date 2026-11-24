@@ -1,0 +1,1061 @@
+{
+  "title": "Suno Workbench Prompt-Engine Starter Rules",
+  "schema_version": "1.0.0",
+  "verified_on": "2026-11-23",
+  "scope": "Suno V6 / MCP plus platform-neutral bass music prompt semantics",
+  "evidence_status": "mixed_official_connected_music_heuristics",
+  "notes": [
+    "This is a starter configuration, not an official Suno schema.",
+    "Tempo ranges and slider presets are hypotheses, not hard genre rules.",
+    "Always refresh live connector schema and Suno official sources before deployment.",
+    "Do not submit generation requests without explicit user intent and credit controls."
+  ],
+  "provider": {
+    "name": "Suno",
+    "models_available_in_connected_account_at_check": [
+      "v6-mini",
+      "v6",
+      "v6-wild"
+    ],
+    "connector_limits": {
+      "style_max_chars": 1000,
+      "negative_style_max_chars": 1000,
+      "lyrics_max_chars": 5000,
+      "simple_description_max_chars": 3000,
+      "duration_target_seconds": [
+        15,
+        360
+      ],
+      "dedicated_mashup_sources": 2,
+      "simple_reference_sources_max": 10
+    },
+    "general_v6_product_max_duration_minutes_official": 8,
+    "control_schema": {
+      "weirdness": {
+        "min": 0.0,
+        "max": 1.0,
+        "meaning": "novelty_and_unpredictability"
+      },
+      "style_influence": {
+        "min": 0.0,
+        "max": 1.0,
+        "meaning": "written_style_adherence"
+      },
+      "audio_influence": {
+        "min": 0.0,
+        "max": 1.0,
+        "meaning": "source_or_voice_conditioning_route_dependent"
+      },
+      "variety": {
+        "enum": {
+          "0": "Off",
+          "1": "Normal",
+          "2": "High",
+          "3": "Extra",
+          "4": "Max"
+        },
+        "meaning": "reinterprets_style_tags"
+      },
+      "max_mode": {
+        "type": "boolean",
+        "meaning": "extra_compute_and_credits_for_consistency_not_source_mix"
+      }
+    },
+    "operation_constraints": {
+      "custom": {
+        "no_description": true,
+        "style_allowed": true,
+        "lyrics_allowed": true,
+        "vocal_gender_allowed": true,
+        "instrumental_allowed": true,
+        "audio_influence_only_with_voice_id": true
+      },
+      "simple": {
+        "description_required": true,
+        "style_disallowed": true,
+        "custom_lyrics_disallowed": true,
+        "reference_audio_ids_max": 10
+      },
+      "cover_dedicated": {
+        "sources": 1,
+        "style_allowed": true,
+        "source_audio_influence_allowed": true,
+        "lyrics_not_inherited_when_omitted": true,
+        "voice_id_allowed": true
+      },
+      "mashup_dedicated": {
+        "sources": 2,
+        "style_allowed": true,
+        "audio_influence_joint_for_both_sources": true,
+        "vocal_gender_field_not_exposed": true
+      },
+      "extend_dedicated": {
+        "sources": 1,
+        "continue_at_required": true,
+        "instrumental_allowed": true,
+        "source_audio_influence_allowed": true
+      }
+    }
+  },
+  "six_part_prompt": {
+    "identity": {
+      "required": [
+        "primary_genre",
+        "primary_groove_role",
+        "tempo",
+        "mood"
+      ],
+      "optional": [
+        "key",
+        "meter",
+        "secondary_styles",
+        "energy"
+      ]
+    },
+    "groove": {
+      "required": [
+        "kick_placement",
+        "backbeat",
+        "hat_timbre",
+        "hat_base_grid"
+      ],
+      "optional": [
+        "hat_fills",
+        "open_hat_role",
+        "ghost_notes",
+        "swing",
+        "section_changes"
+      ]
+    },
+    "musical_identity": {
+      "required": [
+        "primary_hook",
+        "bass_sub_role",
+        "bass_mid_role",
+        "hook_recurrence"
+      ],
+      "optional": [
+        "harmony",
+        "countermelody",
+        "call_response"
+      ]
+    },
+    "arrangement": {
+      "required": [
+        "sections",
+        "final_drop_delta"
+      ],
+      "optional": [
+        "bar_count",
+        "build_mechanism",
+        "contrast",
+        "transition_cues"
+      ]
+    },
+    "production": {
+      "required": [
+        "low_end_priority",
+        "transient_priority"
+      ],
+      "optional": [
+        "stereo_width",
+        "reverb",
+        "distortion_band",
+        "sidechain"
+      ]
+    },
+    "constraints": {
+      "required": [
+        "must_preserve",
+        "must_exclude"
+      ],
+      "optional": [
+        "source_rights_state",
+        "strict_min_characters",
+        "strict_max_characters"
+      ]
+    }
+  },
+  "semantic_edges": [
+    "owns_groove",
+    "supports",
+    "answers",
+    "contrasts",
+    "replaces",
+    "preserves",
+    "enters_during",
+    "drops_out_before",
+    "evolves_into"
+  ],
+  "genre_ontology": [
+    {
+      "id": "trap",
+      "family": "trap",
+      "tempo_bpm_planning_range": [
+        130,
+        160
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "offset_808_kicks, electronic_half_time_snare, 16th_closed_hats, short_32nd_ratchets",
+      "bass_harmony_signature": "pitched_808_glides, short_mid_bass_answers",
+      "good_hybrid_roles": [
+        "rhythm_foundation",
+        "808_bass",
+        "top_percussion"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "trapstep",
+      "family": "trap",
+      "tempo_bpm_planning_range": [
+        135,
+        155
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "trap_machine_drums_with_dubstep_drop_backbeat",
+      "bass_harmony_signature": "FM_growls, Reese_answers, 808_glides",
+      "good_hybrid_roles": [
+        "rhythm_foundation",
+        "drop_architecture",
+        "bass_sound_design"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "future_bass",
+      "family": "melodic_bass",
+      "tempo_bpm_planning_range": [
+        130,
+        160
+      ],
+      "pulse_grammar": "half_time_or_syncopated",
+      "drum_signature": "trap_influenced_drums, chord_accents",
+      "bass_harmony_signature": "detuned_chords, pluck_hook, vocal_chops",
+      "good_hybrid_roles": [
+        "harmony",
+        "hook",
+        "melodic_drop"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "melodic_dubstep",
+      "family": "melodic_bass",
+      "tempo_bpm_planning_range": [
+        135,
+        150
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "weighty_snare_with_melodic_build",
+      "bass_harmony_signature": "wide_chords, FM_bass_replies",
+      "good_hybrid_roles": [
+        "melodic_drop",
+        "bass_color"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "deep_140",
+      "family": "dubstep",
+      "tempo_bpm_planning_range": [
+        138,
+        142
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "sparse_syncopated_kicks, deep_snare, minimal_tops",
+      "bass_harmony_signature": "mono_sub, dub_chords, resonant_wobs",
+      "good_hybrid_roles": [
+        "sub_foundation",
+        "space",
+        "dub_fx"
+      ],
+      "common_conflicts": [
+        "full_density_32nd_hats_can_erase_sparse_identity"
+      ],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "riddim",
+      "family": "dubstep",
+      "tempo_bpm_planning_range": [
+        138,
+        145
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "repetitive_half_time_backbeat_with_1_2_bar_bass_cycle",
+      "bass_harmony_signature": "repeating_gated_bass_motif",
+      "good_hybrid_roles": [
+        "bass_call_pattern",
+        "drop_signature"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "wobble_dubstep",
+      "family": "dubstep",
+      "tempo_bpm_planning_range": [
+        135,
+        145
+      ],
+      "pulse_grammar": "half_time_or_swung",
+      "drum_signature": "syncopated_dubstep_kicks_with_offbeat_ghosts",
+      "bass_harmony_signature": "filter_sweeps, rubbery_wubs, formant_bass",
+      "good_hybrid_roles": [
+        "bass_articulation",
+        "swung_bass"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "tearout",
+      "family": "dubstep",
+      "tempo_bpm_planning_range": [
+        140,
+        155
+      ],
+      "pulse_grammar": "half_time",
+      "drum_signature": "heavy_clipped_impacts, sparse_between_hit_gaps",
+      "bass_harmony_signature": "distorted_mid_bass, sharp_transients",
+      "good_hybrid_roles": [
+        "drop_aggression"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "color_bass",
+      "family": "melodic_bass",
+      "tempo_bpm_planning_range": [
+        140,
+        160
+      ],
+      "pulse_grammar": "half_time_or_broken",
+      "drum_signature": "bass_music_drums_with_harmonic_hits",
+      "bass_harmony_signature": "resonant_tonal_bass_modulation",
+      "good_hybrid_roles": [
+        "timbre",
+        "harmonic_bass"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "ukg_2step",
+      "family": "garage",
+      "tempo_bpm_planning_range": [
+        130,
+        142
+      ],
+      "pulse_grammar": "two_step_shuffled",
+      "drum_signature": "skipping_kicks, ghost_snares, swung_hats",
+      "bass_harmony_signature": "syncopated_bass_stabs, minor_7th_chords",
+      "good_hybrid_roles": [
+        "groove_foundation",
+        "shuffled_top_rhythm"
+      ],
+      "common_conflicts": [
+        "four_on_floor_vs_broken_kick_conflict_without_section_assignment"
+      ],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "speed_garage_bassline",
+      "family": "garage",
+      "tempo_bpm_planning_range": [
+        132,
+        145
+      ],
+      "pulse_grammar": "driving_or_shuffled",
+      "drum_signature": "driving_kicks, swung_percussion, compact_fills",
+      "bass_harmony_signature": "elastic_repetitive_bass_stabs",
+      "good_hybrid_roles": [
+        "club_groove",
+        "bass_riff"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "bass_house",
+      "family": "house",
+      "tempo_bpm_planning_range": [
+        122,
+        132
+      ],
+      "pulse_grammar": "four_on_floor",
+      "drum_signature": "constant_four_on_floor_kick, 2_4_clap, syncopated_tops",
+      "bass_harmony_signature": "mid_bass_riff, short_synth_stabs",
+      "good_hybrid_roles": [
+        "house_pulse",
+        "bass_riff"
+      ],
+      "common_conflicts": [
+        "half_time_snare_global_conflicts_with_house_pulse"
+      ],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "tech_house",
+      "family": "house",
+      "tempo_bpm_planning_range": [
+        120,
+        132
+      ],
+      "pulse_grammar": "four_on_floor",
+      "drum_signature": "persistent_kick, shuffled_ghost_percussion",
+      "bass_harmony_signature": "restrained_bass_ostinato",
+      "good_hybrid_roles": [
+        "percussion_pocket",
+        "subtle_variation"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "liquid_dnb",
+      "family": "dnb",
+      "tempo_bpm_planning_range": [
+        170,
+        180
+      ],
+      "pulse_grammar": "fast_2step_break",
+      "drum_signature": "rolling_breaks, ghost_snares, fast_hats",
+      "bass_harmony_signature": "warm_chords, flowing_sub",
+      "good_hybrid_roles": [
+        "fast_break",
+        "melodic_harmony"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "dancefloor_dnb",
+      "family": "dnb",
+      "tempo_bpm_planning_range": [
+        170,
+        178
+      ],
+      "pulse_grammar": "fast_break",
+      "drum_signature": "driving_dnb_break, strong_snare",
+      "bass_harmony_signature": "anthemic_leads, weighty_sub",
+      "good_hybrid_roles": [
+        "fast_energy",
+        "melodic_drop"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "neurofunk",
+      "family": "dnb",
+      "tempo_bpm_planning_range": [
+        170,
+        180
+      ],
+      "pulse_grammar": "fast_edited_break",
+      "drum_signature": "intricate_break_edits, ghost_notes, kick_displacement",
+      "bass_harmony_signature": "syncopated_Reese_mid_bass",
+      "good_hybrid_roles": [
+        "bass_complexity",
+        "break_editing"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "jump_up_dnb",
+      "family": "dnb",
+      "tempo_bpm_planning_range": [
+        170,
+        180
+      ],
+      "pulse_grammar": "fast_break",
+      "drum_signature": "punchy_break_with_clear_backbeat",
+      "bass_harmony_signature": "short_bouncy_repeated_bass_calls",
+      "good_hybrid_roles": [
+        "bass_hook",
+        "fast_break"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "jungle",
+      "family": "breaks",
+      "tempo_bpm_planning_range": [
+        155,
+        175
+      ],
+      "pulse_grammar": "chopped_break",
+      "drum_signature": "sliced_breaks, rolls, ghost_hits",
+      "bass_harmony_signature": "repetitive_sub_patterns",
+      "good_hybrid_roles": [
+        "break_collage",
+        "drum_variation"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "breakbeat",
+      "family": "breaks",
+      "tempo_bpm_planning_range": [
+        120,
+        145
+      ],
+      "pulse_grammar": "broken_beats",
+      "drum_signature": "edited_breaks, offbeat_snare_patterns",
+      "bass_harmony_signature": "short_riff_and_bass_answers",
+      "good_hybrid_roles": [
+        "break_texture",
+        "groove_foundation"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "halftime_dnb",
+      "family": "dnb",
+      "tempo_bpm_planning_range": [
+        160,
+        180
+      ],
+      "pulse_grammar": "half_time_backbeat_with_fast_grid",
+      "drum_signature": "slow_snare_feel_over_dnb_top_grid",
+      "bass_harmony_signature": "sustained_sub, mid_bass_responses",
+      "good_hybrid_roles": [
+        "halftime_switch",
+        "top_grid"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "jersey_club",
+      "family": "club",
+      "tempo_bpm_planning_range": [
+        130,
+        145
+      ],
+      "pulse_grammar": "triple_kick_syncopated",
+      "drum_signature": "triple_kick_ornaments, chopped_stabs",
+      "bass_harmony_signature": "short_repeating_bass_chops",
+      "good_hybrid_roles": [
+        "kick_pickups",
+        "bounce"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    },
+    {
+      "id": "hardwave",
+      "family": "wave",
+      "tempo_bpm_planning_range": [
+        120,
+        160
+      ],
+      "pulse_grammar": "trap_derived",
+      "drum_signature": "broad_half_time_electronic_drums",
+      "bass_harmony_signature": "spacious_dark_harmony, sub_swells",
+      "good_hybrid_roles": [
+        "atmosphere",
+        "dark_harmony"
+      ],
+      "common_conflicts": [],
+      "status": "music_heuristic_not_suno_enforcement"
+    }
+  ],
+  "hybrid_policy": {
+    "one_primary_timing_grammar": true,
+    "one_primary_low_end_owner": true,
+    "require_secondary_role_map": true,
+    "primary_role_choices": [
+      "rhythm",
+      "bass_timbre",
+      "harmony",
+      "hook",
+      "vocal",
+      "percussion_accent",
+      "drop_architecture",
+      "atmosphere"
+    ]
+  },
+  "compiler": {
+    "preferred_clause_priority": [
+      "primary_groove_and_genre",
+      "recurring_hook",
+      "bass_interaction",
+      "section_progression",
+      "mix_priorities",
+      "decorative_detail"
+    ],
+    "recommended_style_characters_heuristic": [
+      600,
+      850
+    ],
+    "move_negative_terms_to_separate_field": true,
+    "do_not_truncate_hard_constraints_silently": true
+  },
+  "rhythm_patterns": {
+    "modern_trap_machine_hats": {
+      "timbre": "electronic_808",
+      "base_grid": "16ths",
+      "ratchet": "short_32nd_at_phrase_turns",
+      "open_hat": "selected_offbeats_short_chokes"
+    },
+    "deep_140": {
+      "base_grid": "sparse_or_swung",
+      "ratchet": "selected_accents_only",
+      "priority": "negative_space_and_sub"
+    },
+    "ukg": {
+      "base_grid": "swung_8th_16th",
+      "kick": "two_step",
+      "snare": "ghosts",
+      "priority": "shuffle_survives_drop"
+    },
+    "dnb": {
+      "base_grid": "fast_break",
+      "priority": "rolling_break_continuity",
+      "halftime": "explicit_section_or_tempo_feel"
+    }
+  },
+  "section_plan_template": {
+    "main": {
+      "drums": "stable_identity_with_local_fills",
+      "bass": "signature_groove",
+      "hook": "present"
+    },
+    "build": {
+      "drums": "escalating_subdivisions",
+      "bass": "rising_or_thinning_ostinato",
+      "hook": "narrowed_or_chopped"
+    },
+    "predrop": {
+      "drums": "short_reduction",
+      "bass": "sub_dropout_or_pickup",
+      "hook": "signature_fragment"
+    },
+    "drop1": {
+      "drums": "dominant_backbeat",
+      "bass": "clear_call_response",
+      "hook": "returns"
+    },
+    "breakdown": {
+      "drums": "reduced",
+      "bass": "filtered",
+      "hook": "exposed"
+    },
+    "drop2": {
+      "drums": "variation_not_total_reset",
+      "bass": "displaced_or_new_answer",
+      "hook": "developed"
+    }
+  },
+  "generation_presets_heuristic": {
+    "controlled_hybrid": {
+      "model": "v6",
+      "weirdness": [
+        0.45,
+        0.6
+      ],
+      "style_influence": [
+        0.85,
+        0.95
+      ],
+      "variety": [
+        0
+      ]
+    },
+    "rhythmic_complexity": {
+      "model": "v6",
+      "weirdness": [
+        0.5,
+        0.65
+      ],
+      "style_influence": [
+        0.85,
+        0.95
+      ],
+      "variety": [
+        0
+      ]
+    },
+    "faithful_cover": {
+      "model": "v6",
+      "weirdness": [
+        0.25,
+        0.45
+      ],
+      "style_influence": [
+        0.6,
+        0.8
+      ],
+      "audio_influence": [
+        0.7,
+        0.85
+      ],
+      "variety": [
+        0
+      ]
+    },
+    "hybrid_remix": {
+      "model": "v6",
+      "weirdness": [
+        0.45,
+        0.65
+      ],
+      "style_influence": [
+        0.8,
+        0.95
+      ],
+      "audio_influence": [
+        0.45,
+        0.65
+      ],
+      "variety": [
+        0,
+        1
+      ]
+    },
+    "radical_remix": {
+      "model": "v6-wild",
+      "weirdness": [
+        0.6,
+        0.85
+      ],
+      "style_influence": [
+        0.85,
+        1.0
+      ],
+      "audio_influence": [
+        0.1,
+        0.35
+      ],
+      "variety": [
+        1,
+        2
+      ]
+    }
+  },
+  "lint_rules": [
+    {
+      "id": "STYLE_LENGTH_EXCEEDED",
+      "severity": "error",
+      "trigger": "len(style) > limits.style_max_chars",
+      "repair": "shrink clauses with preservation of mandatory identities",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "LYRICS_LENGTH_EXCEEDED",
+      "severity": "error",
+      "trigger": "len(lyrics) > limits.lyrics_max_chars",
+      "repair": "reduce lyrics or split workflow",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "NEGATIVE_STYLE_LENGTH_EXCEEDED",
+      "severity": "error",
+      "trigger": "len(negative_style) > limits.negative_style_max_chars",
+      "repair": "deduplicate and shorten exclusions",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "SIMPLE_CUSTOM_COLLISION",
+      "severity": "error",
+      "trigger": "mode == simple and (style or lyrics)",
+      "repair": "route as custom or remove disallowed fields",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "AUDIO_INFLUENCE_INVALID_FOR_CUSTOM",
+      "severity": "error",
+      "trigger": "mode == custom and audio_influence != null and voice_id == null",
+      "repair": "use source-conditioned cover/mashup/extension or remove audio_influence",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "CUSTOM_VOCAL_GENDER_UNSUPPORTED_ON_MASHUP",
+      "severity": "warning",
+      "trigger": "mode == mashup and vocal_gender != null",
+      "repair": "move supported performance hint to style or use permitted voice mode",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "VOICE_VS_INSTRUMENTAL",
+      "severity": "warning",
+      "trigger": "voice_id != null and instrumental == true",
+      "repair": "explain voice_id will take precedence; correct intent",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "FULL_LYRICS_VS_INSTRUMENTAL_STYLE",
+      "severity": "warning",
+      "trigger": "lyrics substantial and style requests instrumental",
+      "repair": "choose instrumental mode or rewrite vocal intent",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "TOO_MANY_EQUAL_GENRES",
+      "severity": "warning",
+      "trigger": "three_or_more_genres_no_role_ownership",
+      "repair": "assign one primary groove and secondary harmony/bass/timbre roles",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "TEMPO_CONVENTION_CONFLICT",
+      "severity": "warning",
+      "trigger": "target_bpm significantly outside dominant_genre_expected_with_no_transition",
+      "repair": "ask for genre reinterpretation or explicit feel/section change",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "TWO_PRIMARY_KICK_SYSTEMS",
+      "severity": "warning",
+      "trigger": "two_step and four_on_floor both described as globally exclusive primary",
+      "repair": "choose one baseline or section ownership",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "UNDEFINED_HOOK",
+      "severity": "warning",
+      "trigger": "no_repeating_motif_or_signature",
+      "repair": "specify a recurring musical hook with instrument or timbre",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "MASSIVE_FULL_RANGE_BASS_STACK",
+      "severity": "warning",
+      "trigger": "kick_sub_pitched808_fm_reese_all_continuous_low_end",
+      "repair": "separate sub owner, percussive transient and mid-bass phrase",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "CONSTANT_MAX_HAT_DENSITY",
+      "severity": "warning",
+      "trigger": "32nd_hats requested continuous while sparse groove targeted",
+      "repair": "set 16th baseline and short 32nd turns",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "ELECTRONIC_HATS_EXCLUDED",
+      "severity": "warning",
+      "trigger": "require_electronic_hats and exclude_all_hats_or_all_cymbals",
+      "repair": "narrow exclusions to acoustic drum kits and live cymbals",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "UNSPECIFIED_SECOND_DROP",
+      "severity": "suggestion",
+      "trigger": "final_drop only described as larger/heavier",
+      "repair": "name changed rhythm/motif/voicing/bass call relation",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "SOURCE_IDENTITY_ERASURE_RISK",
+      "severity": "warning",
+      "trigger": "cover_or_mashup + low_audio + forced_new_key_tempo_hook_vocals",
+      "repair": "add preservation map or label intentional radical reinterpretation",
+      "evaluation_type": "semantic"
+    },
+    {
+      "id": "SOURCE_RIGHTS_UNKNOWN",
+      "severity": "block",
+      "trigger": "source_present and rights_state is unknown or unapproved",
+      "repair": "establish ownership or licensed/remix-authorized use",
+      "evaluation_type": "human_check"
+    },
+    {
+      "id": "VARIETY_CONFOUNDS_CONTROLLED_TEST",
+      "severity": "suggestion",
+      "trigger": "experiment_type == controlled and variety > 0",
+      "repair": "set Variety Off before baseline",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "GENERATION_CREDIT_ACTION",
+      "severity": "notice",
+      "trigger": "create_audio_or_expensive_analysis_action",
+      "repair": "require intentional generation/credit authorization",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "MASHUP_PARENT_COUNT",
+      "severity": "error",
+      "trigger": "mode == mashup_dedicated and source_count != 2",
+      "repair": "route correct parent count to dedicated or multi-reference mode",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "REFERENCE_COUNT_OVER_LIMIT",
+      "severity": "error",
+      "trigger": "mode == simple_reference and source_count > 10",
+      "repair": "reduce reference set",
+      "evaluation_type": "deterministic"
+    },
+    {
+      "id": "EXACT_CHAR_BAND_MISS",
+      "severity": "error",
+      "trigger": "strict_min_or_max_defined and count outside required range",
+      "repair": "rephrase retaining musical constraints until compliant",
+      "evaluation_type": "deterministic"
+    }
+  ],
+  "acceptance_tests": [
+    {
+      "id": "T01",
+      "mode": "custom",
+      "input": "style length 1001",
+      "expected": [
+        "STYLE_LENGTH_EXCEEDED"
+      ]
+    },
+    {
+      "id": "T02",
+      "mode": "simple",
+      "input": "description plus style plus lyrics",
+      "expected": [
+        "SIMPLE_CUSTOM_COLLISION"
+      ]
+    },
+    {
+      "id": "T03",
+      "mode": "custom",
+      "input": "audio_influence 0.55 with no voice_id",
+      "expected": [
+        "AUDIO_INFLUENCE_INVALID_FOR_CUSTOM"
+      ]
+    },
+    {
+      "id": "T04",
+      "mode": "custom",
+      "input": "instrumental=true; voice_id=owned-voice",
+      "expected": [
+        "VOICE_VS_INSTRUMENTAL"
+      ]
+    },
+    {
+      "id": "T05",
+      "mode": "custom",
+      "input": "Style says instrumental, lyrics contain [Verse 1] with full lyrics",
+      "expected": [
+        "FULL_LYRICS_VS_INSTRUMENTAL_STYLE"
+      ]
+    },
+    {
+      "id": "T06",
+      "mode": "mashup_dedicated",
+      "input": "three source songs",
+      "expected": [
+        "MASHUP_PARENT_COUNT"
+      ]
+    },
+    {
+      "id": "T07",
+      "mode": "simple_reference",
+      "input": "11 source songs",
+      "expected": [
+        "REFERENCE_COUNT_OVER_LIMIT"
+      ]
+    },
+    {
+      "id": "T08",
+      "mode": "cover",
+      "input": "audio=0.15, new BPM/key/hook, instrumental; wants source melody intact",
+      "expected": [
+        "SOURCE_IDENTITY_ERASURE_RISK"
+      ]
+    },
+    {
+      "id": "T09",
+      "mode": "custom",
+      "input": "continuous 32nd hats and deep sparse 140 groove",
+      "expected": [
+        "CONSTANT_MAX_HAT_DENSITY"
+      ]
+    },
+    {
+      "id": "T10",
+      "mode": "custom",
+      "input": "main groove is simultaneously pure 2-step and four-on-floor",
+      "expected": [
+        "TWO_PRIMARY_KICK_SYSTEMS"
+      ]
+    },
+    {
+      "id": "T11",
+      "mode": "custom",
+      "input": "hook absent, six simultaneous independent basses, no interaction",
+      "expected": [
+        "UNDEFINED_HOOK",
+        "MASSIVE_FULL_RANGE_BASS_STACK"
+      ]
+    },
+    {
+      "id": "T12",
+      "mode": "custom",
+      "input": "style length 950, user strict 925-975",
+      "expected": []
+    },
+    {
+      "id": "T13",
+      "mode": "custom",
+      "input": "style length 900, user strict 925-975",
+      "expected": [
+        "EXACT_CHAR_BAND_MISS"
+      ]
+    },
+    {
+      "id": "T14",
+      "mode": "custom",
+      "input": "must be electronic TR-808 hats; exclude all hats",
+      "expected": [
+        "ELECTRONIC_HATS_EXCLUDED"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "title": "Suno V6 FAQ",
+      "url": "https://help.suno.com/en/articles/13924481",
+      "kind": "official"
+    },
+    {
+      "title": "Suno V6 models",
+      "url": "https://help.suno.com/en/articles/13924801",
+      "kind": "official"
+    },
+    {
+      "title": "Creative Sliders",
+      "url": "https://help.suno.com/en/articles/6141377",
+      "kind": "official"
+    },
+    {
+      "title": "Suno MCP",
+      "url": "https://help.suno.com/en/articles/14551361",
+      "kind": "official"
+    },
+    {
+      "title": "Suno Remix",
+      "url": "https://suno.com/remix-welcome",
+      "kind": "official"
+    },
+    {
+      "title": "Custom Lyrics",
+      "url": "https://help.suno.com/en/articles/2415873",
+      "kind": "official"
+    },
+    {
+      "title": "Suno Terms",
+      "url": "https://suno.com/terms",
+      "kind": "official"
+    }
+  ]
+}
