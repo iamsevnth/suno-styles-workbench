@@ -53,12 +53,13 @@ const LOW_END_SOURCES: [string, RegExp][] = [
 ];
 
 /** Words that name a hook. A plain instrument ("piano chords") is not a hook; "piano riff" is. */
-const HOOK_WORDS = /\b(?:hook|motif|riff|lead|melod(?:y|ies)|topline|chops?|chant|whistle|arp\w*|pluck\w*|vocal\w*|sing\w*|singer|rap\w*|chorus|refrain|theme)\b/i;
+const HOOK_WORDS = /\b(?:hook|motif|riff|lead|melod(?:y|ies)|melodic\s+(?:line|phrase|figure|motif|hook|lead|theme)|topline|chops?|chant|whistle|arp\w*|pluck\w*|vocal\w*|sing\w*|singer|rap\w*|chorus|refrain|theme)\b/i;
 /** Role nouns that show a genre was given a job ("trap groove", "future bass chords"). */
-const ROLE_NOUN = /\b([a-z0-9-]+)\s+(groove|drums|rhythm|beat|kicks?|chords|harmony|pads|hook|lead|melody|topline|sub|808s?|bassline|percussion)\b/gi;
+const ROLE_LIST = "groove|drums|rhythm|beat|kicks?|chords|harmony|pads|hook|lead|melody|topline|sub|808s?|bassline|percussion";
 /** A bass source tied to its own section ("reese in the first drop") rather than merely near a section word. */
-const SECTION_ASSIGN = /\b(?:in|during|on|for|throughout|until)\s+(?:the\s+)?(?:(?:first|second|third|last|final|1st|2nd|3rd)\s+)?(?:intros?|verses?|choruses?|hooks?|builds?|drops?|breakdowns?|bridges?|outros?|sections?|half)\b/i;
+const SECTION_ASSIGN = /\b(?:in|during|on|for|throughout|until)\s+(?:the\s+)?(?:(?:first|second|third|last|final|1st|2nd|3rd)\s+)?(?:intros?|verses?|choruses?|hooks?|builds?|drops?|breakdowns?|bridges?|outros?|sections?)\b|\b(?:in|during|for|throughout)\s+the\s+(?:first|second|last|final)\s+half\b/i;
 const ROLE_FROM = /\b(?:groove|drums|rhythm|bass(?:line)?|chords|harmony|hook|lead|melody)\s+(?:from|borrowed from|taken from|of)\b/i;
+const NEGATION = /\b(?:no|never|without|exclude|excluding|avoid|don'?t|do not|not|none)\b/i;
 const CALL_ANSWER = /\b(?:answers?|answering|respond\w*|call[\s-]and[\s-](?:answer|response)|trades?|takes? over|swaps? in|in the (?:first|second|third|last|final)\b)/i;
 const TEMPO_REINTERPRETED = /\b(?:half[\s-]?time|double[\s-]?time|twice[\s-]time)\b|\b(?:tempo|bpm) feel\b|\bfeels? like \d{2,3}\b/i;
 const CONTINUOUS = /\b(?:constant\w*|continuous\w*|throughout|non[\s-]?stop|all the way|the whole (?:song|track)|every bar)\b/i;
@@ -85,17 +86,19 @@ export function lintBrief(parsed: ParsedInput, plan?: SonicPlan): LintFinding[] 
 
   const genres = [...parsed.genres, ...(parsed.unknownGenres ?? [])];
   // A role counts only when a genre word names it ("trap groove", "future bass chords").
-  const genreWords = new Set(
+  // The whole genre name must precede the role, so words inside a name ("drum and bass") don't count.
+  const genreNames = [...new Set(
     [...genres, parsed.native?.labels?.primary, parsed.native?.labels?.secondary, parsed.native?.labels?.tertiary]
       .filter((g): g is string => !!g)
-      .flatMap((g) => g.toLowerCase().split(/[\s/&+-]+/))
-      .filter((w) => w.length > 1),
-  );
-  const roleNouns = new Set(
-    [...positive.matchAll(ROLE_NOUN)]
-      .filter((m) => genreWords.has(m[1].toLowerCase()))
-      .map((m) => m[2].toLowerCase().replace(/s$/, "")),
-  );
+      .map((g) => g.toLowerCase().trim()),
+  )];
+  const roleNouns = new Set<string>();
+  const lower = positive.toLowerCase();
+  for (const name of genreNames) {
+    const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "[\\s-]+");
+    const re = new RegExp(`\\b${esc}\\s+(${ROLE_LIST})\\b`, "gi");
+    for (const m of lower.matchAll(re)) roleNouns.add(m[1].toLowerCase().replace(/s$/, ""));
+  }
   const rolesAssigned = roleNouns.size >= 2 || ROLE_FROM.test(positive);
   if (genres.length >= 3 && !rolesAssigned) {
     const roles = plan ? ownershipMap(plan).filter((r) => r.owner).map((r) => `${r.role.toLowerCase()}: ${r.owner}`) : [];
@@ -164,7 +167,11 @@ export function lintBrief(parsed: ParsedInput, plan?: SonicPlan): LintFinding[] 
 
   const excluded = (parsed.exclusions ?? []).join(", ");
   const blanket = (parsed.exclusions ?? []).some((x) => BLANKET_HATS.test(x.trim()));
-  if (blanket && HATS_WANTED.test(positive)) {
+  // A hat request is a mention in a clause with no negation. The parser moves "never …" into the
+  // exclusions, so "hats should never play" arrives as a dangling "hats should": not a request.
+  const DANGLING = /\b(?:should|must|can|could|will|would|may|might|to|are|is)\s*$/i;
+  const hatRequested = text.split(/[,.;\n]/).some((c) => HATS_WANTED.test(c) && !NEGATION.test(c) && !DANGLING.test(c.trim()));
+  if (blanket && hatRequested) {
     findings.push({
       id: "ELECTRONIC_HATS_EXCLUDED",
       severity: "warning",
@@ -182,7 +189,7 @@ export function lintBrief(parsed: ParsedInput, plan?: SonicPlan): LintFinding[] 
     ? plan.native.edm === true
     : parsed.native
       ? EDM_IDS.has(parsed.native.primary) || (!!parsed.native.secondary && EDM_IDS.has(parsed.native.secondary))
-      : isBassWorld(familyKeys(plan ? [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre] : genres), undefined, false);
+      : electronicFamilies(familyKeys(plan ? [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre] : genres));
   if (!bassWorld || genres.length === 0) {
     // no hook check
   } else if (!parsed.instrumental && !HOOK_WORDS.test(positive)) {
@@ -217,6 +224,11 @@ export function lintBrief(parsed: ParsedInput, plan?: SonicPlan): LintFinding[] 
   }
 
   return findings;
+}
+
+/** Bass, club and rap families, plus breakbeat (drum & bass, jungle, breaks), which the bleed gate leaves out. */
+function electronicFamilies(families: string[]): boolean {
+  return isBassWorld(families, undefined, false) || families.includes("breaks");
 }
 
 /** The brief without its "no …" / "exclude …" parts, so excluded words don't trigger positive checks. */

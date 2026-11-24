@@ -158,3 +158,24 @@ test("bare UKG is not a 2-step kick", () => {
   assert.ok(!ids("UKG with four-on-the-floor kicks, vocal chop hook").includes("TWO_PRIMARY_KICK_SYSTEMS"));
   assert.ok(ids("uk garage with four-on-the-floor kicks, vocal chop hook").includes("TWO_PRIMARY_KICK_SYSTEMS"));
 });
+
+// v5.4.1: second review round.
+test("words inside a multiword genre name are not role owners", () => {
+  assert.ok(ids("Drum and Bass, Trap, Dubstep, piano and drums, bass melody").includes("TOO_MANY_EQUAL_GENRES"));
+});
+
+test("drum and bass without a native route still gets the hook note", () => {
+  assert.ok(ids("Drum and Bass, instrumental, surprise me").includes("UNDEFINED_HOOK"));
+});
+
+test("'on the half-time pulse' is not a section", () => {
+  assert.ok(ids("dubstep with 808, reese, wobble and growl on the half-time pulse, vocal hook").includes("MASSIVE_FULL_RANGE_BASS_STACK"));
+});
+
+test("hats mentioned only to rule them out are not a request", () => {
+  assert.ok(!ids("trap; hats should never play; no hats").includes("ELECTRONIC_HATS_EXCLUDED"));
+});
+
+test("a recurring melodic line is a hook", () => {
+  assert.ok(!ids("dubstep, instrumental, a recurring melodic line on piano").includes("UNDEFINED_HOOK"));
+});
