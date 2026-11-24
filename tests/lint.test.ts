@@ -75,3 +75,44 @@ test("variants differ from the first in at least two named musical axes", () => 
     assert.ok(changed.length >= 2, `changed: ${changed.join(",")}`);
   }
 });
+
+// Review follow-ups: following a finding's own advice clears it, and unrelated words don't hide it.
+test("genres that already have roles are not flagged", () => {
+  assert.ok(!ids("Trap groove, Deep Dubstep bass, Future Bass chords and hook, 140 BPM").includes("TOO_MANY_EQUAL_GENRES"));
+});
+
+test("an unrelated section word does not excuse two kick patterns", () => {
+  assert.ok(ids("uk garage 2-step and four-on-the-floor kicks with a vocal chorus").includes("TWO_PRIMARY_KICK_SYSTEMS"));
+});
+
+test("a narrow cymbal exclusion is not a blanket hat exclusion", () => {
+  assert.ok(!ids("trap with 808 hats and hi-hat rolls, no live cymbals").includes("ELECTRONIC_HATS_EXCLUDED"));
+});
+
+test("change words elsewhere do not excuse a second drop that is only bigger", () => {
+  assert.ok(ids("riddim, syncopated rhythm with a vocal hook; second drop bigger").includes("UNSPECIFIED_SECOND_DROP"));
+});
+
+test("a tempo the brief reinterprets is not flagged", () => {
+  const found = lintBrief(parseUserInput("ukg dubstep at 174 bpm with a half-time feel and a vocal chop hook", { profileEnabled: true }));
+  assert.ok(!found.some((f) => f.id === "TEMPO_CONVENTION_CONFLICT"));
+});
+
+test("bass sources given their own sections are not a stack", () => {
+  const brief = "dubstep with a vocal hook: 808 in the verse, reese in the first drop, wobble in the second drop, growl in the outro";
+  assert.ok(!ids(brief).includes("MASSIVE_FULL_RANGE_BASS_STACK"));
+});
+
+test("short 32nd-note rolls in a sparse groove are fine", () => {
+  assert.ok(!ids("deep sparse groove, 16th-note hats with short 32nd-note rolls at phrase ends, vocal hook").includes("CONSTANT_MAX_HAT_DENSITY"));
+});
+
+test("an instrument named only for harmony is not a hook", () => {
+  assert.ok(ids("dubstep with piano chords and dark pads").includes("UNDEFINED_HOOK"));
+  assert.ok(!ids("dubstep with a piano riff and dark pads").includes("UNDEFINED_HOOK"));
+});
+
+test("native plans include a harmony owner", () => {
+  const r = generateStylesPrompts("lofi jazz hop, rainy night", { count: 1, seed: 5 });
+  assert.ok(ownershipMap(r.prompts[0].plan).some((x) => x.role === "Harmony" && x.owner));
+});

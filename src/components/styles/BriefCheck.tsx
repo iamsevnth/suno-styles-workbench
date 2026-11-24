@@ -17,9 +17,12 @@ export default function BriefCheck({ input, profileEnabled, parsed, plan }: {
   const text = useDeferredValue(input);
   const findings = useMemo(() => {
     if (!text.trim()) return [];
-    const same = parsed && parsed.raw === text ? parsed : null;
     try {
-      return lintBrief(same ?? parseUserInput(text, { profileEnabled }), same ? plan : undefined);
+      const fresh = parseUserInput(text, { profileEnabled });
+      // Compare parsed text: the parser normalizes the brief (it strips exclusions), so the
+      // textarea and the stored brief differ even when they describe the same generation.
+      const same = parsed && parsed.raw === fresh.raw;
+      return lintBrief(same ? parsed : fresh, same ? plan : undefined);
     } catch {
       return [];
     }
