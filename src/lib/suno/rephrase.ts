@@ -1,9 +1,10 @@
 /**
  * Rephrase: new wording for a prompt the Workbench wrote, with no AI. The same sonic plan is rendered again
- * with different sentence frames, connectors, phrase order and equivalent bank phrases, so every musical
- * fact stays. A rewording is offered only when it passes every check the original passed.
+ * with the same musical choices and the same phrases, in different sentence frames, connectors and order,
+ * so every musical fact stays. A rewording is offered only when it passes every check the original passed.
  */
-import { renderStyles } from "./render.ts";
+import { renderStyles, vocalPortion } from "./render.ts";
+import { lengthWindow } from "./limits.ts";
 import type { PromptCandidate } from "./types.ts";
 import { briefFaithfulness, criticalGatesPass, validatePrompt } from "./validate.ts";
 
@@ -36,6 +37,8 @@ export function rephrase(candidate: PromptCandidate, after = 0, seen: string[] =
     if (known.has(text.toLowerCase())) continue;
     if (!criticalGatesPass(validatePrompt(text, plan).hardGates)) continue;
     if (briefFaithfulness(text, plan) < keep) continue;
+    // The vocal share cap of the chosen length (25% Detailed, 15% Tight) holds for new wording too.
+    if (vocalPortion(text, plan) > lengthWindow(plan.length).vocalShare * text.length) continue;
     return { text, wording };
   }
   return null;

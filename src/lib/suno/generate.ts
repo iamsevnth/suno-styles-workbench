@@ -7,7 +7,7 @@ import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
 import { formatTitle, renderStyles, trimKeepingInstruments } from "./render.ts";
 import { lengthWindow } from "./limits.ts";
-import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
+import { tempoStatedFor } from "./tempo-genre.ts";
 import { hashString } from "./rng.ts";
 import { GenerateResult, PromptCandidate, PromptLength, SonicPlan } from "./types.ts";
 import { allHardGatesPass, criticalGatesPass, validatePrompt } from "./validate.ts";
@@ -111,9 +111,9 @@ export function generateStylesPrompts(
     }
     if (options.mode === "rewrite" && i === 0) {
       const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
-      const repaired = repairExistingPrompt(input, sourcePlan);
-      // The user's own prompt follows the tempo-named genre rules too ("140 BPM 140 UKG" becomes "140 UKG Dubstep").
-      const sourceEdit = repaired && { ...repaired, text: applyTempoGenres(repaired.text, sourcePlan.bpm, !!sourcePlan.tempoGenre) };
+      // The user's own prompt follows the tempo-named genre rules too ("140 BPM 140 UKG" becomes "140 UKG Dubstep");
+      // repairExistingPrompt applies them before fitting the length, so the fitted text is what ships.
+      const sourceEdit = repairExistingPrompt(input, sourcePlan);
       if (sourceEdit) {
         const verified = validatePrompt(sourceEdit.text, sourcePlan);
         if (allHardGatesPass(verified.hardGates)) {
@@ -176,7 +176,7 @@ export function generateStylesPrompts(
         }
         if (!validation.hardGates.integerBpm) {
           styles = renderStyles(plan);
-          if (!tempoStated(styles, plan.bpm)) {
+          if (!tempoStatedFor(styles, plan)) {
             styles = `${plan.bpm} BPM ${styles}`.replace(/\s+/g, " ").trim();
             styles = forceCharacterWindow(styles, plan);
           }
@@ -257,7 +257,7 @@ export function generateStylesPrompts(
  */
 function forceCharacterWindow(text: string, plan: SonicPlan): string {
   let t = text.replace(/\s+/g, " ").trim();
-  if (!tempoStated(t, plan.bpm)) t = `${plan.bpm} BPM ${t}`;
+  if (!tempoStatedFor(t, plan)) t = `${plan.bpm} BPM ${t}`;
   const max = lengthWindow(plan.length).hardMax;
   if (t.length > max) t = trimKeepingInstruments(t, max);
   return t;

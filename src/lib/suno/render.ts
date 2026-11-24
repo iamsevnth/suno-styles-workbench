@@ -9,7 +9,7 @@ import {
   VOCAL_STYLE,
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
-import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
+import { applyTempoGenres, tempoStatedFor } from "./tempo-genre.ts";
 import { FINAL_DROP_DELTAS, withDropDelta } from "./wording.ts";
 import { renderNative } from "./native/compose.ts";
 import { lengthWindow, vocalBudget } from "./limits.ts";
@@ -237,7 +237,8 @@ interface Choices {
 }
 
 function compose(plan: SonicPlan, wording = 0): string {
-  const rng = mulberry32((plan.seed ^ 2779096485 ^ Math.imul(wording, 0x9e3779b1)) >>> 0);
+  // Every musical choice comes from the plan's seed alone, so a Rephrase (wording > 0) keeps them all.
+  const rng = mulberry32((plan.seed ^ 2779096485) >>> 0);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   const fits = (phrase: string) => fitsFamilies(phrase, families);
   const keepCaps = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
@@ -267,8 +268,8 @@ function compose(plan: SonicPlan, wording = 0): string {
   const anchors = anchorsToCheck(plan);
   // Tempo-named genres are written by the tempo-genre rules on every build, so the length fitting below
   // measures the prompt exactly as it will read ("138 UKG Dubstep", no separate BPM).
-  const build = (detail: Detail, extras: string[]) =>
-    applyTempoGenres(assemble(plan, choices, detail, extras, keepCaps), plan.bpm, !!plan.tempoGenre);
+  const build = (detail: Detail, extras: string[], look: Choices = choices) =>
+    applyTempoGenres(assemble(plan, look, detail, extras, keepCaps), plan.bpm, !!plan.tempoGenre);
   // Anchors are compared without tempo numbers: "140 UKG" in the brief is honored by "138 UKG Dubstep".
   const neutral = (s: string) => applyTempoGenres(s, 0, false);
   const covers = (text: string, anchor: string) => {
@@ -312,10 +313,37 @@ function compose(plan: SonicPlan, wording = 0): string {
     }
   }
   if (text.length > MAX_CHARS) text = trimKeepingInstruments(text, MAX_CHARS);
+  // Rephrase: the same detail and extras, so the same sounds; only sentence frames and the vocal opener change.
+  // A rephrasing that lands outside the window is rejected by the checks, never trimmed into fewer facts.
+  if (wording > 0) text = build(detail, extras, presentation(choices, plan, wording));
 
   text = sentenceCase(text, keepCaps);
-  if (!tempoStated(text, plan.bpm)) text = `${plan.bpm} BPM ${text}`;
+  if (!tempoStatedFor(text, plan)) text = `${plan.bpm} BPM ${text}`;
   return text.replace(/\s+/g, " ").trim();
+}
+
+/** Openers for the vocal sentence; each takes the same noun phrase, so swapping one changes no fact. */
+const VOCAL_HEADS = ["Vocal performance features", "Lead vocals deliver", "Vocals center on", "Vocal delivery showcases", "Topline features"];
+
+/**
+ * The presentation of a Rephrase: different sentence frames (each differs from the original's) and vocal
+ * opener, with every musical choice (feel, phrases, final-drop change, vocal details) kept as it was.
+ */
+function presentation(c: Choices, plan: SonicPlan, wording: number): Choices {
+  const rng = mulberry32((plan.seed ^ 0x51ed270b ^ Math.imul(wording, 0x9e3779b1)) >>> 0);
+  const other = (current: number, size: number) => (size < 2 ? current : (current + 1 + Math.floor(rng() * (size - 1))) % size);
+  const head = VOCAL_HEADS.find((h) => c.vocal.startsWith(h + " "));
+  const vocal = head ? VOCAL_HEADS[other(VOCAL_HEADS.indexOf(head), VOCAL_HEADS.length)] + c.vocal.slice(head.length) : c.vocal;
+  return {
+    ...c,
+    drumForm: other(c.drumForm % DRUM_FORMS.length, DRUM_FORMS.length),
+    bassForm: other(c.bassForm % BASS_FORMS.length, BASS_FORMS.length),
+    hookForm: other(c.hookForm % HOOK_BASS_FORMS.length, HOOK_BASS_FORMS.length),
+    instIntro: other(c.instIntro % INSTRUMENT_INTROS.length, INSTRUMENT_INTROS.length),
+    arrForm: other(c.arrForm % ARRANGEMENT_FORMS.length, ARRANGEMENT_FORMS.length),
+    mixLead: other(c.mixLead % MIX_LEADS.length, MIX_LEADS.length),
+    vocal,
+  };
 }
 
 const DRUM_FORMS = [

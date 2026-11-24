@@ -35,6 +35,21 @@ const N = "(13[5-9]|14[0-5])";
 const UKG = "(?:ukg|uk garage)";
 const DUB = "dub[\\s-]?step";
 
+/** Every order of the three terms first, then every pair, so the longest spelling is always consumed. */
+const TERM_ORDERS = (() => {
+  const terms = { n: N, u: UKG, d: DUB };
+  const sep = "[\\s-]*";
+  const orders = ["nud", "ndu", "und", "udn", "dnu", "dun", "nu", "un", "ud", "du", "nd", "dn"];
+  // A number or "dubstep" right after wobble/wubby/garage belongs to that other genre.
+  const guard = "(?<!(?:wobble|wubby|wubz|garage)[\\s-]+)";
+  return orders
+    .map((o) => {
+      const body = [...o].map((k) => terms[k as keyof typeof terms]).join(sep);
+      return o === "nd" || o === "dn" || o.startsWith("d") ? guard + body : body;
+    })
+    .join("|");
+})();
+
 interface Kind {
   id: "ukg" | "bass" | "deep" | "wubby";
   re: RegExp;
@@ -47,12 +62,9 @@ const deepOf = (m: RegExpExecArray) => (m.groups?.deep ? `${m.groups.deep.trim()
 const KINDS: Kind[] = [
   {
     id: "ukg",
-    // Any two of number / UKG / dubstep written together, in either order of the first two.
-    // "Wobble 140 dubstep" and "garage dubstep" are other genres and are left alone.
-    re: new RegExp(
-      `(?<![a-z0-9-])(?<deep>deep[\\s-]+)?(?:${N}[\\s-]*${UKG}(?:[\\s-]*${DUB})?|${UKG}[\\s-]*${N}(?:[\\s-]*${DUB})?|${UKG}[\\s-]*${DUB}|(?<!(?:wobble|wubby|wubz|uk garage|garage)[\\s-]+)${N}[\\s-]*${DUB})(?![a-z0-9])`,
-      "gi"
-    ),
+    // Any two or all three of number / UKG / dubstep written together, in any order ("140 UKG", "UKG Dubstep",
+    // "Dubstep UKG", "138 dubstep UKG"). "Wobble 140 dubstep" and "garage dubstep" are other genres.
+    re: new RegExp(`(?<![a-z0-9-])(?<deep>deep[\\s-]+)?(?:${TERM_ORDERS})(?![a-z0-9])`, "gi"),
     numbered: (bpm, m) => `${deepOf(m)}${bpm} UKG Dubstep`,
     plain: (m) => `${deepOf(m)}UKG`,
   },
@@ -169,9 +181,25 @@ export function removeBpm(text: string): string {
     .trim();
 }
 
-/** True when the prompt states the plan's tempo, as "NNN BPM" or through a numbered tempo-named genre. */
+/** True when the prompt states the tempo, as "NNN BPM" or through a numbered tempo-named genre. */
 export function tempoStated(text: string, bpm: number): boolean {
   return new RegExp(`\\b${bpm}\\s*BPM\\b`, "i").test(text) || tempoGenreNumbers(text).includes(bpm);
+}
+
+/**
+ * The tempo check for a plan: a genre name may carry the tempo only on a plan that has a tempo-named genre
+ * inside 135–145 (plan.tempoGenre). Any other plan must write "NNN BPM", so "140 Bass" can't stand in for the
+ * tempo of a house or folk prompt.
+ */
+export function tempoStatedFor(text: string, plan: { bpm: number; tempoGenre?: boolean }): boolean {
+  return plan.tempoGenre ? tempoStated(text, plan.bpm) : new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(text);
+}
+
+/** Where the tempo is written: "NNN BPM", or the numbered genre name that carries it. */
+export function tempoAnchor(plan: { bpm: number; tempoGenre?: boolean }): RegExp {
+  const bpm = `${plan.bpm}\\s*BPM\\b`;
+  if (!plan.tempoGenre) return new RegExp(`\\b${bpm}`, "i");
+  return new RegExp(`\\b(?:${bpm}|(?:deep[ -])?${plan.bpm} (?:UKG Dubstep|Bass)\\b|(?:Deep|Wubby|Wobble|Deep-wobble) ${plan.bpm}\\b)`, "i");
 }
 
 /** A numbered tempo-named genre beside a separate BPM states the tempo twice; that is a contradiction. */

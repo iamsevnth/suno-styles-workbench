@@ -43,6 +43,18 @@ describe("tempo-named genres: the phrase", () => {
     assert.equal(applyTempoGenres("150 BPM UKG Dubstep with 140 Bass weight.", 150, true), "150 BPM UKG with UK bass weight.");
   });
 
+  it("accepts the terms in any order and consumes all three (Codex review)", () => {
+    for (const [input, out] of [
+      ["Dubstep UKG at 140 BPM.", "140 UKG Dubstep."],
+      ["138 Dubstep UKG, dark.", "138 UKG Dubstep, dark."],
+      ["UKG 140 dubstep.", "140 UKG Dubstep."],
+      ["dubstep 140 UKG", "140 UKG Dubstep"],
+    ]) {
+      const bpm = Number(/1[34]\d/.exec(out)?.[0]);
+      assert.equal(applyTempoGenres(input, bpm, true), out, input);
+    }
+  });
+
   it("leaves other genres and single words alone", () => {
     for (const text of ["Wobble 140 dubstep pressure.", "garage dubstep swing.", "150 dubstep.", "UKG hats over a dubstep drop.", "140 BPM trap."]) {
       assert.equal(applyTempoGenres(text, 140, true), text);
@@ -130,6 +142,25 @@ describe("tempo-named genres: checks", () => {
   it("the tempo counts as stated through the genre name", () => {
     assert.ok(tempoStated(p.styles, p.bpm));
     assert.deepEqual(tempoGenreNumbers(p.styles), [p.bpm]);
+  });
+
+  it("only a plan with a tempo-named genre may carry its tempo in a genre name (Codex review)", () => {
+    const house = generateStylesPrompts("house, uplifting, piano, 140 BPM", { count: 1, seed: 7 }).prompts[0];
+    assert.equal(house.plan.tempoGenre, false);
+    const swapped = house.styles.replace(/\b140 BPM\b/, "140 Bass");
+    assert.equal(validatePrompt(swapped, house.plan).hardGates.integerBpm, false);
+  });
+
+  it("Fix mode keeps a pasted prompt near the minimum after the rule shortens it (Codex review)", () => {
+    const body = "UKG Dubstep at 140 BPM with a dark and menacing mood. Led by a dark plucked synth hook, with pitched vocal chops answering the skippy hats. Drums: half-time trap kick and snare under a skippy syncopated hat topline and a shaker shuffle. Bass design and chords: massive 808 sub pressure with long glides, sparse minor piano notes and cold detuned synth stabs. Sound design: low rumble beds under the intro, dark sound-system reverb tails, sub-drop impacts and open-hat accents on the off-beats. Production: dark heavy sub-pressure sound; half-time snare punching through the sub pressure. Arrangement: eerie pad intro, first drop with half-time weight, switch-up drop with rolling hats and heavier 808.";
+    // 800–806 characters as pasted; "UKG Dubstep at 140 BPM" → "140 UKG Dubstep" takes it under 800.
+    const pasted = `${body} Ends on a final sub hit and a fading shaker. Mix with the sub in mono and the hats crisp and wide.`;
+    assert.ok(pasted.length >= 800 && pasted.length < 807, String(pasted.length));
+    const p = generateStylesPrompts(pasted, { count: 1, seed: 7, mode: "rewrite" }).prompts[0];
+    assert.notEqual(p.fixStrategy, "recompiled", p.styles);
+    assert.ok(p.characters >= 800, String(p.characters));
+    assert.match(p.styles, /^140 UKG Dubstep\b/, p.styles);
+    assert.doesNotMatch(p.styles, /\bBPM\b/, p.styles);
   });
 
   it("a separate BPM beside the numbered name is a contradiction", () => {

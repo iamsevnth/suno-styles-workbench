@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { PromptCandidate } from "../../lib/suno/types.ts";
 import { assistantRequest, checkAssistantAnswer } from "../../lib/ai/handoff.ts";
 import type { AiCheck } from "../../lib/ai/check.ts";
@@ -12,15 +12,21 @@ const BTN = "h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-x
  * call those assistants, so this is copy and paste: the Workbench sends nothing, and a pasted answer is shown
  * only after it passes the Workbench checks. Everything here is labeled as AI.
  */
-export default function AssistantHandoff({ prompt, onUse }: {
+export default function AssistantHandoff({ prompt: base, styles, onUse }: {
   prompt: PromptCandidate;
+  /** The wording the card shows now (original, rephrased or an earlier answer); this is what gets reworded. */
+  styles: string;
   /** Shows the checked answer as this card's wording. */
   onUse: (text: string) => void;
 }) {
+  // The request and the check both use the wording on screen, so Copy Request matches what the user sees.
+  const prompt = styles === base.styles ? base : { ...base, styles };
   const [answer, setAnswer] = useState("");
   const [copied, setCopied] = useState<"" | "ok" | "blocked">("");
   const [check, setCheck] = useState<AiCheck | null>(null);
   const answerId = useId();
+  // A check is for the wording it was made against; new wording on the card needs a new check.
+  useEffect(() => setCheck(null), [styles]);
 
   async function copyRequest() {
     setCopied((await copyToClipboard(assistantRequest(prompt))) ? "ok" : "blocked");

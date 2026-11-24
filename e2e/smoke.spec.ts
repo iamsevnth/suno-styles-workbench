@@ -334,8 +334,16 @@ test('Reword with your own assistant: copy a request, paste the answer, and only
   const handoff = page.getByTestId('assistant-handoff').first();
   await handoff.locator('summary').click();
   await expect(handoff).toContainText("goes to that company's service");
+  // The request carries the wording on the card: after Rephrase, that is the rephrased text.
+  await page.getByTestId('rephrase').first().click();
+  const shown = (await page.getByTestId('prompt-text').first().textContent()) ?? '';
   await handoff.getByRole('button', { name: 'Copy Request' }).click();
   await expect(handoff.getByRole('status').first()).toContainText(/Copied|Clipboard blocked/);
+  if ((await handoff.getByRole('status').first().textContent())?.includes('Copied')) {
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied.endsWith(shown)).toBe(true);
+  }
+  await page.getByRole('button', { name: 'Show Original' }).first().click();
 
   const answer = handoff.getByLabel("2. Paste the assistant's answer");
   await answer.fill('No drums, avoid bass.');

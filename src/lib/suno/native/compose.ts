@@ -583,7 +583,8 @@ function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   const low = [...bassList, ...vary(take(s.harmony, d.harmony))];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
-  const tex = nearDistinct(vary([...take(s.textures, d.textures), ...take(s.extras, d.extras)]));
+  // Near-duplicates are settled before the order varies, so a Rephrase keeps the same textures.
+  const tex = vary(nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]));
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
   // Two or three production priorities, mastering talk last: a few consequential choices read better than a stack.
@@ -593,7 +594,8 @@ function compose(plan: SonicPlan, d: Detail, wording = 0): string {
 
   if (d.arrangement && s.arrangement.length) {
     const arc = listOf(take(s.arrangement, 1));
-    const delta = FINAL_DROP_DELTAS[((plan.seed >>> 0) + wording) % FINAL_DROP_DELTAS.length];
+    // The final-drop change is a musical choice, so it depends on the plan alone, never on the wording.
+    const delta = FINAL_DROP_DELTAS[(plan.seed >>> 0) % FINAL_DROP_DELTAS.length];
     out.push(sentence(`Arrangement: ${drops ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
   }
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
@@ -619,17 +621,18 @@ export function renderNative(plan: SonicPlan, wording = 0): string {
     arrangement: 0,
     ending: 0,
   };
-  let text = compose(plan, d, wording);
+  let text = compose(plan, d);
   // Sparse banks (jazz) need more than one pass; later passes also deepen drums and bass.
   for (const key of [...GROW, ...GROW, "drums", "bass", "drums", "bass", "harmony", "leads"] as (keyof Detail)[]) {
     if (text.length >= fill) break;
     const trial = { ...d, [key]: Math.min(d[key] + 1, key === "arrangement" || key === "ending" || key === "era" ? 1 : 4) };
     if (trial[key] === d[key]) continue;
-    const next = compose(plan, trial, wording);
+    const next = compose(plan, trial);
     if (next.length <= max) {
       Object.assign(d, trial);
       text = next;
     }
   }
-  return text;
+  // Rephrase: the detail chosen for the original wording, so the same phrases; only frames and order change.
+  return wording > 0 ? compose(plan, d, wording) : text;
 }

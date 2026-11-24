@@ -1,7 +1,7 @@
 import { bassMusicLeaks, hasConflictingBpm, isBassWorld, moodClash, nonEdmBleed, vocalInInstrumental } from "./consistency.ts";
 import { familyKeys, hasDrops } from "./families.ts";
 import { lengthWindow } from "./limits.ts";
-import { applyTempoGenres, tempoGenreWithBpm, tempoStated } from "./tempo-genre.ts";
+import { applyTempoGenres, tempoGenreWithBpm, tempoStatedFor } from "./tempo-genre.ts";
 import { HardGates, SonicPlan } from "./types.ts";
 import { phraseExcluded } from "./intent.ts";
 import { changedMusicalAxes, semanticDistance, semanticFingerprint } from "./semantic.ts";
@@ -33,7 +33,7 @@ export function validatePrompt(
   if (!characterRange) issues.push(`character_count:${n}`);
 
   // "NNN BPM", or a tempo-named genre carrying the tempo ("138 UKG Dubstep").
-  const integerBpm = tempoStated(styles, plan.bpm);
+  const integerBpm = tempoStatedFor(styles, plan);
   if (!integerBpm) issues.push("missing_or_wrong_bpm");
 
   const protectedReferences = !ARTIST_LEAK_RE.test(styles) && !/\bin the style of\b/i.test(styles);

@@ -149,7 +149,7 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
       </div>
       <p data-testid="prompt-text" className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{view.text}</p>
       {ai?.on && <AiReword prompt={prompt} onCopy={onCopy} modelReady={ai.modelReady} onAllowDownload={ai.allowDownload} />}
-      <AssistantHandoff prompt={prompt} onUse={(text) => setView({ text, source: "assistant", wording: view.wording, seen: view.seen })} />
+      <AssistantHandoff prompt={prompt} styles={view.text} onUse={(text) => setView({ text, source: "assistant", wording: view.wording, seen: view.seen })} />
 
       <button
         type="button"

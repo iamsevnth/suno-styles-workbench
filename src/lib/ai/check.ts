@@ -35,6 +35,37 @@ const GATE_TEXT: Record<string, string> = {
   noExcludedConcepts: "it mentions something the brief excludes",
 };
 
+/**
+ * Sentence-frame words the renderers use ("Instrumentation features", "The arrangement moves through"). A
+ * rewording may change these freely; every other word carries a musical detail.
+ */
+const stem = (w: string) => (w.length > 4 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w);
+
+const FRAME_WORDS = new Set(
+  ("with into that then from over each every while through moves moving unfolds runs form record arrangement arranged " +
+    "instrumentation built around palette sound balance finish finished features feature deliver delivers showcases " +
+    "center centers centered uses sits rides leads replies answering answers answer gaps between settles carries " +
+    "rhythm section production priorities front role goes design plus also they their this which where when " +
+    "throughout mood delivered performance")
+    .split(" ")
+    .map(stem)
+);
+
+function detailWords(text: string): Set<string> {
+  const words = text.toLowerCase().match(/[a-z0-9][a-z0-9'-]{3,}/g) ?? [];
+  return new Set(words.map(stem).filter((w) => !FRAME_WORDS.has(w)));
+}
+
+/** Share of the original's musical detail words that a rewording kept, the share it must keep, and what it dropped. */
+export const DETAIL_RETENTION = 0.8;
+export function detailRetention(text: string, original: string): { share: number; missing: string[] } {
+  const want = detailWords(original);
+  if (!want.size) return { share: 1, missing: [] };
+  const have = detailWords(text);
+  const missing = [...want].filter((w) => !have.has(w));
+  return { share: 1 - missing.length / want.size, missing };
+}
+
 export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck {
   const text = cleanAiText(raw);
   const problems: string[] = [];
@@ -51,6 +82,11 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
   // It must keep at least as many of the brief's own words (scenes, textures, instruments) as the original.
   if (briefFaithfulness(text, original.plan) < briefFaithfulness(original.styles, original.plan)) {
     problems.push("it dropped words from your brief that the original kept");
+  }
+  // A rewording keeps the result's own details too (drums, bass, vocals, arrangement, mix), not just the brief's.
+  const kept = detailRetention(text, original.styles);
+  if (kept.share < DETAIL_RETENTION) {
+    problems.push(`it dropped details the original had (${kept.missing.slice(0, 6).join(", ")}${kept.missing.length > 6 ? ", …" : ""})`);
   }
   if (text.toLowerCase() === original.styles.toLowerCase()) problems.push("it is the same as the original");
   return { ok: problems.length === 0, text, problems };

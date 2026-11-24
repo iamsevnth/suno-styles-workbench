@@ -1,4 +1,5 @@
 import { extractConstraintIntent, phraseExcluded, parseKeyIntent } from "./intent.ts";
+import { applyTempoGenres, tempoAnchor, tempoStatedFor } from "./tempo-genre.ts";
 import type { SonicPlan } from "./types.ts";
 import { MIN_CHARS, MAX_CHARS } from "./limits.ts";
 
@@ -35,17 +36,20 @@ export function repairExistingPrompt(source: string, plan: SonicPlan): FixResult
       if (high) return String(plan.bpm) + " BPM";
       return Number(low) === plan.bpm ? whole : "the reference tempo";
     });
-  const expected = new RegExp("\\b" + plan.bpm + "\\s*BPM\\b", "i");
-  if (!expected.test(text)) {
+  // Tempo-named genres follow their rule before the length is fitted ("140 BPM 140 UKG" is "140 UKG Dubstep"),
+  // so the fitted text is the text that ships.
+  text = applyTempoGenres(text, plan.bpm, !!plan.tempoGenre);
+  const expected = tempoAnchor(plan);
+  if (!tempoStatedFor(text, plan)) {
     text = String(plan.bpm) + " BPM. " + text;
   }
   // The original may spell an accidental as C-sharp instead of C#; those are
   // equivalent musical keys and must not be printed twice.
   if (plan.key && parseKeyIntent(text)?.toLowerCase() !== plan.key.toLowerCase()) {
-    text = text.replace(expected, plan.bpm + " BPM, " + plan.key);
+    text = text.replace(expected, (m) => m + ", " + plan.key);
   }
   if (plan.meter && !text.includes(plan.meter)) {
-    text = text.replace(expected, plan.bpm + " BPM, " + plan.meter);
+    text = text.replace(expected, (m) => m + ", " + plan.meter);
   }
 
   if (phraseExcluded(text, plan.exclusions)) return null;
