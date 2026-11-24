@@ -358,6 +358,14 @@ test('Reword with your own assistant: copy a request, paste the answer, and only
   await handoff.getByRole('button', { name: 'Use This Wording' }).click();
   await expect(page.getByTestId('engine-badge').first()).toHaveText('AI wording from your assistant · passed the Workbench checks');
   await expect(page.getByTestId('prompt-text').first()).toHaveText(reordered);
+  // The results status and Download All Prompts follow what the cards show.
+  await expect(page.getByTestId('results-ai-status')).toHaveText('AI wording on 1 result');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download All Prompts' }).click()]);
+  const pack = await (await import('node:fs/promises')).readFile((await download.path()) ?? '', 'utf8');
+  expect(pack).toContain(reordered);
+  await page.getByRole('button', { name: /^(?:OK|Got It)$/ }).click();
+  await page.getByRole('button', { name: 'Show Original' }).first().click();
+  await expect(page.getByTestId('results-ai-status')).toHaveText('No AI Used');
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });

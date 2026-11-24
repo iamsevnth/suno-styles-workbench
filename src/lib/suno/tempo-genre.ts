@@ -202,7 +202,11 @@ export function tempoAnchor(plan: { bpm: number; tempoGenre?: boolean }): RegExp
   return new RegExp(`\\b(?:${bpm}|(?:deep[ -])?${plan.bpm} (?:UKG Dubstep|Bass)\\b|(?:Deep|Wubby|Wobble|Deep-wobble) ${plan.bpm}\\b)`, "i");
 }
 
-/** A numbered tempo-named genre beside a separate BPM states the tempo twice; that is a contradiction. */
+/**
+ * The tempo stated twice: a numbered tempo-named genre beside a separate BPM, or two numbered tempo-named
+ * genres ("140 UKG Dubstep ... 140 Bass"), even when the numbers agree. Only the first one carries the number.
+ */
 export function tempoGenreWithBpm(text: string): boolean {
-  return tempoGenreNumbers(text).length > 0 && BPM_ANY.test(text);
+  const numbered = tempoGenreNumbers(text).length;
+  return numbered > 1 || (numbered > 0 && BPM_ANY.test(text));
 }

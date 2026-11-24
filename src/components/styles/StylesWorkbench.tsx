@@ -23,6 +23,9 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
   // Optional on-device AI: off until the user turns it on and agrees; its state is always shown.
   const ai = useOnDeviceAi();
 
+  // Results showing an answer from the user's own assistant: the status says so, whatever the AI switch is.
+  const assistantCount = Object.values(wb.wordings).filter((w) => w.source === "assistant").length;
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-8">
@@ -34,9 +37,12 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
               <Icon name="zap" size={16} className="text-[var(--tile-violet-fg)]" />
               {heading}
             </h2>
-            <span data-testid="results-ai-status" title={ai.on ? "AI runs only when you click Reword with AI on a result." : "These prompts were written by the Workbench engine without AI."}
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ai.on ? "bg-[var(--tile-violet-fg)] text-white" : "border border-[var(--border)] text-[var(--fg-muted)]"}`}>
-              {ai.on ? "AI On · runs only when you click" : "No AI Used"}
+            <span data-testid="results-ai-status"
+              title={assistantCount ? "Some results show wording from your own AI assistant; Show Original on a card brings back the engine's." : ai.on ? "AI runs only when you click Reword with AI on a result." : "These prompts were written by the Workbench engine without AI."}
+              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${ai.on || assistantCount ? "bg-[var(--tile-violet-fg)] text-white" : "border border-[var(--border)] text-[var(--fg-muted)]"}`}>
+              {assistantCount
+                ? `AI wording on ${assistantCount} ${assistantCount === 1 ? "result" : "results"}`
+                : ai.on ? "AI On · runs only when you click" : "No AI Used"}
             </span>
             {wb.prompts.length > 0 && (
               <div className="flex items-center gap-2">
@@ -82,6 +88,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
                 sourceText={wb.parsed?.raw ?? ""}
                 changedFromFirst={i > 0 ? changedMusicalAxes(wb.prompts[0].plan, p.plan) : undefined}
                 ai={ai}
+                onWordingChange={(w) => wb.setWording(i, w)}
               />
             ))
           )}

@@ -1,5 +1,5 @@
 import { extractConstraintIntent, parseKeyIntent, parseMeterIntent, parseTempoIntent, phraseExcluded } from "./intent.ts";
-import { tempoGenreNumbers } from "./tempo-genre.ts";
+import { briefTempoFromGenre, tempoGenreNumbers } from "./tempo-genre.ts";
 import { parseUserInput } from "./parse.ts";
 
 export type FidelityStatus = "matched" | "different" | "not-found" | "review";
@@ -201,7 +201,11 @@ export function analyzePromptFidelity(sourceText: string, styleText: string, exc
   };
 
   const tempo = parseTempoIntent(source.positiveText);
-  const targetTempos = tempo.mentions.filter(x => x.role === "target" || x.role === "range");
+  const explicitTargets = tempo.mentions.filter(x => x.role === "target" || x.role === "range");
+  // "138 UKG Dubstep" with no BPM asks for 138 (bare "140" is only the genre's name), as generation reads it.
+  const genreTempo = explicitTargets.length ? undefined : briefTempoFromGenre(source.positiveText);
+  const targetTempos = genreTempo == null ? explicitTargets
+    : [{ value: genreTempo, upper: undefined as number | undefined, role: "target" as const, raw: `${genreTempo} (genre name)` }];
   if (targetTempos.length) {
     const first = targetTempos[0];
     const from = first.value;

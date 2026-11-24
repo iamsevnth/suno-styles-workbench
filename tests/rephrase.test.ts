@@ -6,6 +6,7 @@ import { renderStyles } from "../src/lib/suno/render.ts";
 import { briefFaithfulness, criticalGatesPass, validatePrompt } from "../src/lib/suno/validate.ts";
 import { assistantRequest, checkAssistantAnswer } from "../src/lib/ai/handoff.ts";
 import { detailRetention } from "../src/lib/ai/check.ts";
+import { vocalPortion } from "../src/lib/suno/render.ts";
 import { FINAL_DROP_DELTAS } from "../src/lib/suno/wording.ts";
 
 const BRIEFS = [
@@ -107,6 +108,17 @@ describe("Reword with your own assistant", () => {
     const r = checkAssistantAnswer(answer, p);
     assert.equal(r.ok, false);
     assert.ok(r.problems.some((x) => /dropped details/.test(x)), r.problems.join("; "));
+  });
+
+  it("measures the vocal share of wording the engine didn't write, and holds answers to the cap (Codex review)", () => {
+    const t = generateStylesPrompts("Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings", { count: 1, seed: 7, length: "tight" }).prompts[0];
+    const sentences = t.styles.split(/(?<=\.)\s+/);
+    const reworded = sentences.map((x) => x.replace(/^(?:Vocal performance features|Lead vocals deliver|Vocals center on|Vocal delivery showcases|Topline features)/, "An airy singer carries")).join(" ");
+    assert.ok(vocalPortion(reworded, t.plan) > 0, reworded);
+    const bloated = `${sentences.join(" ").slice(0, 560)}. A breathy female vocal with stacked harmonies, ad-libs, whispered verses, belted chorus peaks and doubled falsetto lines leads every section.`;
+    const r = checkAssistantAnswer(bloated, t);
+    assert.equal(r.ok, false);
+    assert.ok(r.problems.some((x) => /vocal description takes/.test(x)), r.problems.join("; "));
   });
 
   it("the request and the check use the wording on the card when it differs from the original", () => {

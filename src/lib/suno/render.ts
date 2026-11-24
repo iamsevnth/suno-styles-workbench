@@ -134,11 +134,28 @@ const VOCAL_SENTENCE = /(?:^|(?<=[.!?]\s))(?:Vocal performance features|Lead voc
  */
 export function vocalPortion(styles: string, plan: SonicPlan): number {
   if (plan.vocals.present === false) return 0;
-  if (plan.native) {
-    const v = plan.native.sections.vocal?.[0];
-    return v && styles.toLowerCase().includes(v.toLowerCase()) ? "with ".length + v.length : 0;
-  }
-  return VOCAL_SENTENCE.exec(styles)?.[0].length ?? 0;
+  const engine = plan.native
+    ? (() => {
+        const v = plan.native.sections.vocal?.[0];
+        return v && styles.toLowerCase().includes(v.toLowerCase()) ? "with ".length + v.length : 0;
+      })()
+    : VOCAL_SENTENCE.exec(styles)?.[0].length ?? 0;
+  // Wording the engine didn't write (an AI or assistant answer) is measured by the clauses about the voice.
+  return engine || vocalClauses(styles);
+}
+
+const VOCAL_TERMS =
+  /\b(?:vocal\w*|singers?|sung|sings?|singing|rap|rapp\w*|rapper|voices?|croon\w*|belt\w*|falsetto|melisma|ad-?libs?|whisper\w*|alto|soprano|tenor|baritone|choir)\b/i;
+
+/**
+ * Characters of the clauses (split at periods and semicolons) that talk about the voice. It works for any
+ * wording, so it is how AI and assistant answers are held to the vocal share cap.
+ */
+export function vocalClauses(text: string): number {
+  return text
+    .split(/(?<=[.;])\s+/)
+    .filter((clause) => VOCAL_TERMS.test(clause))
+    .reduce((n, clause) => n + clause.length, 0);
 }
 
 /**

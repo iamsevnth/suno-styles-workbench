@@ -170,6 +170,21 @@ describe("tempo-named genres: checks", () => {
     assert.ok(v.issues.includes("contradiction:tempo_named_twice"), v.issues.join(";"));
   });
 
+  it("two numbered tempo-named genres state the tempo twice, even with the same number (Codex review)", () => {
+    const twice = p.styles.replace(`${p.bpm} UKG Dubstep`, `${p.bpm} UKG Dubstep over ${p.bpm} Bass weight`);
+    const v = validatePrompt(twice, p.plan);
+    assert.ok(v.issues.includes("contradiction:tempo_named_twice"), v.issues.join(";"));
+  });
+
+  it("the Fidelity Inspector reads a brief's \"138 UKG Dubstep\" as a 138 BPM target (Codex review)", () => {
+    const brief = "138 ukg dubstep, female vocals";
+    const out = generateStylesPrompts(brief, { count: 1, seed: 7 }).prompts[0];
+    const tempo = analyzePromptFidelity(brief, out.styles).findings.find((f) => f.id === "target-tempo");
+    assert.equal(tempo?.status, "matched", JSON.stringify(tempo));
+    const bare = analyzePromptFidelity("140 UKG dubstep, dark", out.styles).findings.find((f) => f.id === "target-tempo");
+    assert.equal(bare, undefined, "bare 140 is the genre's name, not a requested tempo");
+  });
+
   it("an AI rewrite that adds a BPM or changes the number is rejected", () => {
     const added = checkAiRewrite(p.styles.replace(`${p.bpm} UKG Dubstep`, `${p.bpm} BPM ${p.bpm} UKG Dubstep`), p);
     assert.equal(added.ok, false);

@@ -3,6 +3,7 @@ import FidelityInspector from "./FidelityInspector.tsx";
 import AiReword from "./AiReword.tsx";
 import AssistantHandoff from "./AssistantHandoff.tsx";
 import { canRephrase, rephrase } from "../../lib/suno/rephrase.ts";
+import type { ActiveWording } from "../../hooks/useStylesWorkbench.ts";
 import type { OnDeviceAi } from "../../hooks/useOnDeviceAi.ts";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 import { ownershipMap } from "../../lib/suno/lint.ts";
@@ -53,8 +54,10 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, ai }: {
+export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, ai, onWordingChange }: {
   prompt: PromptCandidate;
+  /** Reports the wording the card shows, so Download All Prompts and the results status match the cards. */
+  onWordingChange?: (wording: ActiveWording | null) => void;
   onCopy: (styles: string) => void;
   sourceText: string;
   /** Musical axes that differ from the first variant; undefined for the first one. */
@@ -63,7 +66,11 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
   ai?: OnDeviceAi;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
-  const [view, setView] = useState<Wording>({ text: prompt.styles, source: "engine", wording: 0, seen: [] });
+  const [view, setViewState] = useState<Wording>({ text: prompt.styles, source: "engine", wording: 0, seen: [] });
+  const setView = (next: Wording) => {
+    setViewState(next);
+    onWordingChange?.(next.source === "engine" ? null : { text: next.text, source: next.source });
+  };
   const [rephraseNote, setRephraseNote] = useState("");
   const plan = prompt.plan;
   const rephrasable = canRephrase(prompt);

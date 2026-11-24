@@ -17,6 +17,13 @@ import { pickSuggestions, SURPRISE_BRIEF } from "../lib/suno/suggestions.ts";
 import { historyFileStamp } from "../lib/suno/title-case.ts";
 import { GenerateResult, HistoryEntry, PromptCandidate, PromptLength } from "../lib/suno/types.ts";
 import { formatAllPromptsTxt } from "../lib/suno/v6.ts";
+import { formatTitle } from "../lib/suno/render.ts";
+
+/** Wording a result card shows instead of the engine's: a Rephrase, or a checked answer from the user's assistant. */
+export interface ActiveWording {
+  text: string;
+  source: "rephrase" | "assistant";
+}
 
 const STORAGE_KEY = "suno-styles-generator:v1";
 const SUGGEST_KEY = "suno-styles-suggestions:v1";
@@ -169,6 +176,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storageFor("local")));
   const [isGenerating, setIsGenerating] = useState(false);
+  // Per result (by position): the wording on the card when it isn't the engine's. Cleared with new results.
+  const [wordings, setWordings] = useState<Record<number, ActiveWording>>({});
   const briefRef = useRef<HTMLTextAreaElement>(null);
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
@@ -209,6 +218,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       const nextGeneration = generation + 1;
 
       setSeedUsed(seed);
+      setWordings({});
       setPrompts(out.prompts);
       setParsed(out.parsed);
       setGeneration(nextGeneration);
@@ -251,6 +261,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     setGeneration(0);
     setSeedUsed(0);
     setPrompts([]);
+    setWordings({});
     setParsed(null);
     setLastAction("Reset — input, mode and current variations cleared. History kept.");
     briefRef.current?.focus();
@@ -258,6 +269,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const clearResults = () => {
     setPrompts([]);
+    setWordings({});
     setLastAction("Current results cleared. Brief and history kept.");
   };
 
@@ -293,6 +305,23 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     );
   };
 
+  /** A card reports the wording it shows; null means it is back to the engine's. */
+  const setWording = (index: number, wording: ActiveWording | null) => {
+    setWordings((current) => {
+      const next = { ...current };
+      if (wording) next[index] = wording;
+      else delete next[index];
+      return next;
+    });
+  };
+
+  /** The results as the cards show them. */
+  const shownPrompts = (): PromptCandidate[] =>
+    prompts.map((p, i) => {
+      const w = wordings[i];
+      return w ? { ...p, styles: w.text, characters: w.text.length, title: formatTitle(p.seed, p.bpm, p.key, w.text.length) } : p;
+    });
+
   const changeLength = (length: PromptLength) => {
     setPromptLength(length);
     setLastAction(
@@ -315,7 +344,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const downloadAllPrompts = async () => {
     if (!prompts.length) return;
-    const text = formatAllPromptsTxt(prompts);
+    // The pack carries what each card shows: a Rephrase or an assistant's wording where one is in use.
+    const text = formatAllPromptsTxt(shownPrompts());
     const filename = `suno-styles-${historyFileStamp()}.txt`;
     downloadFile(filename, text, "text/plain;charset=utf-8");
     const ok = await copyToClipboard(text);
@@ -358,6 +388,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     toggleInstrumental,
     promptLength,
     changeLength,
+    wordings,
+    setWording,
     variationMode,
     setVariationMode,
     generation,

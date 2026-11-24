@@ -6,6 +6,7 @@
 import type { PromptCandidate } from "../suno/types.ts";
 import { briefFaithfulness, criticalGatesPass, validatePrompt } from "../suno/validate.ts";
 import { lengthWindow } from "../suno/limits.ts";
+import { vocalClauses } from "../suno/render.ts";
 import { tempoGenreNumbers } from "../suno/tempo-genre.ts";
 
 export interface AiCheck {
@@ -87,6 +88,15 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
   const kept = detailRetention(text, original.styles);
   if (kept.share < DETAIL_RETENTION) {
     problems.push(`it dropped details the original had (${kept.missing.slice(0, 6).join(", ")}${kept.missing.length > 6 ? ", …" : ""})`);
+  }
+  // The vocal share cap (25% Detailed, 15% Tight) holds for AI wording too. Both texts are measured the same
+  // way, so a faithful rewording of a prompt whose other clauses mention vocal chops is not penalized.
+  if (original.plan.vocals?.present !== false) {
+    const cap = lengthWindow(original.plan.length).vocalShare;
+    const share = (t: string) => vocalClauses(t) / Math.max(1, t.length);
+    if (share(text) > Math.max(cap, share(original.styles)) + 0.03) {
+      problems.push(`its vocal description takes ${Math.round(share(text) * 100)}% of the characters (cap ${Math.round(cap * 100)}%)`);
+    }
   }
   if (text.toLowerCase() === original.styles.toLowerCase()) problems.push("it is the same as the original");
   return { ok: problems.length === 0, text, problems };
