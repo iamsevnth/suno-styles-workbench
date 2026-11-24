@@ -76,7 +76,7 @@ export default function StylesWorkbench({ showDialog }: { showDialog: ShowDialog
           ) : (
             wb.prompts.map((p, i) => (
               <PromptCard
-                key={p.plan.recipeId}
+                key={`${wb.generation}:${p.plan.recipeId}:${i}`}
                 prompt={p}
                 onCopy={wb.copyStyle}
                 sourceText={wb.parsed?.raw ?? ""}

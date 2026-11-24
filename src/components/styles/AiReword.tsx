@@ -14,7 +14,7 @@ type State =
 const BTN = "h-8 px-3 rounded-[var(--r-md)] border border-[var(--border)] text-xs text-[var(--fg)] hover:bg-[var(--bg-subtle)]";
 
 /**
- * Experimental: asks Chrome's on-device model for new wording of this prompt, only when the user
+ * Experimental: asks the browser's on-device model (Chrome, Edge preview) for new wording of this prompt, only when the user
  * clicks. The result is shown, labeled as AI wording, only if it passes the Workbench's checks.
  */
 export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }: {
@@ -34,7 +34,7 @@ export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }
   }, [modelReady]);
 
   function start() {
-    // Chrome downloads its model from Google the first time: ask before that happens.
+    // The browser downloads its model the first time (Chrome from Google, Edge from Microsoft): ask before that happens.
     if (!modelReady) return setState({ kind: "confirm-download" });
     void run();
   }
@@ -47,7 +47,7 @@ export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }
     try {
       const raw = await rewordOnDevice(prompt, {
         signal: ctl.signal,
-        onDownload: (f) => setState({ kind: "working", note: `Chrome is downloading its AI model (${Math.round(f * 100)}%)…` }),
+        onDownload: (f) => setState({ kind: "working", note: `Your browser is downloading its AI model (${Math.round(f * 100)}%)…` }),
       });
       if (!ctl.signal.aborted) setState({ kind: "done", check: checkAiRewrite(raw, prompt) });
     } catch (e) {
@@ -78,7 +78,7 @@ export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }
       {state.kind === "confirm-download" && (
         <div className="mt-2 flex flex-col gap-2" data-testid="ai-download-confirm">
           <p className="m-0 text-[var(--fg)]">
-            Chrome needs to download its AI model from Google before the first rewording. This happens once, in Chrome; the Workbench sends nothing.
+            Your browser needs to download its AI model before the first rewording (Chrome downloads it from Google, Edge from Microsoft). This happens once, in the browser; the Workbench sends nothing.
           </p>
           <div className="flex gap-2">
             <button type="button" className={BTN} onClick={() => setState({ kind: "idle" })}>Cancel</button>

@@ -145,7 +145,7 @@ test('AI turns on only after the user agrees, and AI wording is labeled and chec
   await expect(page.getByTestId('results-ai-status')).toHaveText('No AI Used');
 });
 
-test('AI asks again before Chrome downloads its model', async ({ page }) => {
+test('AI asks again before the browser downloads its model', async ({ page }) => {
   await page.addInitScript(mockLanguageModel, 'downloadable');
   await page.goto(ROUTE_PATHS.styles);
   await page.getByRole('switch', { name: 'Use on-device AI' }).click();
@@ -271,4 +271,85 @@ test('The offline file runs from disk with no network requests', async ({ page }
   await page.goto(file);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(problems).toEqual([]);
+});
+
+test('Prompt Length: Tight prompts are 600–850 characters and report their vocal share', async ({ page }) => {
+  await page.goto(ROUTE_PATHS.styles);
+  const lengths = page.getByTestId('length-choice');
+  await expect(lengths.getByRole('radio', { name: /Detailed/ })).toBeChecked();
+  await lengths.getByText('Tight').click();
+  await expect(lengths.getByRole('radio', { name: /Tight/ })).toBeChecked();
+  await page.getByLabel('Your Creative Brief').fill('melodic dubstep, emotional, female vocals with breathy verses and belted chorus peaks');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const titles = page.getByRole('heading', { name: /Seed #: \d+ \| BPM: \d+/ });
+  await expect(titles).toHaveCount(3);
+  for (const text of await titles.allTextContents()) {
+    const total = Number(/Total Characters: (\d+)/.exec(text)?.[1]);
+    expect(total).toBeGreaterThanOrEqual(600);
+    expect(total).toBeLessThanOrEqual(850);
+  }
+  for (const report of await page.getByTestId('length-report').allTextContents()) {
+    expect(report).toMatch(/^Tight · \d+ characters · vocals (\d+)% \(cap 15%\)$/);
+    expect(Number(/vocals (\d+)%/.exec(report)?.[1])).toBeLessThanOrEqual(15);
+  }
+});
+
+test('140 UKG Dubstep carries the tempo in its name, with no separate BPM', async ({ page }) => {
+  await page.goto(ROUTE_PATHS.styles);
+  await page.getByLabel('Your Creative Brief').fill('140 UKG + Future Bass + Wobble Dubstep, emotional, nocturnal, 140 BPM');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const texts = await page.getByTestId('prompt-text').allTextContents();
+  expect(texts).toHaveLength(3);
+  for (const t of texts) {
+    expect(t).toMatch(/^140 UKG Dubstep with /);
+    expect(t).not.toMatch(/\bBPM\b/);
+    expect(t.match(/\b1[34]\d\b/g)).toHaveLength(1);
+  }
+});
+
+test('Rephrase rewords a result with no AI, labeled, and Show Original restores it', async ({ page }) => {
+  await page.goto(ROUTE_PATHS.styles);
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const text = page.getByTestId('prompt-text').first();
+  const badge = page.getByTestId('engine-badge').first();
+  const original = await text.textContent();
+  await expect(badge).toHaveText('Workbench engine · no AI');
+  await page.getByTestId('rephrase').first().click();
+  await expect(badge).toHaveText('Rephrased by the Workbench engine · no AI · passed the checks');
+  await expect(text).not.toHaveText(original ?? '');
+  expect((await text.textContent())?.startsWith('Melodic dubstep at 150 BPM') || (await text.textContent())?.includes('150 BPM')).toBe(true);
+  await page.getByRole('button', { name: 'Show Original' }).first().click();
+  await expect(text).toHaveText(original ?? '');
+  await expect(badge).toHaveText('Workbench engine · no AI');
+});
+
+test('Reword with your own assistant: copy a request, paste the answer, and only a checked answer is used', async ({ page, context, browserName }) => {
+  if (browserName === 'chromium') await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.addInitScript(() => { delete (window as unknown as { LanguageModel?: unknown }).LanguageModel; });
+  await page.goto(ROUTE_PATHS.styles);
+  await expect(page.getByTestId('ai-alternatives')).toContainText('Reword with your own AI assistant');
+  await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
+  await page.getByRole('button', { name: 'Generate Styles' }).click();
+  const handoff = page.getByTestId('assistant-handoff').first();
+  await handoff.locator('summary').click();
+  await expect(handoff).toContainText("goes to that company's service");
+  await handoff.getByRole('button', { name: 'Copy Request' }).click();
+  await expect(handoff.getByRole('status').first()).toContainText(/Copied|Clipboard blocked/);
+
+  const answer = handoff.getByLabel("2. Paste the assistant's answer");
+  await answer.fill('No drums, avoid bass.');
+  await handoff.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(handoff.getByTestId('assistant-rejected')).toContainText('Not used');
+
+  const original = (await page.getByTestId('prompt-text').first().textContent()) ?? '';
+  const reordered = original.split(/(?<=\.)\s+/).reverse().join(' ');
+  await answer.fill(`Here is the rewritten prompt:\n${reordered}`);
+  await handoff.getByRole('button', { name: 'Check Answer' }).click();
+  await expect(handoff.getByTestId('assistant-accepted')).toContainText('AI wording from your assistant · passed the Workbench checks');
+  await handoff.getByRole('button', { name: 'Use This Wording' }).click();
+  await expect(page.getByTestId('engine-badge').first()).toHaveText('AI wording from your assistant · passed the Workbench checks');
+  await expect(page.getByTestId('prompt-text').first()).toHaveText(reordered);
+  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} node(s)`)).toEqual([]);
 });

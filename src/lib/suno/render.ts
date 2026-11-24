@@ -141,9 +141,13 @@ export function vocalPortion(styles: string, plan: SonicPlan): number {
   return VOCAL_SENTENCE.exec(styles)?.[0].length ?? 0;
 }
 
-export function renderStyles(plan: SonicPlan): string {
-  if (plan.native) return renderNative(plan);
-  let text = compose(plan);
+/**
+ * Renders a plan as Styles text. `wording` 0 is the prompt as generated; any other number re-renders the
+ * same plan with different sentence frames, connectors and equivalent bank phrases (the Rephrase button).
+ */
+export function renderStyles(plan: SonicPlan, wording = 0): string {
+  if (plan.native) return renderNative(plan, wording);
+  let text = compose(plan, wording);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   if (!hasDrops(families)) text = sanitizeNonDropWording(text);
   return text;
@@ -232,8 +236,8 @@ interface Choices {
   isBassMusic: boolean;
 }
 
-function compose(plan: SonicPlan): string {
-  const rng = mulberry32((plan.seed ^ 2779096485) >>> 0);
+function compose(plan: SonicPlan, wording = 0): string {
+  const rng = mulberry32((plan.seed ^ 2779096485 ^ Math.imul(wording, 0x9e3779b1)) >>> 0);
   const families = familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]);
   const fits = (phrase: string) => fitsFamilies(phrase, families);
   const keepCaps = [plan.primaryGenre, plan.secondaryGenre, plan.accentGenre].filter((g): g is string => Boolean(g));
@@ -452,6 +456,8 @@ function assemble(
   const fresh = dedupeByConcept(stages, new Set(seen));
   const keep = new Set(fresh);
   for (const stage of stages) if (keep.size < Math.min(2, stages.length)) keep.add(stage);
+  // The drop progression is never dropped for restating a sound (research §3.1: it goes last).
+  if (c.isBassMusic) for (const stage of stages) if (/\bdrop\b/i.test(stage)) keep.add(stage);
   // Bass music says what the final drop changes, unless a stage already does ("harder second drop").
   const kept = stages.filter((stage) => keep.has(stage));
   const arr = c.isBassMusic && d.delta > 0 ? withDropDelta(kept, c.delta) : kept;

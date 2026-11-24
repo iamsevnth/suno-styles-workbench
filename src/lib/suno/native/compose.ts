@@ -542,10 +542,24 @@ const GROW: (keyof Detail)[] = [
   "arrangement", "era", "textures", "mix", "extras", "ending", "harmony", "leads", "textures", "extras", "mix", "leads", "textures",
 ];
 
-function compose(plan: SonicPlan, d: Detail): string {
+/** Rotates a list by `by` places: the same phrases in a different order. */
+const rotate = (list: string[], by: number) => (list.length > 1 ? [...list.slice(by % list.length), ...list.slice(0, by % list.length)] : list);
+
+/** Sentence frames the Rephrase button cycles through; frame 0 is the original wording. */
+const LEAD_FRAMES = [
+  (leads: string, vocal: string) => (vocal ? `Led by ${leads}, with ${vocal}` : `Fully instrumental, led by ${leads}`),
+  (leads: string, vocal: string) => (vocal ? `The lead role goes to ${leads}, with ${vocal}` : `Fully instrumental, with the lead role on ${leads}`),
+  (leads: string, vocal: string) => (vocal ? `Front and center: ${leads}, with ${vocal}` : `Fully instrumental; front and center: ${leads}`),
+];
+const DRUM_HEADINGS = ["Drums", "Rhythm section", "Groove"];
+const PRODUCTION_HEADINGS = ["Production", "Mix and production", "Production priorities"];
+
+function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   const n = plan.native as NativeParts;
   const s = n.sections;
   const out: string[] = [];
+  const vary = (list: string[]) => rotate(list, wording);
+  const frame = wording % LEAD_FRAMES.length;
 
   // A genre name that carries the tempo ("137 UKG Dubstep") replaces "at 137 BPM"; a label that already
   // says "with" takes the mood after a comma so the opening never reads "with ... with".
@@ -557,29 +571,29 @@ function compose(plan: SonicPlan, d: Detail): string {
   const head = n.genreLabel ? `${n.genreLabel} at ${plan.bpm} BPM${meter}${key}` : `${plan.bpm} BPM${meter}${key}`;
   out.push(sentence(`${head}${mood}${scene}`));
 
-  const leads = listOf(take(s.leads, d.leads));
+  const leads = listOf(vary(take(s.leads, d.leads)));
   const vocal = s.vocal[0];
-  out.push(sentence(vocal ? `Led by ${leads}, with ${lowerFirst(vocal)}` : `Fully instrumental, led by ${leads}`));
+  out.push(sentence(LEAD_FRAMES[frame](leads, vocal ? lowerFirst(vocal) : "")));
 
-  if (d.drums && s.drums.length) out.push(sentence(`Drums: ${listOf(take(s.drums, d.drums))}`));
+  if (d.drums && s.drums.length) out.push(sentence(`${DRUM_HEADINGS[frame]}: ${listOf(vary(take(s.drums, d.drums)))}`));
   // Bass music: the first bass phrase answers the hook, so hook and bass read as call and response.
   const drops = n.edm && hasDrops(familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]));
-  const bassList = take(s.bass, d.bass);
+  const bassList = vary(take(s.bass, d.bass));
   if (drops && bassList[0] && leads && !RELATIONAL.test(bassList[0])) bassList[0] = `${bassList[0]} answering the hook in the gaps`;
-  const low = [...bassList, ...take(s.harmony, d.harmony)];
+  const low = [...bassList, ...vary(take(s.harmony, d.harmony))];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
-  const tex = nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]);
+  const tex = nearDistinct(vary([...take(s.textures, d.textures), ...take(s.extras, d.extras)]));
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
   // Two or three production priorities, mastering talk last: a few consequential choices read better than a stack.
   const mixes = take([...s.mix].sort((a, b) => Number(/\bmaster/i.test(a)) - Number(/\bmaster/i.test(b))), Math.min(d.mix, 2));
-  const prod = [...take(s.era, d.era), ...mixes];
-  if (prod.length) out.push(sentence(`Production: ${listOf(prod)}`));
+  const prod = [...take(s.era, d.era), ...vary(mixes)];
+  if (prod.length) out.push(sentence(`${PRODUCTION_HEADINGS[frame]}: ${listOf(prod)}`));
 
   if (d.arrangement && s.arrangement.length) {
     const arc = listOf(take(s.arrangement, 1));
-    const delta = FINAL_DROP_DELTAS[(plan.seed >>> 0) % FINAL_DROP_DELTAS.length];
+    const delta = FINAL_DROP_DELTAS[((plan.seed >>> 0) + wording) % FINAL_DROP_DELTAS.length];
     out.push(sentence(`Arrangement: ${drops ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
   }
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
@@ -588,7 +602,7 @@ function compose(plan: SonicPlan, d: Detail): string {
   return applyTempoGenres(text, plan.bpm, !!plan.tempoGenre);
 }
 
-export function renderNative(plan: SonicPlan): string {
+export function renderNative(plan: SonicPlan, wording = 0): string {
   const n = plan.native as NativeParts;
   const fill = NATIVE_FILL[plan.length ?? "detailed"];
   const { max } = lengthWindow(plan.length);
@@ -605,13 +619,13 @@ export function renderNative(plan: SonicPlan): string {
     arrangement: 0,
     ending: 0,
   };
-  let text = compose(plan, d);
+  let text = compose(plan, d, wording);
   // Sparse banks (jazz) need more than one pass; later passes also deepen drums and bass.
   for (const key of [...GROW, ...GROW, "drums", "bass", "drums", "bass", "harmony", "leads"] as (keyof Detail)[]) {
     if (text.length >= fill) break;
     const trial = { ...d, [key]: Math.min(d[key] + 1, key === "arrangement" || key === "ending" || key === "era" ? 1 : 4) };
     if (trial[key] === d[key]) continue;
-    const next = compose(plan, trial);
+    const next = compose(plan, trial, wording);
     if (next.length <= max) {
       Object.assign(d, trial);
       text = next;

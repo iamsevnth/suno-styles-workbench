@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
           client-side in your browser and does not send your prompts, lyrics, Styles text or generated content to
           SEVNTHLABS.
         </p>
-        <p className="text-xs text-[var(--fg-subtle)]">Last updated: November 23, 2026</p>
+        <p className="text-xs text-[var(--fg-subtle)]">Last updated: November 24, 2026</p>
       </header>
 
       <Section id="privacy-introduction" title="Introduction">
@@ -55,15 +55,22 @@ export default function PrivacyPolicyPage() {
         <Prose>
           <p>
             The Styles Compiler has an optional, experimental AI Assist section. AI is off until you turn it on and agree
-            in a permission dialog, and it works only in desktop Chrome versions that include Chrome's built-in AI; other
-            browsers show it as not available. With AI on, AI runs only when you click Reword with AI on a result: that
-            Styles prompt is given to the model Chrome runs on your computer, and the new wording is labeled AI wording.
-            Suno Workbench does not send that text to SEVNTHLABS or to any AI service.
+            in a permission dialog, and it works only in browsers with built-in on-device AI (desktop Chrome, and Microsoft
+            Edge preview builds); other browsers show it as not available. With AI on, AI runs only when you click Reword
+            with AI on a result: that Styles prompt is given to the model your browser runs on your computer, and the new
+            wording is labeled AI wording. Suno Workbench does not send that text to SEVNTHLABS or to any AI service.
           </p>
           <p>
-            The first time a site uses Chrome's built-in model, Chrome downloads the model from Google. That download,
-            and how Chrome runs the model, are part of Chrome and are covered by Google's own terms and privacy
-            policies, not by SEVNTHLABS. The on/off setting is stored in your browser's <code>localStorage</code>.
+            The first time a site uses the browser's built-in model, the browser downloads it (Chrome from Google, Edge from
+            Microsoft). That download, and how the browser runs the model, are covered by the browser maker's own terms and
+            privacy policies, not by SEVNTHLABS. The on/off setting is stored in your browser's <code>localStorage</code>.
+          </p>
+          <p>
+            Each result also offers <strong>Rephrase · no AI</strong>, which re-words the prompt with the Workbench engine on
+            your device, and <strong>Reword with your own AI assistant</strong>, which copies a request for you to paste into
+            an assistant you choose (for example Brave Leo, Microsoft Copilot or ChatGPT). Suno Workbench never sends that
+            request anywhere. Whatever you paste into an assistant goes to that assistant's provider under its own terms and
+            privacy policy. An answer you paste back is checked in your browser and stays there.
           </p>
         </Prose>
       </Section>

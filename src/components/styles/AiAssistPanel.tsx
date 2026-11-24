@@ -33,17 +33,19 @@ export default function AiAssistPanel({ ai }: { ai: OnDeviceAi }) {
       </div>
       {unavailable && (
         <p id="ai-unavailable" className="m-0 text-xs text-[var(--fg-muted)] leading-relaxed">
-          This browser doesn't offer on-device AI. It needs desktop Chrome with Chrome's built-in AI (Gemini Nano) on a computer that
-          can run it; Safari, Firefox and phones don't have it.{" "}
-          <a href="https://developer.chrome.com/docs/ai/prompt-api" target="_blank" rel="noreferrer noopener" className="underline">
-            Chrome's requirements
-          </a>
-          . Everything else in the Workbench works without it.
+          This browser doesn't offer on-device AI. Desktop Chrome has it on computers that can run its built-in model{" "}
+          (<a href="https://developer.chrome.com/docs/ai/prompt-api" target="_blank" rel="noreferrer noopener" className="underline">requirements</a>),
+          and Microsoft Edge is testing it in its Canary and Dev preview builds. Brave, Firefox, Safari and phones don't have it yet.
         </p>
       )}
       {!unavailable && !ai.on && ai.availability !== "available" && (
-        <p className="m-0 text-xs text-[var(--fg-muted)]">Chrome will need to download its AI model from Google before the first rewording. You'll be asked first.</p>
+        <p className="m-0 text-xs text-[var(--fg-muted)]">Your browser will need to download its AI model before the first rewording. You'll be asked first.</p>
       )}
+      <p data-testid="ai-alternatives" className="m-0 text-xs text-[var(--fg-muted)] leading-relaxed">
+        In any browser, each result also has <strong className="text-[var(--fg)]">Rephrase · no AI</strong> (new wording from the Workbench
+        engine) and <strong className="text-[var(--fg)]">Reword with your own AI assistant</strong>, a copy-and-paste request for Brave Leo,
+        Copilot, ChatGPT or another assistant you choose.
+      </p>
     </section>
   );
 }
