@@ -129,6 +129,16 @@ export const INSTRUMENT_PATTERNS: [RegExp, string][] = [
   [/\bsoul samples?\b|\bchopped soul\b/i, "warm chopped soul-inspired fragments"],
 ];
 
+/**
+ * Whether a brief mentions vocals in any form: singers, rap, a voice, vocal chops, a choir, lyrics, or
+ * a male/female lead. Exclusions ("no vocals") are removed before this runs, so they don't count.
+ */
+const VOCAL_REFERENCE = /\b(?:vocals?|vocalists?|vocali[sz]\w*|singers?|singing|sings?|sung|songbird|voices?|voiced|rap|raps|rapper|rappers|rapping|rapped|mcs?|emcees?|choirs?|choral|chants?|chanting|lyrics?|lyrical|topline|harmon(?:y|ies) vocals?|ad[- ]?libs?|falsetto|croon\w*|spoken[- ]word|a[- ]?capp?ella|duets?|male|female|feat\.?|featuring|hums?|humming|whisper\w*|scat\w*|yodel\w*)\b/i;
+
+export function mentionsVocals(brief: string): boolean {
+  return VOCAL_REFERENCE.test(extractConstraintIntent(brief).positiveText);
+}
+
 export function parseUserInput(
   raw: string,
   options?: {
@@ -136,6 +146,8 @@ export function parseUserInput(
     profileEnabled?: boolean;
     mode?: "minimal" | "standard" | "advanced" | "reference" | "rewrite" | "variants";
     variationMode?: "precision" | "exploration" | "ab";
+    /** The Instrumental toggle: a brief that never mentions vocals stays instrumental. */
+    instrumentalDefault?: boolean;
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
@@ -195,8 +207,11 @@ export function parseUserInput(
   // invent a lead singer. An explicitly named singer still takes precedence.
   const vocalFxOnly = /\bvocal[- ]chops?(?:[- ]style)?\b|\bchopped vocal samples?\b/i.test(text) && !namedVoice &&
     !/\b(?:lead vocals?|sung vocals?|melodic rap|singing voice)\b/i.test(text);
-  const instrumental = explicitInstrumental || (options?.mode === "rewrite" && vocalFxOnly) || (!namedVoice && /\binstrumental\b/i.test(text)) ||
+  let instrumental = explicitInstrumental || (options?.mode === "rewrite" && vocalFxOnly) || (!namedVoice && /\binstrumental\b/i.test(text)) ||
     constraintIntent.exclusions.some((x) => /^(?:lead\s+)?vocals?$|^singing$|^rapping$/i.test(x));
+  // The Instrumental toggle applies only when the brief says nothing about vocals; any mention wins.
+  const instrumentalByToggle = !instrumental && options?.instrumentalDefault === true && !mentionsVocals(text);
+  if (instrumentalByToggle) instrumental = true;
   const vocals: VocalPreferences = extractVocalDetails(text, lower, instrumental);
 
   // If a rap vocal style was detected but no genre was explicitly given, seed with authentic hip-hop/trap genres
@@ -427,6 +442,7 @@ export function parseUserInput(
     references,
     mandatory,
     instrumental,
+    instrumentalByToggle,
     profileEnabled: options?.profileEnabled ?? true,
     blendBand: inferBlendBand(text, genres, wantsVariety, options?.profileEnabled ?? true),
     mode,

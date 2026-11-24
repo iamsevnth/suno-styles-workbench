@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.5.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.6.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -44,6 +44,10 @@ Its four evidence labels are **Text Matched**, **Explicit Difference**, **Not De
 In Fix Mode, an optional **Original Intent / Brief** lets you compare both the pre-Fix prompt and fixed output against that same earlier source. Without that separate brief, Workbench cannot determine whether the original pre-Fix prompt already diverged from the user's true intentions. Reports can be exported locally in JSON format.
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
+
+### v5.6.0: Instrumental Toggle
+
+The brief panel has an **Instrumental** toggle next to Hybrid Bass Profile (Create mode, off by default). When it's on, a brief that never mentions vocals stays instrumental: no singer, rapper or vocal line is added, and the prompt checks reject any vocal wording, including On-Device AI rewording. If the brief mentions vocals in any form (a singer, rap, a voice, vocal chops, a choir, a male or female lead), the brief wins and a note under the brief says the toggle doesn't apply. "No vocals" and other exclusions don't count as a mention.
 
 ### v5.5.0: On-Device AI Rewording (Experimental)
 
@@ -91,7 +95,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.5.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.5.0.html`. The GitHub release is [v5.5.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.5.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.6.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.6.0.html`. The GitHub release is [v5.6.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.6.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 
