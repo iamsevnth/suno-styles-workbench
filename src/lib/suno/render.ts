@@ -10,7 +10,8 @@ import {
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
 import { applyTempoGenres, tempoStatedFor } from "./tempo-genre.ts";
-import { FINAL_DROP_DELTAS, withDropDelta } from "./wording.ts";
+import { allowedDeltas, withDropDelta } from "./wording.ts";
+import { phraseExcluded } from "./intent.ts";
 import { renderNative } from "./native/compose.ts";
 import { lengthWindow, vocalBudget } from "./limits.ts";
 export { MIN_CHARS, MAX_CHARS, HARD_MAX_CHARS } from "./limits.ts";
@@ -273,7 +274,8 @@ function compose(plan: SonicPlan, wording = 0): string {
     arrForm: Math.floor(rng() * ARRANGEMENT_FORMS.length),
     mixLead: Math.floor(rng() * MIX_LEADS.length),
     hookForm: Math.floor(rng() * HOOK_BASS_FORMS.length),
-    delta: pick2(rng, FINAL_DROP_DELTAS),
+    // Same single draw whatever is allowed, so excluding a word never shifts the other choices.
+    delta: pick2(rng, allowedDeltas((d) => phraseExcluded(d, plan.exclusions))) ?? "",
     vocal: vocalSection(plan, rng, fits, Math.floor(rng() * 4)),
     moodPhrase: plan.moodPhrase ?? reconcileMoods([plan.moodPrimary, plan.moodSecondary ?? ""].filter(Boolean))?.phrase ?? plan.moodPrimary,
     genreText:
@@ -470,7 +472,8 @@ function assemble(
   const bass = claim(take(plan.bass, d.bass));
   // "808 glides into the downbeat" after "sliding 808" says the same thing twice, so movement is claimed too.
   const behavior = claim(take(plan.bassBehavior, d.behavior));
-  const relational = c.isBassMusic && mel.length > 0 && bass.length > 0;
+  // "No hook" in the brief: the call and response is written without the word, as the ordinary bass sentence.
+  const relational = c.isBassMusic && mel.length > 0 && bass.length > 0 && !phraseExcluded("hook", plan.exclusions);
   if (relational) sentences.push(HOOK_BASS_FORMS[c.hookForm % HOOK_BASS_FORMS.length](joinList(mel), joinList(bass), joinList(behavior)));
   else if (bass.length) sentences.push(BASS_FORMS[c.bassForm % BASS_FORMS.length](joinList(bass), joinList(behavior)));
   else if (behavior.length) sentences.push(`The low end moves through ${joinList(behavior)}.`);
@@ -505,7 +508,7 @@ function assemble(
   if (c.isBassMusic) for (const stage of stages) if (/\bdrop\b/i.test(stage)) keep.add(stage);
   // Bass music says what the final drop changes, unless a stage already does ("harder second drop").
   const kept = stages.filter((stage) => keep.has(stage));
-  const arr = c.isBassMusic && d.delta > 0 ? withDropDelta(kept, c.delta) : kept;
+  const arr = c.isBassMusic && d.delta > 0 && c.delta ? withDropDelta(kept, c.delta) : kept;
   if (arr.length) sentences.push(`${ARRANGEMENT_FORMS[c.arrForm % ARRANGEMENT_FORMS.length]} ${arr.join(", then ")}.`);
 
   // 8. Mix and finish.
@@ -577,9 +580,14 @@ function vocalSection(plan: SonicPlan, rng: () => number, fits: (p: string) => b
 }
 
 /** "<head> a, b, c." keeping as many of the brief's own clauses (from the start) as fit the budget. */
+const VOCAL_EFFECT = /\b(?:auto-?tun\w*|pitch correction|delay|reverb|echo|slapback|distort\w*|vocoder|talkbox|formant|doubl\w*|chorus effect|saturat\w*|telephone|lo-?fi filter|throws?)\b/i;
+
 function fitClauses(head: string, text: string, budget: number): string {
   const clauses = text.split(/,\s*/).filter(Boolean);
-  while (clauses.length > 1 && `${head} ${clauses.join(", ")}.`.length > budget) clauses.pop();
+  // Clauses without an effect go first, from the end; the effects the brief asked for go last.
+  const fits = () => `${head} ${clauses.join(", ")}.`.length <= budget;
+  for (let i = clauses.length - 1; i > 0 && !fits(); i--) if (!VOCAL_EFFECT.test(clauses[i])) clauses.splice(i, 1);
+  while (clauses.length > 1 && !fits()) clauses.pop();
   let out = `${head} ${clauses.join(", ")}.`;
   if (out.length > budget) {
     const words = clauses[0].split(/\s+/);

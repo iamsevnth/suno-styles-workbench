@@ -118,6 +118,29 @@ function findAll(text: string): Found[] {
   return kept;
 }
 
+/**
+ * A brief's tempo-named genres in the spelling the genre library knows, so "138 Bass", "Deep 138", "140 dubstep"
+ * and "Dubstep UKG" find their genre. Numbers become 140 here (the tempo is read separately, before this), and
+ * the UKG family becomes one genre: number with UKG → "140 UKG", otherwise "UKG dubstep".
+ */
+export function parseFormTempoGenres(text: string): string {
+  const found = findAll(text);
+  if (!found.length) return text;
+  let out = "";
+  let cursor = 0;
+  for (const f of found) {
+    out += text.slice(cursor, f.index);
+    const m = f.match[0];
+    const deep = f.match.groups?.deep ? "deep " : "";
+    if (f.kind.id === "ukg") out += /(?:13[5-9]|14[0-5])/.test(m) && /ukg|uk garage/i.test(m) ? `${deep}140 UKG` : `${deep}UKG dubstep`;
+    else if (f.kind.id === "bass") out += `${deep}140 bass`;
+    else if (f.kind.id === "deep") out += "deep 140";
+    else out += `${(f.match.groups?.w ?? "wubby").toLowerCase()} 140`;
+    cursor = f.index + f.length;
+  }
+  return out + text.slice(cursor);
+}
+
 /** True when the text names a tempo-named genre in any spelling ("UKG dubstep", "140 UKG", "Deep 140"). */
 export function namesTempoGenre(text: string): boolean {
   return findAll(text).length > 0;

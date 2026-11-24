@@ -121,6 +121,14 @@ describe("Reword with your own assistant", () => {
     assert.ok(r.problems.some((x) => /vocal description takes/.test(x)), r.problems.join("; "));
   });
 
+  it("rejects an answer that adds a sound the original didn't have (Codex review)", () => {
+    const r = checkAssistantAnswer(`${p.styles} Phaser sweeps.`.replace(/^(\S+)/, "$1"), p);
+    assert.equal(r.ok, false);
+    assert.ok(r.problems.some((x) => /added sounds the original didn't have \(phaser/.test(x)), r.problems.join("; "));
+    // Reordering and Rephrase add nothing.
+    assert.equal(checkAssistantAnswer(p.styles.split(/(?<=\.)\s+/).reverse().join(" "), p).ok, true);
+  });
+
   it("the request and the check use the wording on the card when it differs from the original", () => {
     const shown = rephrase(p)?.text;
     assert.ok(shown);

@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { generateStylesPrompts } from "../src/lib/suno/generate.ts";
-import { DROP_DELTA_STAGE, withDropDelta } from "../src/lib/suno/wording.ts";
+import { arcHasDropChange, withDropDelta } from "../src/lib/suno/wording.ts";
 
 const SEEDS = [1, 7, 42, 99];
 const BASS_BRIEFS = [
@@ -43,17 +43,29 @@ describe("research wording: say what the final drop changes (§3 Part 4)", () =>
         const arc = /(?:Arrangement:|arrangement moves through|record unfolds as|Form runs through)([^.]*)\./.exec(p.styles)?.[1];
         if (!arc || !/\bdrop\b/i.test(arc)) continue;
         const stages = arc.split(/,\s*(?:then\s+)?|\s+then\s+/);
-        assert.ok(stages.some((s) => DROP_DELTA_STAGE.test(s)) || /final drop that/.test(arc), p.styles);
+        assert.ok(arcHasDropChange(stages) || /final drop that/.test(arc), p.styles);
       }
     }
   });
 
-  it("adds the line once, replaces a bare \"final drop\", and leaves drop-less arcs alone", () => {
+  it("adds the line once, replaces a bare later drop, goes before an outro, and leaves drop-less arcs alone", () => {
     const d = "a final drop that revoices the hook over displaced bass answers";
     assert.deepEqual(withDropDelta(["intro", "first drop"], d), ["intro", "first drop", d]);
     assert.deepEqual(withDropDelta(["intro", "drop", "final drop"], d), ["intro", "drop", d]);
     assert.deepEqual(withDropDelta(["intro", "harder second drop"], d), ["intro", "harder second drop"]);
     assert.deepEqual(withDropDelta(["intro", "verse", "hook", "outro"], d), ["intro", "verse", "hook", "outro"]);
+    // Codex review: a bare "second drop" says nothing about what changes, and the line never follows an outro.
+    assert.deepEqual(withDropDelta(["intro", "verse", "drop", "interlude", "second drop", "outro"], d), ["intro", "verse", "drop", "interlude", d, "outro"]);
+    assert.deepEqual(withDropDelta(["build with pitch-rising synths", "hard drop", "half-bar switch-up", "outro"], d), ["build with pitch-rising synths", "hard drop", "half-bar switch-up", d, "outro"]);
+  });
+
+  it("never writes a word the brief excludes: \"no hook\" gets no hook wording (Codex review)", () => {
+    for (const brief of ["riddim, no hook", "Trap + UKG Dubstep, dark, no hook", "UKG dubstep, dark, no hats"]) {
+      for (const p of prompts(brief)) {
+        assert.ok(p.hardGates.noExcludedConcepts, `${brief}: ${p.styles}`);
+        if (/no hook/.test(brief)) assert.doesNotMatch(p.styles, /\bhook\b/i, p.styles);
+      }
+    }
   });
 
   it("song genres never get drop wording", () => {

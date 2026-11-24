@@ -3,7 +3,7 @@ import { MIN_CHARS, MAX_CHARS, lengthWindow, vocalBudget } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
 import { applyTempoGenres, hasTempoGenre, inTempoWindow, windowTempo } from "../tempo-genre.ts";
-import { FINAL_DROP_DELTAS, RELATIONAL, withDropDelta } from "../wording.ts";
+import { allowedDeltas, RELATIONAL, withDropDelta } from "../wording.ts";
 import { familyKeys, hasDrops } from "../families.ts";
 import { moodClash, nonEdmBleed } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
@@ -208,7 +208,7 @@ function styleOf(v: VocalPreferences | undefined, fallback: string | undefined):
   return v?.style ?? (asked ? "sung" : fallback);
 }
 
-function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean, fallbackStyle?: string): string {
+function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean, fallbackStyle?: string, budget = Infinity): string {
   if (instrumental) return "";
   const v = parsed.vocals;
   const voice = voiceOf(v);
@@ -228,7 +228,14 @@ function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: bool
   const processing = processingAll.filter((x) => !own.some((o) => o.toLowerCase().includes(x.toLowerCase().split(/[\s-]+/)[0].slice(0, 6)))).slice(0, detailed ? 3 : v?.processingFromBrief ? 1 : processingAll.length ? 1 : 0);
   const taken = wordsOf([subject, ...own, ...processing].join(" "));
   const approach = approaches.find((a) => ![...wordsOf(a)].some((w) => w.length > 3 && taken.has(w))) ?? approaches[0];
-  return [subject, ...own, ...processing, own.length || processing.length ? "" : approach].filter(Boolean).join(", ");
+  // Over the vocal share (25% Detailed, 15% Tight): the planned approach goes first, then the brief's own
+  // descriptors from the last, and the effects the brief asked for ("light autotune") go last of all.
+  const kept = { own: [...own], processing: [...processing], approach: own.length || processing.length ? "" : approach };
+  const line = () => [subject, ...kept.own, ...kept.processing, kept.approach].filter(Boolean).join(", ");
+  if (line().length > budget) kept.approach = "";
+  while (line().length > budget && kept.own.length) kept.own.pop();
+  while (line().length > budget && kept.processing.length > 1) kept.processing.pop();
+  return line();
 }
 
 const PROPER: [RegExp, string][] = [[/\brhodes\b/gi, "Rhodes"], [/\bwurlitzer\b/gi, "Wurlitzer"], [/\bhammond\b/gi, "Hammond"], [/\bfender\b/gi, "Fender"]];
@@ -393,7 +400,8 @@ export function buildNativePlan(
   const vocalStyle = styleOf(parsed.vocals, primary.vocalStyle);
   const approaches = vocalStyle && RAP_KIND[vocalStyle] && (primary.rapVocals?.length || secondary?.rapVocals?.length) ? bank("rapVocals") : bank("vocals");
   // The vocal clause ("with <vocal line>") keeps within its share of the prompt (25% Detailed, 15% Tight).
-  const vocalSentence = fitVocal(proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle)), vocalBudget(parsed.length) - "with ".length);
+  const budget = vocalBudget(parsed.length) - "with ".length;
+  const vocalSentence = fitVocal(proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle, budget)), budget);
   // A bass-music brief that already has "vocal chops" in its vocal line does not get them again as sound design.
   const noRepeatChops = (list: string[]) => (primary.edm && /\bchop/i.test(vocalSentence) ? list.filter((x) => !/\bchop/i.test(x)) : list);
   const [dLeads, dDrums, dBass, dHarmony, dTextures, dExtras] = distinct([
@@ -579,7 +587,9 @@ function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   // Bass music: the first bass phrase answers the hook, so hook and bass read as call and response.
   const drops = n.edm && hasDrops(familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]));
   const bassList = vary(take(s.bass, d.bass));
-  if (drops && bassList[0] && leads && !RELATIONAL.test(bassList[0])) bassList[0] = `${bassList[0]} answering the hook in the gaps`;
+  // Never with a word the brief excludes ("riddim, no hook").
+  const answering = `${bassList[0]} answering the hook in the gaps`;
+  if (drops && bassList[0] && leads && !RELATIONAL.test(bassList[0]) && !phraseExcluded(answering, plan.exclusions)) bassList[0] = answering;
   const low = [...bassList, ...vary(take(s.harmony, d.harmony))];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
@@ -595,8 +605,9 @@ function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   if (d.arrangement && s.arrangement.length) {
     const arc = listOf(take(s.arrangement, 1));
     // The final-drop change is a musical choice, so it depends on the plan alone, never on the wording.
-    const delta = FINAL_DROP_DELTAS[(plan.seed >>> 0) % FINAL_DROP_DELTAS.length];
-    out.push(sentence(`Arrangement: ${drops ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
+    const deltas = allowedDeltas((x) => phraseExcluded(x, plan.exclusions));
+    const delta = deltas.length ? deltas[(plan.seed >>> 0) % deltas.length] : "";
+    out.push(sentence(`Arrangement: ${drops && delta ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
   }
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
 

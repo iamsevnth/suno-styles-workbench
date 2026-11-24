@@ -10,20 +10,45 @@ export const FINAL_DROP_DELTAS = [
   "a final drop that keeps the groove but adds a second bass response to the hook",
 ];
 
-/** An arc stage that already says how a later drop differs ("harder second drop", "switch-up drop with ..."). */
-export const DROP_DELTA_STAGE =
-  /^(?!\s*(?:the |a )?final drop\.?\s*$).*\b(?:second|final|last|closing|switch-up|harder|bigger|heavier|new)\b.*\bdrop\b|\bdrop\b.*\b(?:switch\w*|chang\w*|revoic\w*|shift\w*)\b/i;
+/** Words that say what is different about a drop ("harder", "switch-up", "new melody", "extra hats"). */
+const CHANGE = /\b(?:harder|heavier|bigger|switch\w*|revoic\w*|shift\w*|new|different|chang\w*|extra|more|adds?|added|doubl\w*|displac\w*|transform\w*|variation|flip\w*|stripped|second pattern)\b/i;
+/** A drop that comes later in the record by name ("second drop", "final drop", "last drop", "switch-up drop"). */
+const LATER = /\b(?:second|final|last|closing|another|2nd|switch-up)\b[^,]*\bdrop\b/i;
+/** Closing stages the final-drop line goes in front of. */
+const CLOSING = /^(?:an?\s+|the\s+)?(?:outro|ending|end|fade[- ]?out|closing)\b|\boutro\b/i;
 
-/** Arc stages with the final-drop change added, unless a stage already says what changes. */
+/**
+ * True when a later drop in the arc says what changes. Naming a "second drop" is not enough: a change word
+ * ("harder", "switch-up", "new melody") has to say how it differs from the first.
+ */
+export function arcHasDropChange(stages: string[]): boolean {
+  const drops = stages.map((s, i) => ({ s, i })).filter(({ s }) => /\bdrop\b/i.test(s));
+  return drops.some(({ s }, k) => (k > 0 || LATER.test(s)) && CHANGE.test(s));
+}
+
+/** Arc stages with the final-drop change added, unless a later drop already says what changes. */
 export function withDropDelta(stages: string[], delta: string): string[] {
-  if (!stages.length || stages.some((s) => DROP_DELTA_STAGE.test(s))) return stages;
+  if (!stages.length || arcHasDropChange(stages)) return stages;
   // An arc with no drop (drill, rap) gets no final-drop line.
   if (!stages.some((s) => /\bdrop\b/i.test(s))) return stages;
   const out = [...stages];
-  const last = out.length - 1;
-  if (/^(?:the |a )?final drop\.?$/i.test(out[last].trim())) out[last] = delta;
-  else out.push(delta);
+  // A later drop named without saying how it differs ("second drop", "final drop") becomes the delta.
+  for (let i = out.length - 1; i > 0; i--) {
+    if (/^(?:the |a |an )?(?:second|final|last|closing|another) drop\.?$/i.test(out[i].trim())) {
+      out[i] = delta;
+      return out;
+    }
+  }
+  // Otherwise the delta goes after the last drop-side stage and before an outro or ending.
+  let at = out.length;
+  while (at > 0 && CLOSING.test(out[at - 1].trim())) at--;
+  out.splice(at, 0, delta);
   return out;
+}
+
+/** The final-drop lines a plan may use: none that names something the brief excludes ("no hook", "no hats"). */
+export function allowedDeltas(excluded: (phrase: string) => boolean): string[] {
+  return FINAL_DROP_DELTAS.filter((d) => !excluded(d));
 }
 
 /** True when a bass phrase already states a relationship ("growl bass answering the snare"). */

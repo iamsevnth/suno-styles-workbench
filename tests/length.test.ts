@@ -52,6 +52,15 @@ describe("Prompt Length", () => {
     });
   }
 
+  it("fitting the vocal cap keeps the effects the brief asked for (Codex review)", () => {
+    for (const brief of ["melodic dubstep, breathy female alto vocals with light autotune and slapback delay, emotional", "indie folk ballad, raspy male vocals, whispered verses, light autotune and slapback delay"]) {
+      for (const p of generateStylesPrompts(brief, { count: 3, seed: 7, length: "tight" }).prompts) {
+        assert.match(p.styles, /autotun/i, p.styles);
+        assert.match(p.styles, /slapback/i, p.styles);
+      }
+    }
+  });
+
   it("Tight prompts are shorter than Detailed ones for the same brief and seed", () => {
     for (const brief of BRIEFS) {
       const d = generateStylesPrompts(brief, { count: 1, seed: 7 }).prompts[0];

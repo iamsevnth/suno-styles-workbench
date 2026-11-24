@@ -67,6 +67,33 @@ export function detailRetention(text: string, original: string): { share: number
   return { share: 1 - missing.length / want.size, missing };
 }
 
+/**
+ * Words that name a sound, instrument or effect. A rewording may not bring in one the original never had
+ * ("Phaser sweeps"): that changes the music, not the wording. Generic words (drums, percussion, bass, beat)
+ * are not listed, so ordinary rewording passes.
+ */
+const SOUND_WORDS = new Set(
+  ("synth synths pad pads piano keys rhodes wurlitzer organ guitar guitars strings violin cello viola harp flute " +
+    "sax saxophone brass horn horns trumpet trombone choir bell bells pluck plucks marimba kalimba vibraphone " +
+    "mallet mallets sitar tabla conga congas bongo bongos djembe cowbell timbale tambourine shaker shakers clap " +
+    "claps snare snares kick kicks hat hats hi-hat cymbal cymbals tom toms rimshot rim rims 808 909 sub reese " +
+    "wobble wub wubs growl growls supersaw supersaws arp arpeggio arpeggios sample samples chop chops riser risers " +
+    "impact impacts sweep sweeps glitch stutter stutters gate gated tape vinyl crackle phaser flanger chorus vocoder " +
+    "talkbox autotune auto-tune delay delays reverb distortion bitcrush bitcrushed sidechain saturation fuzz " +
+    "harmonica banjo mandolin ukulele accordion bagpipes steel pedal-steel stab stabs drone drones " +
+    "whistle whistles siren sirens airhorn air-horn gong timpani glockenspiel celesta clavinet theremin")
+    .split(" ")
+    .map(stem)
+);
+
+/** Sound, instrument and effect words the rewording has and the original doesn't. */
+export function addedSounds(text: string, original: string): string[] {
+  const words = (t: string) => new Set((t.toLowerCase().match(/[a-z0-9]+(?:-[a-z0-9]+)*/g) ?? [])
+    .flatMap((w) => [w, ...w.split("-")]).map(stem));
+  const before = words(original);
+  return [...words(text)].filter((w) => SOUND_WORDS.has(w) && !before.has(w));
+}
+
 export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck {
   const text = cleanAiText(raw);
   const problems: string[] = [];
@@ -89,6 +116,9 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
   if (kept.share < DETAIL_RETENTION) {
     problems.push(`it dropped details the original had (${kept.missing.slice(0, 6).join(", ")}${kept.missing.length > 6 ? ", …" : ""})`);
   }
+  // A rewording changes words, not the music: no sound, instrument or effect the original didn't have.
+  const added = addedSounds(text, original.styles);
+  if (added.length) problems.push(`it added sounds the original didn't have (${added.slice(0, 6).join(", ")})`);
   // The vocal share cap (25% Detailed, 15% Tight) holds for AI wording too. Both texts are measured the same
   // way, so a faithful rewording of a prompt whose other clauses mention vocal chops is not penalized.
   if (original.plan.vocals?.present !== false) {

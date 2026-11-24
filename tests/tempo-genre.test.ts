@@ -86,6 +86,25 @@ describe("tempo-named genres: generated prompts", () => {
     }
   });
 
+  it("numbered spellings keep their genre: \"138 Bass\", \"Deep 138\", \"140 dubstep\", \"Dubstep UKG\" (Codex review)", () => {
+    const cases: [string, RegExp, number | undefined][] = [
+      ["138 Bass + Baile Funk, kinetic", /^138 Bass with /, 138],
+      ["Deep 138, dark", /^Deep 138 Bass\b/, 138],
+      ["140 dubstep, dark", /^1(?:3[5-9]|4[0-5]) UKG Dubstep\b/, undefined],
+      ["dubstep UKG, dark", /^1(?:3[5-9]|4[0-5]) UKG Dubstep\b/, undefined],
+      ["140 UKG Dubstep, dark", /^1(?:3[5-9]|4[0-5]) UKG Dubstep\b/, undefined],
+    ];
+    for (const [brief, opens, bpm] of cases) {
+      for (const p of generateStylesPrompts(brief, { count: 2, seed: 7 }).prompts) {
+        assert.match(p.styles, opens, `${brief}: ${p.styles}`);
+        assert.notEqual(p.plan.primaryGenre, "Original", brief);
+        if (bpm) assert.equal(p.bpm, bpm, brief);
+        assert.doesNotMatch(p.styles, /\bBPM\b/, `${brief}: ${p.styles}`);
+        assert.equal(tempoNumbers(p.styles), 1, `${brief}: ${p.styles}`);
+      }
+    }
+  });
+
   it("UKG dubstep with no tempo: the first prompt is 140, siblings vary inside 135–145", () => {
     const seen = new Set<number>();
     for (const seed of SEEDS) {
