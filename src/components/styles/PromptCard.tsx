@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FidelityInspector from "./FidelityInspector.tsx";
+import AiReword from "./AiReword.tsx";
 import { PromptCandidate } from "../../lib/suno/types.ts";
 import { ownershipMap } from "../../lib/suno/lint.ts";
 import type { SemanticAxis } from "../../lib/suno/semantic.ts";
@@ -26,12 +27,14 @@ function vocalSummary(plan: PromptCandidate["plan"]): string {
   return `${plan.vocals.presentation || "lead"} ${plan.vocals.timbre || ""} ${plan.vocals.style || ""}`.trim();
 }
 
-export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst }: {
+export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirst, aiOn }: {
   prompt: PromptCandidate;
   onCopy: (styles: string) => void;
   sourceText: string;
   /** Musical axes that differ from the first variant; undefined for the first one. */
   changedFromFirst?: SemanticAxis[];
+  /** Show the experimental on-device AI rewording (only when the browser has it and the user turned it on). */
+  aiOn?: boolean;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const plan = prompt.plan;
@@ -83,6 +86,7 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
         </div>
       ) : null}
       <p className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{prompt.styles}</p>
+      {aiOn && <AiReword prompt={prompt} onCopy={onCopy} />}
 
       <button
         type="button"

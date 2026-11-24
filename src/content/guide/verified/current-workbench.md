@@ -1,6 +1,6 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.4.1 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.5.0 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
@@ -45,6 +45,10 @@ In Fix Mode, an optional **Original Intent / Brief** lets you compare both the p
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
 
+### v5.5.0: On-Device AI Rewording (Experimental)
+
+In desktop Chrome versions with Chrome's built-in AI, an **On-Device AI (experimental)** checkbox appears above the results. It is off by default and does not appear in other browsers. Turned on, each result gets **Reword on This Device**: Chrome's on-device model proposes new wording for that prompt, and the Workbench shows it only if it passes the same checks as its own prompts (length, the exact BPM, no artist names, no negative wording, no lyrics, no contradictions or genre bleed, nothing the brief excludes, and at least as many of the brief's own words). Anything that fails is discarded with the reasons. The model only rewords; the plan, genres and roles stay the Workbench's. The Workbench sends nothing to an AI service; Chrome downloads its model from Google the first time it is used.
+
 ### v5.4.1: Brief Check Accuracy
 
 Brief Check notes are more precise: a role counts only when a genre names it ("trap groove"), a bass source is separate only when it has its own section ("reese in the second drop"), non-electronic briefs never get the hook note, any hat request ("crisp hi-hats") conflicts with excluding all hats, the word "melodic" in a genre name is not a hook, and bare "UKG" (UKG Dubstep) is not read as a 2-step kick. Generation is unchanged.
@@ -87,7 +91,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.4.1 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.4.1.html`. The GitHub release is [v5.4.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.4.1), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.5.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.5.0.html`. The GitHub release is [v5.5.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.5.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 

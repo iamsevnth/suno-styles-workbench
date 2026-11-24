@@ -14,7 +14,7 @@ export default function PrivacyPolicyPage() {
           client-side in your browser and does not send your prompts, lyrics, Styles text or generated content to
           SEVNTHLABS.
         </p>
-        <p className="text-xs text-[var(--fg-subtle)]">Last updated: October 25, 2026</p>
+        <p className="text-xs text-[var(--fg-subtle)]">Last updated: November 23, 2026</p>
       </header>
 
       <Section id="privacy-introduction" title="Introduction">
@@ -47,6 +47,22 @@ export default function PrivacyPolicyPage() {
             If you contact SEVNTHLABS by email, we receive the information you choose to include in that message so we
             can respond. Do not include confidential prompts or other sensitive information unless it is necessary for
             your support request.
+          </p>
+        </Prose>
+      </Section>
+
+      <Section id="privacy-on-device-ai" title="Optional On-Device AI (Experimental)">
+        <Prose>
+          <p>
+            In desktop Chrome versions that include Chrome's built-in AI, the Styles Compiler offers an optional,
+            experimental On-Device AI setting. It is off until you turn it on, and it is not offered in other browsers.
+            When you choose Reword on This Device, the Styles prompt is given to the model that Chrome runs on your
+            computer. Suno Workbench does not send that text to SEVNTHLABS or to any AI service.
+          </p>
+          <p>
+            The first time a site uses Chrome's built-in model, Chrome downloads the model from Google. That download,
+            and how Chrome runs the model, are part of Chrome and are covered by Google's own terms and privacy
+            policies, not by SEVNTHLABS. The on/off setting is stored in your browser's <code>localStorage</code>.
           </p>
         </Prose>
       </Section>
