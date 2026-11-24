@@ -193,8 +193,12 @@ test('After one model download, no other result asks again; AI can be turned off
   await page.getByLabel('Your Creative Brief').fill('Dark melodic dubstep at 150 BPM, female lead vocal, cinematic strings');
   await page.getByRole('button', { name: 'Generate Styles' }).click();
   const cards = page.getByTestId('ai-reword');
+  // Open the download question on two results, then agree on the first: the second closes.
+  await cards.nth(2).getByRole('button', { name: 'Reword with AI' }).click();
+  await expect(cards.nth(2).getByTestId('ai-download-confirm')).toBeVisible();
   await cards.nth(0).getByRole('button', { name: 'Reword with AI' }).click();
   await cards.nth(0).getByRole('button', { name: 'Download Model and Reword' }).click();
+  await expect(cards.nth(2).getByTestId('ai-download-confirm')).toHaveCount(0);
   await expect(cards.nth(0).getByTestId('ai-accepted')).toBeVisible();
   await cards.nth(1).getByRole('button', { name: 'Reword with AI' }).click();
   await expect(cards.nth(1).getByTestId('ai-download-confirm')).toHaveCount(0);
