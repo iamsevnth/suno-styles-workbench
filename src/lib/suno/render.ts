@@ -10,6 +10,7 @@ import {
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
 import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
+import { FINAL_DROP_DELTAS, withDropDelta } from "./wording.ts";
 import { renderNative } from "./native/compose.ts";
 import { lengthWindow, vocalBudget } from "./limits.ts";
 export { MIN_CHARS, MAX_CHARS, HARD_MAX_CHARS } from "./limits.ts";
@@ -162,11 +163,14 @@ function sanitizeNonDropWording(text: string): string {
 /* -------------------------------------------------------------------------------------------- */
 /* Composition                                                                                    */
 /*                                                                                                */
-/* A Styles prompt is a fixed sequence of sections, each one natural sentence:                    */
-/*   1 genre blend + BPM + mood   2 drums & groove   3 bass   4 harmony / melody / texture         */
-/*   5 instrumentation   6 vocals   7 arrangement   8 mix                                         */
+/* A Styles prompt is a fixed sequence of sections, each one natural sentence, in the order of    */
+/* the 2026-11-23 prompt-engineering research (docs/research): identity, groove, how the hook and  */
+/* bass interact, texture, sections and what changes in the final drop, then two or three mix     */
+/* priorities:                                                                                    */
+/*   1 genre blend + tempo + mood   2 drums & groove   3 hook and bass (relational in bass music) */
+/*   4 harmony / texture   5 instrumentation   6 vocals   7 arrangement + final-drop change   8 mix */
 /* The plan decides WHAT is said; this file decides the order, the connective wording and how     */
-/* much of each section fits in the 800–975 character window.                                    */
+/* much of each section fits the chosen length window.                                           */
 /* -------------------------------------------------------------------------------------------- */
 
 /** How many items each section may list. The renderer starts at FULL and shrinks or grows from there. */
@@ -181,23 +185,31 @@ interface Detail {
   sd: number;
   inst: number;
   arr: number;
+  /** The final-drop change in bass music ("the final drop revoices the hook over displaced bass answers"). */
+  delta: number;
   mix: number;
   master: number;
 }
 
-const FULL: Detail = { prod: 1, drums: 3, groove: 2, bass: 3, behavior: 2, harm: 2, mel: 1, sd: 2, inst: 8, arr: 3, mix: 4, master: 1 };
+// Two or three mix priorities and no mastering buzzwords: the research finds a few consequential mix
+// choices read better than a stack of them.
+const FULL: Detail = { prod: 1, drums: 3, groove: 2, bass: 3, behavior: 2, harm: 2, mel: 1, sd: 2, inst: 8, arr: 3, delta: 1, mix: 3, master: 0 };
 
-/** Over the window: take detail away in order of least value, one step at a time. */
+/**
+ * Over the window: take detail away in order of least value, one step at a time. Decoration goes first
+ * (production label, extra instruments, sound design, a third mix note); the groove, the hook and bass
+ * relationship and the drop progression go last.
+ */
 const SHRINK_STEPS: [keyof Detail, number][] = [
-  ["master", 0], ["prod", 0], ["mel", 0], ["inst", 6], ["mix", 3], ["sd", 1], ["behavior", 1], ["groove", 1],
-  ["harm", 1], ["inst", 5], ["arr", 2], ["mix", 2], ["drums", 2], ["inst", 4], ["sd", 0], ["bass", 2],
-  ["inst", 3], ["arr", 1], ["groove", 0], ["harm", 0], ["mix", 1], ["inst", 2], ["behavior", 0], ["drums", 1],
-  ["inst", 1], ["inst", 0],
+  ["prod", 0], ["inst", 6], ["sd", 1], ["mix", 2], ["inst", 5], ["harm", 1], ["behavior", 1], ["inst", 4],
+  ["sd", 0], ["groove", 1], ["inst", 3], ["drums", 2], ["bass", 2], ["arr", 2], ["inst", 2], ["harm", 0],
+  ["groove", 0], ["behavior", 0], ["inst", 1], ["drums", 1], ["mix", 1], ["delta", 0], ["arr", 1], ["mel", 0],
+  ["inst", 0],
 ];
 
 /** Under the window: add detail in order of value before any generic sentence is used. */
 const GROW_STEPS: [keyof Detail, number][] = [
-  ["drums", 4], ["sd", 3], ["mel", 2], ["mix", 5], ["arr", 4], ["groove", 3], ["behavior", 3], ["inst", 9],
+  ["drums", 4], ["sd", 3], ["mel", 2], ["arr", 4], ["groove", 3], ["behavior", 3], ["inst", 9],
 ];
 
 /** Everything about a plan that is chosen once, so shrinking and growing never reroll the wording. */
@@ -212,6 +224,8 @@ interface Choices {
   instIntro: number;
   arrForm: number;
   mixLead: number;
+  hookForm: number;
+  delta: string;
   vocal: string;
   moodPhrase: string;
   genreText: string;
@@ -236,6 +250,8 @@ function compose(plan: SonicPlan): string {
     instIntro: Math.floor(rng() * INSTRUMENT_INTROS.length),
     arrForm: Math.floor(rng() * ARRANGEMENT_FORMS.length),
     mixLead: Math.floor(rng() * MIX_LEADS.length),
+    hookForm: Math.floor(rng() * HOOK_BASS_FORMS.length),
+    delta: pick2(rng, FINAL_DROP_DELTAS),
     vocal: vocalSection(plan, rng, fits, Math.floor(rng() * 4)),
     moodPhrase: plan.moodPhrase ?? reconcileMoods([plan.moodPrimary, plan.moodSecondary ?? ""].filter(Boolean))?.phrase ?? plan.moodPrimary,
     genreText:
@@ -307,6 +323,19 @@ const DRUM_FORMS = [
     `The rhythm settles into ${article(feel)} ${feel} built from ${drums}${groove ? `, with ${groove}` : ""}${tail}.`,
 ];
 
+/**
+ * Bass music: the hook and the bass in one relational sentence ("X carries the hook while the bass answers
+ * in the gaps"), so the listener hears a call and response, not two unconnected tag lists. Agreement-free.
+ */
+const HOOK_BASS_FORMS = [
+  (hook: string, bass: string, behavior: string) =>
+    `The hook sits on ${hook}, with ${bass} answering in the gaps between kick accents${behavior ? `, moving through ${behavior}` : ""}.`,
+  (hook: string, bass: string, behavior: string) =>
+    `The hook rides on ${hook} while the low end answers with ${bass}${behavior ? `, moving through ${behavior}` : ""}.`,
+  (hook: string, bass: string, behavior: string) =>
+    `A hook on ${hook} leads, and the low end replies in the gaps with ${bass}${behavior ? `, articulated by ${behavior}` : ""}.`,
+];
+
 const BASS_FORMS = [
   (bass: string, behavior: string) => `The low end pairs ${bass}${behavior ? ` with ${behavior}` : ""}.`,
   (bass: string, behavior: string) => `Bass is built on ${bass}${behavior ? `, moving through ${behavior}` : ""}.`,
@@ -343,6 +372,18 @@ function article(phrase: string): string {
   return /^[aeiou]/i.test(phrase) ? "an" : "a";
 }
 
+/**
+ * The arc's first `count` stages, except that a drop stage outranks a middle stage: when the arc is cut,
+ * the opening and the drop progression stay (research §3.1: the drop progression goes last).
+ */
+function takeArc(stages: string[], count: number): string[] {
+  if (stages.length <= count) return stages.slice();
+  if (count <= 0) return [];
+  const ranked = stages.map((s, i) => ({ s, i, rank: i === 0 ? 0 : /\bdrop\b/i.test(s) ? 1 : 2 }));
+  const kept = [...ranked].sort((a, b) => a.rank - b.rank || (a.rank === 1 ? b.i - a.i : a.i - b.i)).slice(0, count);
+  return kept.sort((a, b) => a.i - b.i).map((k) => k.s);
+}
+
 /** Join the first `count` items; an empty list stays empty so the section can drop out. */
 function take(items: string[], count: number): string[] {
   return items.slice(0, Math.max(0, count));
@@ -375,20 +416,22 @@ function assemble(
   if (drums.length) sentences.push(DRUM_FORMS[c.drumForm % DRUM_FORMS.length](c.feel, joinList(drums), joinList(groove), tail));
   else sentences.push(`The rhythm settles into ${article(c.feel)} ${c.feel}${groove.length ? ` with ${joinList(groove)}` : ""}.`);
 
-  // 3. Bass.
+  // 3. Hook and bass. In bass music the two are one call-and-response sentence; elsewhere the bass has its own.
+  const mel = claim(take(plan.melody, d.mel));
   const bass = claim(take(plan.bass, d.bass));
   // "808 glides into the downbeat" after "sliding 808" says the same thing twice, so movement is claimed too.
   const behavior = claim(take(plan.bassBehavior, d.behavior));
-  if (bass.length) sentences.push(BASS_FORMS[c.bassForm % BASS_FORMS.length](joinList(bass), joinList(behavior)));
+  const relational = c.isBassMusic && mel.length > 0 && bass.length > 0;
+  if (relational) sentences.push(HOOK_BASS_FORMS[c.hookForm % HOOK_BASS_FORMS.length](joinList(mel), joinList(bass), joinList(behavior)));
+  else if (bass.length) sentences.push(BASS_FORMS[c.bassForm % BASS_FORMS.length](joinList(bass), joinList(behavior)));
   else if (behavior.length) sentences.push(`The low end moves through ${joinList(behavior)}.`);
 
   // 4. Harmony, melody and texture.
   const harm = claim(dedupeSimilar(take(plan.harmony, d.harm)));
-  const mel = claim(take(plan.melody, d.mel));
   const sd = claim(take(plan.soundDesign, d.sd));
   const musical: string[] = [];
   if (harm.length) musical.push(`The harmonic bed uses ${joinList(harm)} to ${c.harmVerb}.`);
-  if (mel.length) musical.push(c.melTemplate.replace("{m}", joinList(mel)).replace(/^(\{m\}|.)/, (m) => m.toUpperCase()).replace(/([^.])$/, "$1."));
+  if (mel.length && !relational) musical.push(c.melTemplate.replace("{m}", joinList(mel)).replace(/^(\{m\}|.)/, (m) => m.toUpperCase()).replace(/([^.])$/, "$1."));
   if (sd.length) musical.push(c.textureTemplate.replace("{sd}", joinList(sd)));
   sentences.push(...musical);
 
@@ -405,11 +448,13 @@ function assemble(
 
   // 7. Arrangement arc.
   // A stage that only restates a sound already described ("heavier 808") adds nothing to the arc; the arc keeps two stages at least.
-  const stages = take(plan.arrangement, d.arr);
+  const stages = takeArc(plan.arrangement, d.arr);
   const fresh = dedupeByConcept(stages, new Set(seen));
   const keep = new Set(fresh);
   for (const stage of stages) if (keep.size < Math.min(2, stages.length)) keep.add(stage);
-  const arr = stages.filter((stage) => keep.has(stage));
+  // Bass music says what the final drop changes, unless a stage already does ("harder second drop").
+  const kept = stages.filter((stage) => keep.has(stage));
+  const arr = c.isBassMusic && d.delta > 0 ? withDropDelta(kept, c.delta) : kept;
   if (arr.length) sentences.push(`${ARRANGEMENT_FORMS[c.arrForm % ARRANGEMENT_FORMS.length]} ${arr.join(", then ")}.`);
 
   // 8. Mix and finish.

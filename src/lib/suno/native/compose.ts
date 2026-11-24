@@ -3,6 +3,8 @@ import { MIN_CHARS, MAX_CHARS, lengthWindow, vocalBudget } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
 import { applyTempoGenres, hasTempoGenre, inTempoWindow, windowTempo } from "../tempo-genre.ts";
+import { FINAL_DROP_DELTAS, RELATIONAL, withDropDelta } from "../wording.ts";
+import { familyKeys, hasDrops } from "../families.ts";
 import { moodClash, nonEdmBleed } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
@@ -560,16 +562,26 @@ function compose(plan: SonicPlan, d: Detail): string {
   out.push(sentence(vocal ? `Led by ${leads}, with ${lowerFirst(vocal)}` : `Fully instrumental, led by ${leads}`));
 
   if (d.drums && s.drums.length) out.push(sentence(`Drums: ${listOf(take(s.drums, d.drums))}`));
-  const low = [...take(s.bass, d.bass), ...take(s.harmony, d.harmony)];
+  // Bass music: the first bass phrase answers the hook, so hook and bass read as call and response.
+  const drops = n.edm && hasDrops(familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]));
+  const bassList = take(s.bass, d.bass);
+  if (drops && bassList[0] && leads && !RELATIONAL.test(bassList[0])) bassList[0] = `${bassList[0]} answering the hook in the gaps`;
+  const low = [...bassList, ...take(s.harmony, d.harmony)];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
   const tex = nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]);
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
-  const prod = [...take(s.era, d.era), ...take(s.mix, d.mix)];
+  // Two or three production priorities, mastering talk last: a few consequential choices read better than a stack.
+  const mixes = take([...s.mix].sort((a, b) => Number(/\bmaster/i.test(a)) - Number(/\bmaster/i.test(b))), Math.min(d.mix, 2));
+  const prod = [...take(s.era, d.era), ...mixes];
   if (prod.length) out.push(sentence(`Production: ${listOf(prod)}`));
 
-  if (d.arrangement && s.arrangement.length) out.push(sentence(`Arrangement: ${listOf(take(s.arrangement, 1))}`));
+  if (d.arrangement && s.arrangement.length) {
+    const arc = listOf(take(s.arrangement, 1));
+    const delta = FINAL_DROP_DELTAS[(plan.seed >>> 0) % FINAL_DROP_DELTAS.length];
+    out.push(sentence(`Arrangement: ${drops ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
+  }
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
 
   const text = out.join(" ").replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
