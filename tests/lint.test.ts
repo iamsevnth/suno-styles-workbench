@@ -116,3 +116,18 @@ test("native plans include a harmony owner", () => {
   const r = generateStylesPrompts("lofi jazz hop, rainy night", { count: 1, seed: 5 });
   assert.ok(ownershipMap(r.prompts[0].plan).some((x) => x.role === "Harmony" && x.owner));
 });
+
+test("a mood 'feel' does not excuse an out-of-range tempo", () => {
+  const found = lintBrief(parseUserInput("ukg dubstep at 174 bpm with a dark feel and a vocal chop hook", { profileEnabled: true }));
+  assert.ok(found.some((f) => f.id === "TEMPO_CONVENTION_CONFLICT"));
+});
+
+test("32nd notes that are not hats are not a hat-density problem", () => {
+  assert.ok(!ids("deep dubstep with a continuous 32nd-note bass arpeggio and a vocal hook").includes("CONSTANT_MAX_HAT_DENSITY"));
+});
+
+test("a native blend names its primary sub-genre as owner, not the whole blend", () => {
+  const r = generateStylesPrompts("ukg dubstep future bass wobble", { count: 1, seed: 2 });
+  const groove = ownershipMap(r.prompts[0].plan).find((x) => x.role === "Groove")!;
+  assert.ok(!/\bwith\b/i.test(groove.owner), groove.owner);
+});

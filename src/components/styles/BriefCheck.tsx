@@ -19,10 +19,10 @@ export default function BriefCheck({ input, profileEnabled, parsed, plan }: {
     if (!text.trim()) return [];
     try {
       const fresh = parseUserInput(text, { profileEnabled });
-      // Compare parsed text: the parser normalizes the brief (it strips exclusions), so the
-      // textarea and the stored brief differ even when they describe the same generation.
-      const same = parsed && parsed.raw === fresh.raw;
-      return lintBrief(same ? parsed : fresh, same ? plan : undefined);
+      // The parser strips exclusions from raw, so compare those too before reusing the plan.
+      const same = !!parsed && parsed.raw === fresh.raw &&
+        (parsed.exclusions ?? []).join("|") === (fresh.exclusions ?? []).join("|");
+      return lintBrief(fresh, same ? plan : undefined);
     } catch {
       return [];
     }

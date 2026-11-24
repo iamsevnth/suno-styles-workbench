@@ -49,7 +49,7 @@ Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [meth
 
 - **Brief Check** sits under the brief in Create mode and updates as you type; it never generates anything. Each note says what the brief leaves ambiguous and how to say it more precisely: genres with no roles, a tempo far from the genre's range, two kick patterns at once, too many bass sources, constant 32nd-note hats, hats requested and excluded, no named hook (electronic and bass music), and a second drop that is only "bigger". The checks are production heuristics from the 11/23/2026 prompt-engine research, not Suno rules.
 - **Role owners:** open a result's **Sonic Plan** to see which genre owns the groove, the low end, the harmony and the hook, and which genres only add color.
-- **Named variation changes:** each result after the first says where it differs musically from the first (rhythm, bass, sound design, arrangement, vocals). Results that differ in fewer than two of these are rejected and regenerated.
+- **Named variation changes:** each result after the first says where it differs musically from the first (rhythm, bass, sound design, arrangement, vocals). In Precision and Exploration, results that differ in fewer than two of these are rejected and regenerated; A/B Lab's second result changes only the bass articulation, by design.
 
 ### v5.3.2: Accessibility and Accuracy Maintenance
 

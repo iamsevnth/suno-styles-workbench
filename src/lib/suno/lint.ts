@@ -55,7 +55,7 @@ const HOOK_WORDS = /\b(?:hook|motif|riff|lead|melod\w*|topline|chops?|chant|whis
 const ROLE_NOUN = /\b[a-z0-9-]+\s+(groove|drums|rhythm|beat|kicks?|chords|harmony|pads|hook|lead|melody|topline|sub|808s?|bassline|percussion)\b/gi;
 const ROLE_FROM = /\b(?:groove|drums|rhythm|bass(?:line)?|chords|harmony|hook|lead|melody)\s+(?:from|borrowed from|taken from|of)\b/i;
 const CALL_ANSWER = /\b(?:answers?|answering|respond\w*|call[\s-]and[\s-](?:answer|response)|trades?|takes? over|swaps? in|in the (?:first|second|third|last|final)\b)/i;
-const TEMPO_REINTERPRETED = /\b(?:half[\s-]?time|double[\s-]?time|twice[\s-]time|feel)\b/i;
+const TEMPO_REINTERPRETED = /\b(?:half[\s-]?time|double[\s-]?time|twice[\s-]time)\b|\b(?:tempo|bpm) feel\b|\bfeels? like \d{2,3}\b/i;
 const CONTINUOUS = /\b(?:constant\w*|continuous\w*|throughout|non[\s-]?stop|all the way|the whole (?:song|track)|every bar)\b/i;
 const SHORT_ACCENTS = /\b(?:rolls?|turns?|fills?|phrase[\s-]ends?|occasional\w*|short|bursts?|ratchet\w*|accents?)\b/i;
 /** Exclusions that remove every hat or cymbal, not only live or acoustic ones. */
@@ -132,7 +132,7 @@ export function lintBrief(parsed: ParsedInput, plan?: SonicPlan): LintFinding[] 
   }
 
   const THIRTY_SECOND = /\b32nd\b|\bthirty[\s-]second\b/i;
-  const hatSentence = positive.split(/[.;\n]/).find((c) => THIRTY_SECOND.test(c)) ?? "";
+  const hatSentence = positive.split(/[.;\n]/).find((c) => THIRTY_SECOND.test(c) && /\b(?:hi-?)?hats?\b/i.test(c)) ?? "";
   const sparse = /\b(?:deep|sparse|minimal|spacious|halftime|half[\s-]time|deep 140)\b/i.test(positive);
   if (hatSentence &&
     (CONTINUOUS.test(hatSentence) || (sparse && !SHORT_ACCENTS.test(hatSentence)))) {
@@ -221,15 +221,16 @@ export function ownershipMap(plan: SonicPlan): RoleOwner[] {
   const axes = semanticAxes(plan);
   const d = plan.donors ?? {};
   if (plan.native) {
-    const labels = plan.native.genreLabel;
+    // primaryGenre reads "X with Y and Z influences" for blends; the owner is X.
+    const labels = (plan.primaryGenre || plan.native.genreLabel).split(/\s+with\s+/i)[0];
     const color = [plan.secondaryGenre, plan.accentGenre].filter(Boolean).join(", ");
     const s = plan.native.sections;
     const lead = s.lead?.[0] ?? s.leads?.[0] ?? s.melody?.[0] ?? s.hook?.[0];
     return [
-      { role: "Groove", owner: plan.primaryGenre || labels, phrase: axes.rhythm || undefined },
-      { role: "Low end", owner: plan.primaryGenre || labels, phrase: axes.bass || undefined },
-      { role: "Harmony", owner: plan.primaryGenre || labels, phrase: s.harmony?.[0] ?? plan.harmony[0] },
-      { role: "Hook", owner: plan.primaryGenre || labels, phrase: lead },
+      { role: "Groove", owner: labels, phrase: axes.rhythm || undefined },
+      { role: "Low end", owner: labels, phrase: axes.bass || undefined },
+      { role: "Harmony", owner: labels, phrase: s.harmony?.[0] ?? plan.harmony[0] },
+      { role: "Hook", owner: labels, phrase: lead },
       ...(color ? [{ role: "Color" as const, owner: color }] : []),
     ];
   }
