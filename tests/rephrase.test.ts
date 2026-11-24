@@ -68,6 +68,15 @@ describe("Rephrase (no AI)", () => {
     }
   });
 
+  it("is off for A/B pairs, which differ only in bass articulation (Codex review)", () => {
+    const pair = generateStylesPrompts("UKG dubstep, dark", { count: 2, seed: 7, variationMode: "ab" }).prompts;
+    assert.equal(pair.length, 2);
+    for (const p of pair) {
+      assert.equal(canRephrase(p), false);
+      assert.equal(rephrase(p), null);
+    }
+  });
+
   it("keeps the tempo-named genre rule", () => {
     const p = generateStylesPrompts("UKG dubstep, dark", { count: 1, seed: 7 }).prompts[0];
     const r = rephrase(p);

@@ -7,7 +7,7 @@
  *    "<tempo> UKG Dubstep" and never split.
  *  - The number follows the prompt's tempo inside 135–145 BPM ("137 UKG Dubstep"), and the prompt
  *    then names no separate BPM.
- *  - "140 Bass", "Deep 140" and "Wubby 140" follow the same rule.
+ *  - "140 Bass", "Deep 140", "Wubby 140", "140 Grime" and "140 Halftime" follow the same rule.
  *  - Outside 135–145 (a brief that asks for 150 BPM, say) the name drops its number ("UKG", "UK bass")
  *    and the tempo is written as "150 BPM" as usual. Any one of the three words on its own is fine.
  *  - Only the first tempo-named genre in a prompt carries the number; later ones are written without it,
@@ -51,7 +51,7 @@ const TERM_ORDERS = (() => {
 })();
 
 interface Kind {
-  id: "ukg" | "bass" | "deep" | "wubby";
+  id: "ukg" | "bass" | "deep" | "wubby" | "named";
   re: RegExp;
   numbered: (bpm: number, m: RegExpExecArray) => string;
   plain: (m: RegExpExecArray) => string;
@@ -85,6 +85,13 @@ const KINDS: Kind[] = [
     re: new RegExp(`(?<![a-z0-9-])(?<w>wubby|wobble|deep-wobble)[\\s-]+${N}(?![a-z0-9])(?![\\s-]*(?:bpm|dub))`, "gi"),
     numbered: (bpm, m) => `${cap(m.groups?.w ?? "wubby")} ${bpm}`,
     plain: (m) => `${(m.groups?.w ?? "wubby").toLowerCase()} bass`,
+  },
+  {
+    // Other numbered genre names from the genre atlas ("140 Grime", "140 Halftime") follow the same rule.
+    id: "named",
+    re: new RegExp(`(?<![a-z0-9-])${N}[\\s-]+(?<g>grime|half[\\s-]?time)(?![a-z0-9])`, "gi"),
+    numbered: (bpm, m) => `${bpm} ${/^half/i.test(m.groups?.g ?? "") ? "Halftime" : "Grime"}`,
+    plain: (m) => (/^half/i.test(m.groups?.g ?? "") ? "half-time" : "grime"),
   },
 ];
 
@@ -135,6 +142,7 @@ export function parseFormTempoGenres(text: string): string {
     if (f.kind.id === "ukg") out += /(?:13[5-9]|14[0-5])/.test(m) && /ukg|uk garage/i.test(m) ? `${deep}140 UKG` : `${deep}UKG dubstep`;
     else if (f.kind.id === "bass") out += `${deep}140 bass`;
     else if (f.kind.id === "deep") out += "deep 140";
+    else if (f.kind.id === "named") out += `140 ${(f.match.groups?.g ?? "grime").toLowerCase()}`;
     else out += `${(f.match.groups?.w ?? "wubby").toLowerCase()} 140`;
     cursor = f.index + f.length;
   }

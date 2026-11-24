@@ -28,6 +28,11 @@ export default function AiReword({ prompt, onCopy, modelReady, onAllowDownload }
   const abort = useRef<AbortController | null>(null);
   // Cancel a request still running when the card goes away (new results, Clear Results).
   useEffect(() => () => abort.current?.abort(), []);
+  // New wording on the card (Rephrase, Show Original) makes an earlier result stale.
+  useEffect(() => {
+    abort.current?.abort();
+    setState((s) => (s.kind === "confirm-download" ? s : { kind: "idle" }));
+  }, [prompt.styles]);
   // A download question left open here closes once the user agrees on another result.
   useEffect(() => {
     if (modelReady) setState((s) => (s.kind === "confirm-download" ? { kind: "idle" } : s));

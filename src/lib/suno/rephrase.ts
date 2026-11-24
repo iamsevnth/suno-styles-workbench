@@ -19,6 +19,8 @@ const ATTEMPTS = 24;
 
 /** Rephrase applies to prompts the engine wrote; a pasted prompt kept by Fix mode has no plan to re-render. */
 export function canRephrase(candidate: PromptCandidate): boolean {
+  // An A/B pair differs only in bass articulation; rewording one side would break that, so A/B is left as is.
+  if (candidate.plan.variationMode === "ab") return false;
   return !candidate.fixStrategy || candidate.fixStrategy === "recompiled";
 }
 

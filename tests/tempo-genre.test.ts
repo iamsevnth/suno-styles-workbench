@@ -33,6 +33,18 @@ describe("tempo-named genres: the phrase", () => {
     assert.equal(applyTempoGenres("Deep 140 at 141 BPM.", 141, true), "Deep 141.");
   });
 
+  it("other numbered genre names follow the rule too: \"140 Grime\", \"140 Halftime\" (Codex review)", () => {
+    for (const brief of ["140 Grime", "140 Halftime, dark", "140 Bass + 140 Grime"]) {
+      for (const seed of SEEDS) {
+        for (const p of generateStylesPrompts(brief, { count: 2, seed }).prompts) {
+          assert.doesNotMatch(p.styles, /\bBPM\b/, `${brief}: ${p.styles}`);
+          assert.equal(tempoNumbers(p.styles), 1, `${brief}: ${p.styles}`);
+          assert.ok(tempoStated(p.styles, p.bpm), `${brief}: ${p.styles}`);
+        }
+      }
+    }
+  });
+
   it("numbers only the first tempo-named genre, so the number never repeats a few words later", () => {
     const out = applyTempoGenres("140 BPM Deep 140 Bass with UKG Dubstep hat skip and Wubby 140 accents.", 141, true);
     assert.equal(out, "Deep 141 Bass with UKG hat skip and wubby bass accents.");

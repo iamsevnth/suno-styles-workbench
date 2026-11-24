@@ -132,8 +132,12 @@ test('AI turns on only after the user agrees, and AI wording is labeled and chec
   await expect(page.getByTestId('results-ai-status')).toContainText('AI On');
   expect(await page.evaluate(() => (window as unknown as { __aiCalls: number }).__aiCalls)).toBe(0);
   const first = page.getByTestId('ai-reword').first();
+  // AI rewords the wording on screen: after Rephrase, that is the rephrased text (the stand-in reverses its sentences).
+  await page.getByTestId('rephrase').first().click();
+  const shown = (await page.getByTestId('prompt-text').first().textContent()) ?? '';
   await first.getByRole('button', { name: 'Reword with AI' }).click();
   await expect(first.getByTestId('ai-accepted')).toContainText('AI wording · passed the Workbench checks');
+  await expect(first.getByTestId('ai-accepted')).toContainText(shown.split(/(?<=\.)\s+/).reverse().join(' '));
   await first.getByRole('button', { name: 'Reword with AI Again' }).click();
   await expect(first.getByTestId('ai-rejected')).toContainText('discarded');
   results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();

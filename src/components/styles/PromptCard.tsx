@@ -142,7 +142,9 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
           </span>
         )}
         <button type="button" onClick={nextWording} disabled={!rephrasable} data-testid="rephrase"
-          title={rephrasable ? "New wording for the same musical plan, made by the Workbench engine. No AI." : "Rephrase works on prompts the Workbench wrote; this one keeps your pasted wording."}
+          title={rephrasable ? "New wording for the same musical plan, made by the Workbench engine. No AI."
+            : plan.variationMode === "ab" ? "Rephrase is off for A/B pairs, which differ only in bass articulation."
+            : "Rephrase works on prompts the Workbench wrote; this one keeps your pasted wording."}
           className="h-7 px-2.5 rounded-[var(--r-md)] border border-[var(--border)] text-[11px] text-[var(--fg)] hover:bg-[var(--bg-subtle)] disabled:opacity-50 disabled:cursor-not-allowed">
           Rephrase · no AI
         </button>
@@ -155,7 +157,11 @@ export default function PromptCard({ prompt, onCopy, sourceText, changedFromFirs
         <span role="status" aria-live="polite" className="text-[11px] text-[var(--fg-muted)]">{rephraseNote}</span>
       </div>
       <p data-testid="prompt-text" className="p-4 whitespace-pre-wrap text-sm leading-relaxed text-[var(--fg-muted)]">{view.text}</p>
-      {ai?.on && <AiReword prompt={prompt} onCopy={onCopy} modelReady={ai.modelReady} onAllowDownload={ai.allowDownload} />}
+      {ai?.on && (
+        // On-device AI rewords the wording on screen (original, rephrased or an assistant's), like the hand-off.
+        <AiReword prompt={view.text === prompt.styles ? prompt : { ...prompt, styles: view.text }}
+          onCopy={onCopy} modelReady={ai.modelReady} onAllowDownload={ai.allowDownload} />
+      )}
       <AssistantHandoff prompt={prompt} styles={view.text} onUse={(text) => setView({ text, source: "assistant", wording: view.wording, seen: view.seen })} />
 
       <button
