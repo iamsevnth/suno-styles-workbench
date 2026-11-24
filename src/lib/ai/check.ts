@@ -5,7 +5,8 @@
  */
 import type { PromptCandidate } from "../suno/types.ts";
 import { briefFaithfulness, criticalGatesPass, validatePrompt } from "../suno/validate.ts";
-import { HARD_MAX_CHARS, MIN_CHARS } from "../suno/render.ts";
+import { lengthWindow } from "../suno/limits.ts";
+import { tempoGenreNumbers } from "../suno/tempo-genre.ts";
 
 export interface AiCheck {
   ok: boolean;
@@ -25,7 +26,6 @@ export function cleanAiText(raw: string): string {
 }
 
 const GATE_TEXT: Record<string, string> = {
-  characterRange: `length outside ${MIN_CHARS}–${HARD_MAX_CHARS} characters`,
   integerBpm: "the tempo (BPM) is missing or changed",
   protectedReferences: "it names an artist or says \"in the style of\"",
   positivePrompting: "it uses negative wording (no, avoid, without)",
@@ -41,8 +41,11 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
   if (!text) return { ok: false, text, problems: ["the model returned nothing"] };
   const result = validatePrompt(text, original.plan);
   if (!criticalGatesPass(result.hardGates)) {
+    const window = lengthWindow(original.plan.length);
     for (const [gate, pass] of Object.entries(result.hardGates)) {
-      if (pass === false && GATE_TEXT[gate]) problems.push(GATE_TEXT[gate]);
+      if (pass !== false) continue;
+      if (gate === "characterRange") problems.push(`length outside ${window.min}–${window.hardMax} characters`);
+      else if (GATE_TEXT[gate]) problems.push(GATE_TEXT[gate]);
     }
   }
   // It must keep at least as many of the brief's own words (scenes, textures, instruments) as the original.
@@ -53,13 +56,22 @@ export function checkAiRewrite(raw: string, original: PromptCandidate): AiCheck 
   return { ok: problems.length === 0, text, problems };
 }
 
-/** The instruction given to the on-device model. */
+/** How the prompt states its tempo: "140 BPM", or a genre name that carries it ("138 UKG Dubstep"). */
+function tempoRule(original: PromptCandidate): string {
+  const named = tempoGenreNumbers(original.styles).includes(original.bpm);
+  if (!named) return `the tempo written exactly as "${original.bpm} BPM"`;
+  const label = /\b(?:deep[ -])?1[34]\d(?: UKG Dubstep| Bass)?\b|\b(?:deep|wubby|wobble)[ -]1[34]\d\b/i.exec(original.styles)?.[0] ?? String(original.bpm);
+  return `the genre name "${label}" written exactly like that, which already states the tempo (never add a separate BPM)`;
+}
+
+/** The instruction given to an AI model, on this device or in the assistant the user pastes it into. */
 export function rewordInstruction(original: PromptCandidate): string {
+  const window = lengthWindow(original.plan.length);
   return [
     "You rewrite music-style prompts for Suno. Rewrite the prompt below with new wording and sentence order.",
-    `Keep every musical fact: the tempo written exactly as "${original.bpm} BPM", every genre name, instrument, vocal detail, mood and production detail.`,
+    `Keep every musical fact: ${tempoRule(original)}, every genre name, instrument, vocal detail, mood and production detail.`,
     "Do not add new instruments, genres or effects.",
-    `Write between ${MIN_CHARS} and 975 characters.`,
+    `Write between ${window.min} and ${window.max} characters.`,
     "Describe only what to hear: never write no, avoid, without or don't.",
     "No artist names, no lyrics, no section tags in brackets.",
     "Return only the rewritten prompt, with no title, quotes or explanation.",

@@ -134,7 +134,7 @@ export const BASS: FamilyLexicon = {
     "dark deep-dubstep production",
     "melodic dubstep production",
     "aggressive tearout production",
-    "sound-system 140 production",
+    "sound-system production",
     "festival bass-music production",
   ],
   groove: [

@@ -5,9 +5,11 @@ import { phraseExcluded } from "./intent.ts";
 import { changedMusicalAxes } from "./semantic.ts";
 import { buildPlans } from "./plan.ts";
 import { hasConflictingBpm } from "./consistency.ts";
-import { formatTitle, HARD_MAX_CHARS, renderStyles, trimKeepingInstruments } from "./render.ts";
+import { formatTitle, renderStyles, trimKeepingInstruments } from "./render.ts";
+import { lengthWindow } from "./limits.ts";
+import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
 import { hashString } from "./rng.ts";
-import { GenerateResult, PromptCandidate, SonicPlan } from "./types.ts";
+import { GenerateResult, PromptCandidate, PromptLength, SonicPlan } from "./types.ts";
 import { allHardGatesPass, criticalGatesPass, validatePrompt } from "./validate.ts";
 
 export function generateStylesPrompts(
@@ -21,6 +23,8 @@ export function generateStylesPrompts(
     variationMode?: "precision" | "exploration" | "ab";
     /** Instrumental toggle: keep a brief that never mentions vocals instrumental. */
     instrumentalDefault?: boolean;
+    /** Detailed (800–975, the default) or Tight (600–850) prompts. */
+    length?: PromptLength;
   } = {}
 ): GenerateResult {
   const parsed = parseUserInput(input, {
@@ -29,6 +33,7 @@ export function generateStylesPrompts(
     mode: options.mode,
     variationMode: options.variationMode,
     instrumentalDefault: options.instrumentalDefault,
+    length: options.mode === "rewrite" ? undefined : options.length,
   });
 
   const abMode = options.variationMode === "ab" && options.mode !== "rewrite";
@@ -106,7 +111,9 @@ export function generateStylesPrompts(
     }
     if (options.mode === "rewrite" && i === 0) {
       const sourcePlan = buildPlans(parsed, seed, 1, { variantIndex: 0 })[0];
-      const sourceEdit = repairExistingPrompt(input, sourcePlan);
+      const repaired = repairExistingPrompt(input, sourcePlan);
+      // The user's own prompt follows the tempo-named genre rules too ("140 BPM 140 UKG" becomes "140 UKG Dubstep").
+      const sourceEdit = repaired && { ...repaired, text: applyTempoGenres(repaired.text, sourcePlan.bpm, !!sourcePlan.tempoGenre) };
       if (sourceEdit) {
         const verified = validatePrompt(sourceEdit.text, sourcePlan);
         if (allHardGatesPass(verified.hardGates)) {
@@ -154,7 +161,7 @@ export function generateStylesPrompts(
         repairs++;
         const before = styles;
         if (!validation.hardGates.characterRange) {
-          styles = forceCharacterWindow(styles, plan.bpm);
+          styles = forceCharacterWindow(styles, plan);
         }
         // Never invert a forbidden concept into a positive prompt; recompile on failure.
         if (!validation.hardGates.protectedReferences) {
@@ -169,9 +176,9 @@ export function generateStylesPrompts(
         }
         if (!validation.hardGates.integerBpm) {
           styles = renderStyles(plan);
-          if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(styles)) {
+          if (!tempoStated(styles, plan.bpm)) {
             styles = `${plan.bpm} BPM ${styles}`.replace(/\s+/g, " ").trim();
-            styles = forceCharacterWindow(styles, plan.bpm);
+            styles = forceCharacterWindow(styles, plan);
           }
         }
         validation = validatePrompt(styles, plan, peerTexts, peerPlans);
@@ -216,7 +223,7 @@ export function generateStylesPrompts(
 
     if (!best) {
       const plan = buildPlans(parsed, seed + i * 13, 1, { variantIndex: i })[0];
-      const styles = forceCharacterWindow(renderStyles(plan), plan.bpm);
+      const styles = forceCharacterWindow(renderStyles(plan), plan);
       const validation = validatePrompt(styles, plan, peerTexts, peerPlans);
       best = {
         title: formatTitle(plan.seed, plan.bpm, plan.key, styles.length),
@@ -248,9 +255,10 @@ export function generateStylesPrompts(
  * Repairs a prompt that missed a hard gate: the tempo must be named and the text must fit the Styles field.
  * A prompt that is too short is never padded; the renderer adds real detail or the prompt stays short.
  */
-function forceCharacterWindow(text: string, bpm: number): string {
+function forceCharacterWindow(text: string, plan: SonicPlan): string {
   let t = text.replace(/\s+/g, " ").trim();
-  if (!new RegExp(`\\b${bpm}\\s*BPM\\b`, "i").test(t)) t = `${bpm} BPM ${t}`;
-  if (t.length > HARD_MAX_CHARS) t = trimKeepingInstruments(t, HARD_MAX_CHARS);
+  if (!tempoStated(t, plan.bpm)) t = `${plan.bpm} BPM ${t}`;
+  const max = lengthWindow(plan.length).hardMax;
+  if (t.length > max) t = trimKeepingInstruments(t, max);
   return t;
 }

@@ -2,6 +2,7 @@ import { conceptsOf, reconcileMoods } from "../blend.ts";
 import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
+import { applyTempoGenres, hasTempoGenre, inTempoWindow, windowTempo } from "../tempo-genre.ts";
 import { moodClash, nonEdmBleed } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
@@ -296,7 +297,7 @@ export function buildNativePlan(
     parsed.vocals?.present === false ||
     (!parsed.vocals?.present && !parsed.vocals?.presentation && !parsed.vocals?.style && primary.vocal === "none");
 
-  const bpm = Math.round(
+  let bpm = Math.round(
     parsed.bpm ?? (() => {
       const [lo, hi, mid] = primary.bpm;
       const jitter = (rng() - 0.5) * 0.4 * (hi - lo);
@@ -305,6 +306,10 @@ export function buildNativePlan(
       return Math.min(hi, Math.max(lo, slow + jitter * (slow === mid ? 1 : 0.5)));
     })()
   );
+
+  // A tempo-named genre ("UKG dubstep", "140 Bass") sets a tempo inside 135–145; siblings vary inside it.
+  const tempoNamed = hasTempoGenre([route.labels?.primary, route.labels?.secondary, route.labels?.tertiary, route.verbatim, primary.name, secondary?.name, tertiary?.name]);
+  if (tempoNamed && parsed.bpm == null) bpm = windowTempo(opts.diversityRank ?? opts.variantIndex ?? 0, rng);
 
   const bank = (key: keyof NativeSub): string[] => {
     const p = (primary[key] as string[] | undefined) ?? [];
@@ -480,6 +485,8 @@ export function buildNativePlan(
     textures: briefTextures,
     variantAxes: ["lead", "vocal approach", "production era"],
     seed,
+    tempoGenre: tempoNamed && inTempoWindow(bpm),
+    length: parsed.length,
   };
 }
 
@@ -523,7 +530,10 @@ function compose(plan: SonicPlan, d: Detail): string {
   const s = n.sections;
   const out: string[] = [];
 
-  const mood = plan.moodPhrase ? ` with ${article(plan.moodPhrase)} ${plan.moodPhrase} mood` : "";
+  // A genre name that carries the tempo ("137 UKG Dubstep") replaces "at 137 BPM"; a label that already
+  // says "with" takes the mood after a comma so the opening never reads "with ... with".
+  const carried = !!plan.tempoGenre && /\bwith\b/i.test(n.genreLabel);
+  const mood = plan.moodPhrase ? (carried ? `, ${article(plan.moodPhrase)} ${plan.moodPhrase} mood throughout` : ` with ${article(plan.moodPhrase)} ${plan.moodPhrase} mood`) : "";
   const scene = n.scenes.length ? `, evoking ${article(n.scenes[0])} ${listOf(n.scenes)} atmosphere` : "";
   const key = plan.key ? ` in ${plan.key}` : "";
   const meter = plan.meter ? `, ${plan.meter}` : "";
@@ -547,7 +557,8 @@ function compose(plan: SonicPlan, d: Detail): string {
   if (d.arrangement && s.arrangement.length) out.push(sentence(`Arrangement: ${listOf(take(s.arrangement, 1))}`));
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
 
-  return out.join(" ").replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  const text = out.join(" ").replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  return applyTempoGenres(text, plan.bpm, !!plan.tempoGenre);
 }
 
 export function renderNative(plan: SonicPlan): string {

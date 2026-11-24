@@ -8,6 +8,8 @@ export interface ParsedInput {
   /** Genres the blend resolver merged or dropped, and tempo conflicts, as readable notes. */
   genreNotes?: string[];
   bpm?: number;
+  /** Prompt length the user chose; Detailed when unset. */
+  length?: PromptLength;
   key?: string;
   meter?: string;
   tempoMentions?: TempoMention[];
@@ -163,7 +165,17 @@ export interface SonicPlan {
   textures?: string[];
   variantAxes: string[];
   seed: number;
+  /**
+   * True when a tempo-named genre ("140 UKG Dubstep", "140 Bass") carries the tempo, so the prompt
+   * writes the number inside the genre name and names no separate BPM (see tempo-genre.ts).
+   */
+  tempoGenre?: boolean;
+  /** Prompt length the user chose: Detailed (800–975) or Tight (600–850). */
+  length?: PromptLength;
 }
+
+/** Detailed prompts target 800–975 characters, Tight ones 600–850. */
+export type PromptLength = "detailed" | "tight";
 
 export interface HardGates {
   characterRange: boolean;

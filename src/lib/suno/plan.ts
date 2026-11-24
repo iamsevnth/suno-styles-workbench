@@ -59,6 +59,7 @@ import { buildNativePlan } from "./native/compose.ts";
 import { isBassWorld, nonEdmBleed } from "./consistency.ts";
 import { ParsedInput, SonicPlan, VocalPreferences } from "./types.ts";
 import { phraseExcluded } from "./intent.ts";
+import { hasTempoGenre, inTempoWindow, windowTempo } from "./tempo-genre.ts";
 
 export function buildPlans(
   parsed: ParsedInput,
@@ -160,6 +161,10 @@ export function buildOnePlan(
       bpm = clamp(bpm + (deltas[(rank + Math.floor(rng() * 3)) % deltas.length] ?? 0), 70, 180);
     }
   }
+  // A tempo-named genre ("140 UKG Dubstep", "140 Bass") sets a tempo inside 135–145; sibling prompts vary
+  // inside that window. A tempo the brief names always wins (see tempo-genre.ts).
+  const tempoNamed = hasTempoGenre([primaryGenre, secondaryGenre, accentGenre, ...(parsed.unknownGenres ?? [])]);
+  if (tempoNamed && parsed.bpm == null) bpm = windowTempo(rank, rng);
 
   // Moods: the brief's own, else the hybrid bass profile's (bass-music plans only), else the genre's.
   const familyMoods = [...new Set(families.flatMap((f) => FAMILY_MOODS[f] ?? []))];
@@ -328,6 +333,8 @@ export function buildOnePlan(
     titlePhrase,
     anchors,
     recipeId,
+    tempoGenre: tempoNamed && inTempoWindow(bpm),
+    length: parsed.length,
     briefText: parsed.raw,
     unknownGenres: parsed.unknownGenres?.length ? parsed.unknownGenres : undefined,
     variantAxes: [...preset.axes, `seed:${seed % 1000}`, `recipe:${recipeId.slice(0, 48)}`],

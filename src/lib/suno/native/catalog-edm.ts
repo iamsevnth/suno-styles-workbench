@@ -203,7 +203,7 @@ const EDM_LIST: NativeSub[] = [
     extras: ["open-hat accents on the off-beats", "off-grid shaker shuffles", "pitched vocal-chop stabs", "eerie bell hits"],
     vocals: ["dark melodic vocal over heavy sub, short and low in the mix", "airy vocal floating over the sub pressure", "pitched chops answering the skippy hats"],
     rapVocals: ["low menacing rap flow riding the skippy hats", "rhythmic rap bars locked to the shuffled shaker topline", "chanted rap hook with ad-libs in the gaps"],
-    eras: ["nocturnal 140 club-system production", "dark heavy sub-pressure sound", "modern trap-drum bass weight"],
+    eras: ["nocturnal club-system production", "dark heavy sub-pressure sound", "modern trap-drum bass weight"],
     arrangement: [
       "dark filtered intro with a shaker shuffle, heavy sub-pressure drop, stripped break into a harder second drop",
       "skippy hat intro, trap-drum verse over rumbling sub, full drop with the percussion topline doubled",

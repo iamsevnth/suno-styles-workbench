@@ -1,6 +1,7 @@
 import { bassMusicLeaks, hasConflictingBpm, isBassWorld, moodClash, nonEdmBleed, vocalInInstrumental } from "./consistency.ts";
 import { familyKeys, hasDrops } from "./families.ts";
-import { HARD_MAX_CHARS, MAX_CHARS, MIN_CHARS } from "./render.ts";
+import { lengthWindow } from "./limits.ts";
+import { applyTempoGenres, tempoGenreWithBpm, tempoStated } from "./tempo-genre.ts";
 import { HardGates, SonicPlan } from "./types.ts";
 import { phraseExcluded } from "./intent.ts";
 import { changedMusicalAxes, semanticDistance, semanticFingerprint } from "./semantic.ts";
@@ -26,12 +27,13 @@ export function validatePrompt(
 ): ValidationResult {
   const issues: string[] = [];
   const n = styles.length;
-  // Hard gate: 800..1000. The renderer aims for 800..975; the score rewards that target window.
-  const characterRange = n >= MIN_CHARS && n <= HARD_MAX_CHARS;
+  // Hard gate: Detailed 800..1000 (target 800..975), Tight 600..850; the score rewards the target window.
+  const window = lengthWindow(plan.length);
+  const characterRange = n >= window.min && n <= window.hardMax;
   if (!characterRange) issues.push(`character_count:${n}`);
 
-  const bpmRe = new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i");
-  const integerBpm = bpmRe.test(styles);
+  // "NNN BPM", or a tempo-named genre carrying the tempo ("138 UKG Dubstep").
+  const integerBpm = tempoStated(styles, plan.bpm);
   if (!integerBpm) issues.push("missing_or_wrong_bpm");
 
   const protectedReferences = !ARTIST_LEAK_RE.test(styles) && !/\bin the style of\b/i.test(styles);
@@ -87,6 +89,8 @@ export function validatePrompt(
 export function findContradictions(styles: string, plan: SonicPlan): string[] {
   const found: string[] = [];
   if (hasConflictingBpm(styles, plan.bpm)) found.push("conflicting_bpm");
+  // "140 UKG Dubstep ... 140 BPM" states the tempo twice; the genre name already carries it.
+  if (tempoGenreWithBpm(styles)) found.push("tempo_named_twice");
   const instrumental = plan.vocals.present === false;
   if (vocalInInstrumental(styles, instrumental)) found.push("vocal_terms_in_instrumental");
   const sentences = styles.split(/(?<=[.;])\s+/);
@@ -104,7 +108,12 @@ export function briefFaithfulness(styles: string, plan: SonicPlan): number {
   const anchors = plan.native
     ? [...(plan.scenes ?? []), ...(plan.textures ?? []), ...plan.anchors]
     : plan.anchors;
-  const wanted = [...new Set(anchors.map((a) => a.toLowerCase().trim()).filter((a) => a.length > 2))];
+  // A tempo-named genre carries the tempo, so "140 BPM" is not looked for and "140 UKG" is matched as
+  // the prompt writes it ("138 UKG Dubstep").
+  const asWritten = (a: string) => applyTempoGenres(a, plan.bpm, !!plan.tempoGenre);
+  const wanted = [...new Set(anchors
+    .filter((a) => !(plan.tempoGenre && /\bBPM\b/i.test(a)))
+    .map((a) => asWritten(a).toLowerCase().trim()).filter((a) => a.length > 2))];
   if (!wanted.length) return 1;
   const text = styles.toLowerCase();
   const kept = wanted.filter((a) => text.includes(a)).length;
@@ -173,8 +182,9 @@ export function scorePrompt(styles: string, plan: SonicPlan, gates: HardGates): 
   score += Math.min(6, plan.instruments.length);
   score += Math.min(5, plan.mix.length);
   const n = styles.length;
-  if (n >= MIN_CHARS && n <= MAX_CHARS) score += 8;
-  else if (n > MAX_CHARS && n <= HARD_MAX_CHARS) score += 4;
+  const window = lengthWindow(plan.length);
+  if (n >= window.min && n <= window.max) score += 8;
+  else if (n > window.max && n <= window.hardMax) score += 4;
   score += Math.round(briefFaithfulness(styles, plan) * 8);
   score += gates.noContradictions === false ? -15 : 4;
   const sentences = styles.split(/(?<=\.)\s+/).filter(Boolean).length;

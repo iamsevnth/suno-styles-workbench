@@ -5,8 +5,9 @@ import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
 import { extractBriefPhrases } from "./brief.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./native/catalog.ts";
 import { labelOf, nativeCovers, nativeHits } from "./native/compose.ts";
-import { NativeRoute, ParsedInput, VocalPreferences } from "./types.ts";
+import { NativeRoute, ParsedInput, PromptLength, VocalPreferences } from "./types.ts";
 import { extractConstraintIntent, parseTempoIntent, parseKeyIntent, parseMeterIntent, parseArrangementCues } from "./intent.ts";
+import { briefTempoFromGenre, inTempoWindow, namesTempoGenre } from "./tempo-genre.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
 const N_FLAG_RE = /(?:^|\s)(?:-n|--count)\s*(\d{1,2})\b/i;
@@ -148,6 +149,8 @@ export function parseUserInput(
     variationMode?: "precision" | "exploration" | "ab";
     /** The Instrumental toggle: a brief that never mentions vocals stays instrumental. */
     instrumentalDefault?: boolean;
+    /** Detailed (800–975) or Tight (600–850) prompts. */
+    length?: PromptLength;
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
@@ -165,7 +168,8 @@ export function parseUserInput(
   if (countMatch) count = Math.min(12, Math.max(1, parseInt(countMatch[1], 10)));
 
   const tempoIntent = parseTempoIntent(text);
-  const bpm = tempoIntent.bpm;
+  // "138 UKG dubstep" with no BPM asks for 138; the genre's own "140" sets nothing (tempo-genre.ts).
+  const bpm = tempoIntent.bpm ?? briefTempoFromGenre(text);
 
   const wantsVariety =
     /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(
@@ -413,7 +417,15 @@ export function parseUserInput(
     raw: instrumentText,
     count,
     genres: finalGenres,
-    genreNotes: [...blend.notes, ...(bpm != null && !native ? bpmNotes(genres, bpm) : []), ...nativeNotes],
+    genreNotes: [
+      ...blend.notes,
+      ...(bpm != null && !native ? bpmNotes(genres, bpm) : []),
+      ...nativeNotes,
+      ...(bpm != null && !inTempoWindow(bpm) && namesTempoGenre([...finalGenres, text].join(" "))
+        ? [`Tempo-named genres ("140 UKG Dubstep", "140 Bass") carry their number only at 135–145 BPM, so at ${bpm} BPM they are written without it ("UKG", "UK bass").`]
+        : []),
+    ],
+    length: options?.length,
     scenes: phrases.scenes,
     textures: phrases.textures,
     instrumentPhrases: phrases.instrumentPhrases,

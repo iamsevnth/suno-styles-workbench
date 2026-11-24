@@ -4,11 +4,13 @@
  * on a folk record) is worse than a plain prompt, so these are hard gates.
  */
 
+import { tempoGenreNumbers } from "./tempo-genre.ts";
+
 const BPM_RE = /\b(\d{2,3})\s*BPM\b/gi;
 
-/** Every distinct tempo the text states. */
+/** Every distinct tempo the text states, including one carried by a genre name ("138 UKG Dubstep"). */
 export function statedBpms(text: string): number[] {
-  return [...new Set([...text.matchAll(BPM_RE)].map((m) => parseInt(m[1], 10)))];
+  return [...new Set([...[...text.matchAll(BPM_RE)].map((m) => parseInt(m[1], 10)), ...tempoGenreNumbers(text)])];
 }
 
 export function hasConflictingBpm(text: string, bpm: number): boolean {

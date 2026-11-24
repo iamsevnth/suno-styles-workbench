@@ -71,7 +71,7 @@ export const UKG: FamilyLexicon = {
   ],
   master: [
     "loud, heavy UKG master with massive sub pressure",
-    "club-ready 140 master with a deep mono low end and crisp hats",
+    "club-ready master with a deep mono low end and crisp hats",
   ],
   arrangement: [
     ["dark filtered intro with shaker shuffle", "heavy sub-pressure drop", "stripped break into a harder second drop"],

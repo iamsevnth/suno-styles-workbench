@@ -9,6 +9,7 @@ import {
   VOCAL_STYLE,
 } from "./lexicon.ts";
 import { mulberry32 } from "./rng.ts";
+import { applyTempoGenres, tempoStated } from "./tempo-genre.ts";
 import { renderNative } from "./native/compose.ts";
 import { MIN_CHARS, MAX_CHARS } from "./limits.ts";
 export { MIN_CHARS, MAX_CHARS, HARD_MAX_CHARS } from "./limits.ts";
@@ -222,9 +223,17 @@ function compose(plan: SonicPlan): string {
   };
 
   const anchors = anchorsToCheck(plan);
-  const build = (detail: Detail, extras: string[]) => assemble(plan, choices, detail, extras, keepCaps);
-  const covers = (text: string, anchor: string) =>
-    hasAnchor(text, anchor) || (!VOCAL_ANCHOR.test(anchor) && !namesInstrument(anchor) && isCovered(text, anchor));
+  // Tempo-named genres are written by the tempo-genre rules on every build, so the length fitting below
+  // measures the prompt exactly as it will read ("138 UKG Dubstep", no separate BPM).
+  const build = (detail: Detail, extras: string[]) =>
+    applyTempoGenres(assemble(plan, choices, detail, extras, keepCaps), plan.bpm, !!plan.tempoGenre);
+  // Anchors are compared without tempo numbers: "140 UKG" in the brief is honored by "138 UKG Dubstep".
+  const neutral = (s: string) => applyTempoGenres(s, 0, false);
+  const covers = (text: string, anchor: string) => {
+    const t = neutral(text);
+    const a = neutral(anchor);
+    return hasAnchor(t, a) || (!VOCAL_ANCHOR.test(a) && !namesInstrument(a) && isCovered(t, a));
+  };
   const missingIn = (text: string) => anchors.filter((a) => !/\bBPM\b/i.test(a) && !covers(text, a));
 
   // Brief elements the plan's sections never mention join the instrumentation list instead of a filler sentence.
@@ -261,7 +270,7 @@ function compose(plan: SonicPlan): string {
   if (text.length > MAX_CHARS) text = trimKeepingInstruments(text, MAX_CHARS);
 
   text = sentenceCase(text, keepCaps);
-  if (!new RegExp(`\\b${plan.bpm}\\s*BPM\\b`, "i").test(text)) text = `${plan.bpm} BPM ${text}`;
+  if (!tempoStated(text, plan.bpm)) text = `${plan.bpm} BPM ${text}`;
   return text.replace(/\s+/g, " ").trim();
 }
 

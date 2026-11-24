@@ -39,9 +39,10 @@ describe("trap + trap + UKG Dubstep brief", () => {
     }
   });
 
-  it("opens with BPM, the primary genre and the supporting genre's role", () => {
+  it("opens with the primary genre and the supporting genre's role, the tempo carried by \"145 UKG Dubstep\"", () => {
     for (const p of prompts) {
-      assert.match(p.styles, /^145 BPM Aggressive Trap with UKG Dubstep hat skip and sub pressure, /, p.styles);
+      assert.match(p.styles, /^Aggressive Trap with 145 UKG Dubstep hat skip and sub pressure, /, p.styles);
+      assert.doesNotMatch(p.styles, /\bBPM\b/, p.styles);
     }
   });
 
@@ -90,7 +91,7 @@ describe("trap + trap + UKG Dubstep brief", () => {
   });
 
   it("writes the sections in a fixed order", () => {
-    const order = [/^145 BPM/, /half-time/, /\b(?:low end|bass)\b/i, /harmonic bed|Transitions|Ear-candy|FX bed|Texture design|Scene changes/, /Vocals center on|Lead vocals deliver|Vocal performance features|Vocal delivery showcases|Topline features/, /arrangement moves through|record unfolds as|Form runs through/, /\bMix\b|mix with|mix for|mix around|Balance the mix/i];
+    const order = [/^Aggressive Trap with 145 UKG Dubstep/, /half-time/, /\b(?:low end|bass)\b/i, /harmonic bed|Transitions|Ear-candy|FX bed|Texture design|Scene changes/, /Vocals center on|Lead vocals deliver|Vocal performance features|Vocal delivery showcases|Topline features/, /arrangement moves through|record unfolds as|Form runs through/, /\bMix\b|mix with|mix for|mix around|Balance the mix/i];
     for (const p of prompts) {
       let at = -1;
       for (const section of order) {
@@ -134,8 +135,10 @@ describe("tempo across a blend", () => {
   it("chooses one tempo near the primary when the brief names none", () => {
     for (const seed of SEEDS) {
       const p = generateStylesPrompts("Trap + UKG Dubstep, dark", { count: 1, seed }).prompts[0];
-      assert.match(p.styles, new RegExp(`\\b${p.bpm} BPM\\b`));
-      assert.ok(p.bpm >= 130 && p.bpm <= 150, String(p.bpm));
+      // UKG Dubstep carries the tempo in its name ("140 UKG Dubstep"), so no separate BPM is written.
+      assert.match(p.styles, new RegExp(`\\b${p.bpm} UKG Dubstep\\b`), p.styles);
+      assert.doesNotMatch(p.styles, /\bBPM\b/, p.styles);
+      assert.ok(p.bpm >= 135 && p.bpm <= 145, String(p.bpm));
     }
   });
 
