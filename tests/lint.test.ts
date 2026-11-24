@@ -131,3 +131,51 @@ test("a native blend names its primary sub-genre as owner, not the whole blend",
   const groove = ownershipMap(r.prompts[0].plan).find((x) => x.role === "Groove")!;
   assert.ok(!/\bwith\b/i.test(groove.owner), groove.owner);
 });
+
+// v5.4.1: follow-up review on #49.
+test("role phrases count only when a genre names the role", () => {
+  assert.ok(ids("Trap, Deep Dubstep, Future Bass, syncopated drums, vocal hook").includes("TOO_MANY_EQUAL_GENRES"));
+  assert.ok(!ids("Trap groove, Deep Dubstep bass, Future Bass chords and hook, 140 BPM").includes("TOO_MANY_EQUAL_GENRES"));
+});
+
+test("a section word near a bass source does not separate it", () => {
+  assert.ok(ids("dubstep with 808, reese, wobble and growl bass under a vocal chorus").includes("MASSIVE_FULL_RANGE_BASS_STACK"));
+});
+
+test("a folk brief without a native route gets no hook note", () => {
+  assert.ok(!ids("folk with acoustic guitar, instrumental, surprise me").includes("UNDEFINED_HOOK"));
+});
+
+test("hats requested with any adjective conflict with a blanket hat exclusion", () => {
+  assert.ok(ids("trap with crisp hi-hats, no hi-hats").includes("ELECTRONIC_HATS_EXCLUDED"));
+});
+
+test("a melodic genre name is not a hook", () => {
+  assert.ok(ids("melodic dubstep, 150 BPM, dark, instrumental").includes("UNDEFINED_HOOK"));
+});
+
+test("bare UKG is not a 2-step kick", () => {
+  assert.ok(!ids("UKG with four-on-the-floor kicks, vocal chop hook").includes("TWO_PRIMARY_KICK_SYSTEMS"));
+  assert.ok(ids("uk garage with four-on-the-floor kicks, vocal chop hook").includes("TWO_PRIMARY_KICK_SYSTEMS"));
+});
+
+// v5.4.1: second review round.
+test("words inside a multiword genre name are not role owners", () => {
+  assert.ok(ids("Drum and Bass, Trap, Dubstep, piano and drums, bass melody").includes("TOO_MANY_EQUAL_GENRES"));
+});
+
+test("drum and bass without a native route still gets the hook note", () => {
+  assert.ok(ids("Drum and Bass, instrumental, surprise me").includes("UNDEFINED_HOOK"));
+});
+
+test("'on the half-time pulse' is not a section", () => {
+  assert.ok(ids("dubstep with 808, reese, wobble and growl on the half-time pulse, vocal hook").includes("MASSIVE_FULL_RANGE_BASS_STACK"));
+});
+
+test("hats mentioned only to rule them out are not a request", () => {
+  assert.ok(!ids("trap; hats should never play; no hats").includes("ELECTRONIC_HATS_EXCLUDED"));
+});
+
+test("a recurring melodic line is a hook", () => {
+  assert.ok(!ids("dubstep, instrumental, a recurring melodic line on piano").includes("UNDEFINED_HOOK"));
+});
