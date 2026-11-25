@@ -1,4 +1,5 @@
 import { extractConstraintIntent, parseKeyIntent, parseMeterIntent, parseTempoIntent, phraseExcluded } from "./intent.ts";
+import { briefTempoFromGenre, tempoGenreNumbers } from "./tempo-genre.ts";
 import { parseUserInput } from "./parse.ts";
 
 export type FidelityStatus = "matched" | "different" | "not-found" | "review";
@@ -200,14 +201,21 @@ export function analyzePromptFidelity(sourceText: string, styleText: string, exc
   };
 
   const tempo = parseTempoIntent(source.positiveText);
-  const targetTempos = tempo.mentions.filter(x => x.role === "target" || x.role === "range");
+  const explicitTargets = tempo.mentions.filter(x => x.role === "target" || x.role === "range");
+  // "138 UKG Dubstep" with no BPM asks for 138 (bare "140" is only the genre's name), as generation reads it.
+  const genreTempo = explicitTargets.length ? undefined : briefTempoFromGenre(source.positiveText);
+  const targetTempos = genreTempo == null ? explicitTargets
+    : [{ value: genreTempo, upper: undefined as number | undefined, role: "target" as const, raw: `${genreTempo} (genre name)` }];
   if (targetTempos.length) {
     const first = targetTempos[0];
     const from = first.value;
     const to = first.upper ?? first.value;
     const conflicts = targetTempos.some(x => x.value !== from || (x.upper ?? x.value) !== to);
-    const generatedTargets = parseTempoIntent(outputPositive).mentions
-      .filter(x => x.role === "target" || x.role === "range");
+    // A genre name that carries the tempo ("138 UKG Dubstep") states the destination tempo too.
+    const generatedTargets = [
+      ...parseTempoIntent(outputPositive).mentions,
+      ...tempoGenreNumbers(outputPositive).map(value => ({ value, upper: undefined as number | undefined, role: "target" as const, raw: value + " (genre name)" })),
+    ].filter(x => x.role === "target" || x.role === "range");
     const acceptable = generatedTargets.some(x => x.value >= Math.min(from, to) &&
       x.value <= Math.max(from, to) && (x.upper == null || (x.upper >= Math.min(from, to) && x.upper <= Math.max(from, to))));
     const differing = generatedTargets.find(x => x.value < Math.min(from, to) ||

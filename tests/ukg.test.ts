@@ -54,10 +54,12 @@ describe("reading UKG and UK garage in a brief", () => {
 
 describe("UKG prompts", () => {
   for (const brief of ["UKG Dubstep", "UKG", "ukg dubstep, dark", "UKG, male rap", "UKG Dubstep, female vocals"]) {
-    it(`"${brief}" is 140 BPM half-time trap drums with a skippy hat and shaker topline`, () => {
+    it(`"${brief}" is 135–145 BPM half-time trap drums with a skippy hat and shaker topline`, () => {
       for (const p of promptsFor(brief)) {
-        assert.equal(p.plan.bpm, 140, p.styles);
-        assert.match(p.styles, /\b140 BPM\b/, p.styles);
+        assert.ok(p.plan.bpm >= 135 && p.plan.bpm <= 145, p.styles);
+        // The tempo is the number in the full "NNN UKG Dubstep" phrase; no separate BPM.
+        assert.match(p.styles, new RegExp(`\\b${p.plan.bpm} UKG Dubstep\\b`), p.styles);
+        assert.doesNotMatch(p.styles, /\bBPM\b/, p.styles);
         assert.equal(p.plan.metricFeel, "half-time", p.styles);
         assert.match(p.styles, /\btrap\b/i, p.styles);
         assert.match(p.styles, /skipp|shuffl|syncopated/i, p.styles);

@@ -5,8 +5,9 @@ import { genreNamesLongestFirst, matchGenre } from "./ontology.ts";
 import { extractBriefPhrases } from "./brief.ts";
 import { GENERAL_SUB, NATIVE_SUBS } from "./native/catalog.ts";
 import { labelOf, nativeCovers, nativeHits } from "./native/compose.ts";
-import { NativeRoute, ParsedInput, VocalPreferences } from "./types.ts";
+import { NativeRoute, ParsedInput, PromptLength, VocalPreferences } from "./types.ts";
 import { extractConstraintIntent, parseTempoIntent, parseKeyIntent, parseMeterIntent, parseArrangementCues } from "./intent.ts";
+import { briefTempoFromGenre, inTempoWindow, namesTempoGenre, parseFormTempoGenres } from "./tempo-genre.ts";
 
 const COUNT_RE = /(?:generate|make|create|variants?|prompts?)\s*[:=]?\s*(\d{1,2})\b/i;
 const N_FLAG_RE = /(?:^|\s)(?:-n|--count)\s*(\d{1,2})\b/i;
@@ -148,11 +149,16 @@ export function parseUserInput(
     variationMode?: "precision" | "exploration" | "ab";
     /** The Instrumental toggle: a brief that never mentions vocals stays instrumental. */
     instrumentalDefault?: boolean;
+    /** Detailed (800–975) or Tight (600–850) prompts. */
+    length?: PromptLength;
   }
 ): ParsedInput {
   // Fix mode re-reads the compiler's own output; its filler sentences are not user intent.
   const constraintIntent = extractConstraintIntent(stripTemplateBoilerplate(raw.trim()));
-  const text = constraintIntent.positiveText;
+  const sourceText = constraintIntent.positiveText;
+  // Tempo-named genres in any spelling ("138 Bass", "Deep 138", "Dubstep UKG") are read as the genre the library
+  // knows; their number is read as the tempo below, from the brief as written.
+  const text = parseFormTempoGenres(sourceText);
   const lower = text.toLowerCase();
   const looksLikeDraft =
     text.length > 400 ||
@@ -164,8 +170,9 @@ export function parseUserInput(
   const countMatch = text.match(COUNT_RE) || text.match(N_FLAG_RE);
   if (countMatch) count = Math.min(12, Math.max(1, parseInt(countMatch[1], 10)));
 
-  const tempoIntent = parseTempoIntent(text);
-  const bpm = tempoIntent.bpm;
+  const tempoIntent = parseTempoIntent(sourceText);
+  // "138 UKG dubstep" with no BPM asks for 138; the genre's own "140" sets nothing (tempo-genre.ts).
+  const bpm = tempoIntent.bpm ?? briefTempoFromGenre(sourceText);
 
   const wantsVariety =
     /\b(variety|various|diverse|surprise|random|wild|explore|anything|something new|mix it up|different genres?|full library)\b/i.test(
@@ -410,10 +417,19 @@ export function parseUserInput(
   }
 
   return {
-    raw: instrumentText,
+    // The brief as written (genre spellings included), for the Fidelity Inspector and the brief-word checks.
+    raw: sourceText === text ? instrumentText : dropMismatchedCompiled(sourceText, finalGenres),
     count,
     genres: finalGenres,
-    genreNotes: [...blend.notes, ...(bpm != null && !native ? bpmNotes(genres, bpm) : []), ...nativeNotes],
+    genreNotes: [
+      ...blend.notes,
+      ...(bpm != null && !native ? bpmNotes(genres, bpm) : []),
+      ...nativeNotes,
+      ...(bpm != null && !inTempoWindow(bpm) && namesTempoGenre([...finalGenres, text].join(" "))
+        ? [`Tempo-named genres ("140 UKG Dubstep", "140 Bass") carry their number only at 135–145 BPM, so at ${bpm} BPM they are written without it ("UKG", "UK bass").`]
+        : []),
+    ],
+    length: options?.length,
     scenes: phrases.scenes,
     textures: phrases.textures,
     instrumentPhrases: phrases.instrumentPhrases,

@@ -80,6 +80,9 @@ function toHistoryEntry(v: unknown): HistoryEntry | null {
     brief: v.brief,
     seed: isNumber(v.seed) ? v.seed : 0,
     profileEnabled: typeof v.profileEnabled === "boolean" ? v.profileEnabled : true,
+    // Settings recorded with the entry (v5.6.0+, v5.8.0+) survive a reload and an export.
+    ...(typeof v.instrumentalDefault === "boolean" ? { instrumentalDefault: v.instrumentalDefault } : {}),
+    ...(v.promptLength === "detailed" || v.promptLength === "tight" ? { promptLength: v.promptLength } : {}),
     prompts,
   };
 }

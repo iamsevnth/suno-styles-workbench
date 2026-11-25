@@ -53,9 +53,9 @@ export default function AiConsentDialog({ availability, onAgree, onDecline }: {
             <li><strong className="text-[var(--fg)]">AI only runs when you click Reword with AI</strong>, on one result at a time. It never runs by itself.</li>
             <li>It changes only the wording of that prompt. The Workbench engine still builds every prompt, and the plan, genres, BPM and roles stay the same.</li>
             <li>AI wording is shown only if it passes the Workbench's checks, and it is always labeled <strong className="text-[var(--fg)]">AI wording</strong>. Prompts without that label were written without AI.</li>
-            <li>The model runs in Chrome on this computer. The Workbench sends nothing to an AI service.</li>
+            <li>The model runs in your browser on this computer. The Workbench sends nothing to an AI service.</li>
             {availability !== "available" && (
-              <li>Chrome doesn't have the model yet. It will ask you again before it downloads the model from Google, the first time you reword.</li>
+              <li>Your browser doesn't have the model yet. You'll be asked again before it downloads the model (Chrome from Google, Edge from Microsoft), the first time you reword.</li>
             )}
           </ul>
           <p className="m-0">You can turn AI off at any time in AI Assist.</p>

@@ -15,8 +15,15 @@ import {
 import { generateStylesPrompts } from "../lib/suno/generate.ts";
 import { pickSuggestions, SURPRISE_BRIEF } from "../lib/suno/suggestions.ts";
 import { historyFileStamp } from "../lib/suno/title-case.ts";
-import { GenerateResult, HistoryEntry, PromptCandidate } from "../lib/suno/types.ts";
+import { GenerateResult, HistoryEntry, PromptCandidate, PromptLength } from "../lib/suno/types.ts";
 import { formatAllPromptsTxt } from "../lib/suno/v6.ts";
+import { formatTitle } from "../lib/suno/render.ts";
+
+/** Wording a result card shows instead of the engine's: a Rephrase, or a checked answer from the user's assistant. */
+export interface ActiveWording {
+  text: string;
+  source: "rephrase" | "assistant";
+}
 
 const STORAGE_KEY = "suno-styles-generator:v1";
 const SUGGEST_KEY = "suno-styles-suggestions:v1";
@@ -31,12 +38,14 @@ interface SessionSnapshot {
   count: number;
   profileEnabled: boolean;
   instrumentalDefault: boolean;
+  promptLength: PromptLength;
   variationMode: "precision" | "exploration" | "ab";
   generation: number;
   seedUsed: number;
   lastAction: string;
   prompts: PromptCandidate[];
   parsed: Parsed | null;
+  wordings: Record<number, ActiveWording>;
 }
 
 type StorageArea = "session" | "local";
@@ -69,13 +78,28 @@ function readSession(): StoredSession {
     count: count != null && count >= 1 && count <= 12 ? Math.round(count) : undefined,
     profileEnabled: typeof r.profileEnabled === "boolean" ? r.profileEnabled : undefined,
     instrumentalDefault: r.instrumentalDefault === true,
+    promptLength: r.promptLength === "tight" ? "tight" : "detailed",
     variationMode: r.variationMode === "exploration" || r.variationMode === "ab" ? r.variationMode : "precision",
     generation: num(r.generation),
     seedUsed: num(r.seedUsed),
     lastAction: str(r.lastAction),
     hasResults: r.hasResults === true && isRestorableResult(r.result),
     result: isRestorableResult(r.result) ? (r.result as StoredSession["result"]) : undefined,
+    wordings: readWordings(r.wordings),
   };
+}
+
+/** Stored card wordings (Rephrase or an assistant's answer), keeping only well-formed entries. */
+function readWordings(v: unknown): Record<number, ActiveWording> {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return {};
+  const out: Record<number, ActiveWording> = {};
+  for (const [k, w] of Object.entries(v as Record<string, unknown>)) {
+    const i = Number(k);
+    if (!Number.isInteger(i) || i < 0 || typeof w !== "object" || w === null) continue;
+    const { text, source } = w as Record<string, unknown>;
+    if (typeof text === "string" && text && (source === "rephrase" || source === "assistant")) out[i] = { text, source };
+  }
+  return out;
 }
 
 interface StoredSession {
@@ -84,12 +108,14 @@ interface StoredSession {
   count?: number;
   profileEnabled?: boolean;
   instrumentalDefault?: boolean;
+  promptLength?: PromptLength;
   variationMode?: "precision" | "exploration" | "ab";
   generation?: number;
   seedUsed?: number;
   lastAction?: string;
   hasResults?: boolean;
   result?: { prompts: PromptCandidate[]; parsed: Parsed };
+  wordings?: Record<number, ActiveWording>;
 }
 
 function saveSession(s: SessionSnapshot): void {
@@ -99,12 +125,14 @@ function saveSession(s: SessionSnapshot): void {
     count: s.count,
     profileEnabled: s.profileEnabled,
     instrumentalDefault: s.instrumentalDefault,
+    promptLength: s.promptLength,
     variationMode: s.variationMode,
     generation: s.generation,
     seedUsed: s.seedUsed,
     lastAction: s.lastAction,
     hasResults: s.prompts.length > 0,
     result: s.prompts.length && s.parsed ? { prompts: s.prompts, parsed: s.parsed } : undefined,
+    wordings: s.prompts.length ? s.wordings : undefined,
   };
   writeJson("session", STORAGE_KEY, stored);
 }
@@ -120,7 +148,7 @@ function initialSuggestions(): string[] {
   return fresh;
 }
 
-function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, instrumentalDefault: boolean, prompts: PromptCandidate[]): HistoryEntry {
+function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, instrumentalDefault: boolean, promptLength: PromptLength, prompts: PromptCandidate[]): HistoryEntry {
   return {
     id: `${Date.now()}-${seed}`,
     createdAt: new Date().toISOString(),
@@ -128,6 +156,7 @@ function toHistoryEntry(brief: string, seed: number, profileEnabled: boolean, in
     seed,
     profileEnabled,
     instrumentalDefault,
+    promptLength,
     prompts: prompts.map((p) => ({
       title: p.title,
       seed: p.seed,
@@ -154,6 +183,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [count, setCount] = useState(stored.count ?? DEFAULT_COUNT);
   const [profileEnabled, setProfileEnabled] = useState(stored.profileEnabled ?? true);
   const [instrumentalDefault, setInstrumentalDefault] = useState(stored.instrumentalDefault ?? false);
+  const [promptLength, setPromptLength] = useState<PromptLength>(stored.promptLength ?? "detailed");
   const [variationMode, setVariationMode] = useState<"precision" | "exploration" | "ab">(stored.variationMode ?? "precision");
   const [generation, setGeneration] = useState(stored.generation ?? 0);
   const [seedUsed, setSeedUsed] = useState(stored.seedUsed ?? 0);
@@ -163,12 +193,14 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
   const [suggestions, setSuggestions] = useState<string[]>(initialSuggestions);
   const [history, setHistory] = useState<HistoryEntry[]>(() => loadHistory(storageFor("local")));
   const [isGenerating, setIsGenerating] = useState(false);
+  // Per result (by position): the wording on the card when it isn't the engine's. Cleared with new results.
+  const [wordings, setWordings] = useState<Record<number, ActiveWording>>(restored ? stored.wordings ?? {} : {});
   const briefRef = useRef<HTMLTextAreaElement>(null);
 
   // Persist the whole session on every change so switching pages never loses a draft brief.
   useEffect(() => {
-    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed });
-  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, variationMode, generation, seedUsed, lastAction, prompts, parsed]);
+    saveSession({ input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed, wordings });
+  }, [input, compilerMode, count, profileEnabled, instrumentalDefault, promptLength, variationMode, generation, seedUsed, lastAction, prompts, parsed, wordings]);
 
   const generate = () => {
     const brief = input.trim();
@@ -193,6 +225,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
         profileEnabled,
         // Fix mode rewrites an existing prompt, so the toggle doesn't apply there.
         instrumentalDefault: compilerMode === "fix" ? false : instrumentalDefault,
+        // Fix mode keeps the pasted prompt's own Detailed window.
+        length: compilerMode === "fix" ? "detailed" : promptLength,
         seed,
         avoidFingerprints,
         mode: compilerMode === "fix" ? "rewrite" : undefined,
@@ -201,11 +235,12 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
       const nextGeneration = generation + 1;
 
       setSeedUsed(seed);
+      setWordings({});
       setPrompts(out.prompts);
       setParsed(out.parsed);
       setGeneration(nextGeneration);
 
-      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, compilerMode !== "fix" && instrumentalDefault, out.prompts)]);
+      const saved = saveHistory(storageFor("local"), [...history, toHistoryEntry(brief, seed, profileEnabled, compilerMode !== "fix" && instrumentalDefault, compilerMode === "fix" ? "detailed" : promptLength, out.prompts)]);
       setHistory(saved.kept);
 
       const head = out.prompts[0]?.styles.slice(0, 48).replace(/\s+/g, " ") ?? "";
@@ -243,6 +278,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     setGeneration(0);
     setSeedUsed(0);
     setPrompts([]);
+    setWordings({});
     setParsed(null);
     setLastAction("Reset — input, mode and current variations cleared. History kept.");
     briefRef.current?.focus();
@@ -250,6 +286,7 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const clearResults = () => {
     setPrompts([]);
+    setWordings({});
     setLastAction("Current results cleared. Brief and history kept.");
   };
 
@@ -285,6 +322,32 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     );
   };
 
+  /** A card reports the wording it shows; null means it is back to the engine's. */
+  const setWording = (index: number, wording: ActiveWording | null) => {
+    setWordings((current) => {
+      const next = { ...current };
+      if (wording) next[index] = wording;
+      else delete next[index];
+      return next;
+    });
+  };
+
+  /** The results as the cards show them. */
+  const shownPrompts = (): PromptCandidate[] =>
+    prompts.map((p, i) => {
+      const w = wordings[i];
+      return w ? { ...p, styles: w.text, characters: w.text.length, title: formatTitle(p.seed, p.bpm, p.key, w.text.length) } : p;
+    });
+
+  const changeLength = (length: PromptLength) => {
+    setPromptLength(length);
+    setLastAction(
+      length === "tight"
+        ? "Length: Tight (600–850 characters) — used on the next Generate Styles."
+        : "Length: Detailed (800–975 characters) — used on the next Generate Styles."
+    );
+  };
+
   const copyStyle = async (styles: string) => {
     const ok = await copyToClipboard(styles);
     showDialog(
@@ -298,7 +361,8 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
 
   const downloadAllPrompts = async () => {
     if (!prompts.length) return;
-    const text = formatAllPromptsTxt(prompts);
+    // The pack carries what each card shows: a Rephrase or an assistant's wording where one is in use.
+    const text = formatAllPromptsTxt(shownPrompts());
     const filename = `suno-styles-${historyFileStamp()}.txt`;
     downloadFile(filename, text, "text/plain;charset=utf-8");
     const ok = await copyToClipboard(text);
@@ -339,6 +403,10 @@ export function useStylesWorkbench(showDialog: ShowDialog) {
     toggleProfile,
     instrumentalDefault,
     toggleInstrumental,
+    promptLength,
+    changeLength,
+    wordings,
+    setWording,
     variationMode,
     setVariationMode,
     generation,

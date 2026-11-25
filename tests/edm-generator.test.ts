@@ -24,6 +24,8 @@ interface Case {
   bpm: [number, number];
   /** Wording this genre must carry somewhere in its prompt (at least once across the seeds). */
   signature: RegExp;
+  /** The genre name carries the tempo ("140 UKG Dubstep"), so the prompt writes no separate BPM. */
+  tempoInName?: boolean;
   /** Wording the genre itself makes legitimate for the bleed gate (phonk is cassette-saturated). */
   allow?: string;
 }
@@ -33,7 +35,8 @@ const CASES: Case[] = [
   { brief: "bass house", opens: /^Bass house at/, bpm: [124, 132], signature: /four-on-the-floor|bass riff|mid-bass/i },
   { brief: "dubstep", opens: /^Dubstep at/, bpm: [138, 150], signature: /half-time|growl|mid-bass|snare/i },
   { brief: "wobble bass, wubs", opens: /^Wobble bass at/, bpm: [140, 150], signature: /wobble|LFO|wob/i },
-  { brief: "UKG dubstep", opens: /^UKG Dubstep at 140 BPM/, bpm: [140, 140], signature: /skippy|syncopated/i },
+  // The tempo lives in the genre name ("140 UKG Dubstep"), varied 135–145 across siblings; no separate BPM.
+  { brief: "UKG dubstep", opens: /^1(?:3[5-9]|4[0-5]) UKG Dubstep with/, bpm: [135, 145], signature: /skippy|syncopated/i, tempoInName: true },
   { brief: "EDM trap", opens: /^EDM trap at/, bpm: [138, 152], signature: /808/i },
   { brief: "future bass", opens: /^Future bass at/, bpm: [128, 160], signature: /supersaw|pluck|chord/i },
   { brief: "future house", opens: /^Future house at/, bpm: [124, 130], signature: /four-on-the-floor|offbeat|stab|bass/i },
@@ -69,7 +72,7 @@ describe("priority genres run on the native generator", () => {
         assert.ok(p.plan.native?.edm, `${c.brief} should be a native bass/rap plan: ${p.styles}`);
         assert.match(p.styles, c.opens, p.styles);
         assert.ok(p.bpm >= c.bpm[0] && p.bpm <= c.bpm[1], `${p.bpm} BPM outside ${c.bpm.join("-")}`);
-        assert.equal((p.styles.match(/\b\d{2,3} BPM\b/g) ?? []).length, 1, p.styles);
+        assert.equal((p.styles.match(/\b\d{2,3} BPM\b/g) ?? []).length, c.tempoInName ? 0 : 1, p.styles);
         assert.ok(p.characters >= MIN_CHARS && p.characters <= MAX_CHARS, `${p.characters}`);
         assert.ok(p.characters <= 1000);
         assert.ok(criticalGatesPass(p.hardGates), JSON.stringify(p.hardGates));
@@ -150,9 +153,9 @@ describe("sibling genres stay genuinely distinct", () => {
     assert.doesNotMatch(wobble, /tamborz|dembow/i);
   });
 
-  it("UKG dubstep is 140 BPM half-time trap drums, never UK garage", () => {
+  it("UKG dubstep is 135–145 BPM half-time trap drums, never UK garage", () => {
     for (const p of promptsFor("UKG dubstep")) {
-      assert.equal(p.bpm, 140);
+      assert.ok(p.bpm >= 135 && p.bpm <= 145, String(p.bpm));
       assert.doesNotMatch(p.styles, /\bgarage\b|2-step|two-step|organ stab|diva/i, p.styles);
     }
     for (const p of promptsFor("UK garage")) assert.doesNotMatch(p.styles, /skippy|trap kick|\bUKG\b|dubstep/i, p.styles);

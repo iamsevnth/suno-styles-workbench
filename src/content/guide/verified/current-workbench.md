@@ -1,12 +1,12 @@
 # Suno Workbench v5.3 — Start Here
 
-**Current Workbench documentation, checked November 4, 2026 and updated for v5.7.1 on November 23, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
+**Current Workbench documentation, checked November 4, 2026 and updated for v5.8.0 on November 24, 2026.** The earlier v4 manuscript remains available as historical reference; use this chapter and the other **Current** chapters when instructions conflict.
 
 ## What Workbench Does
 
 Suno Workbench is a **browser-only, deterministic Styles Compiler, source-preserving Lyrics Arranger and Prompt Fidelity Inspector** with a searchable production Guide and a downloadable, self-contained offline HTML edition. It does not create music, call Suno's generation API, or send original prompts or lyric content to an application backend.
 
-Workbench's Styles Compiler targets 800–975 characters with a 1,000-character hard cap. These are **Workbench application constraints**, not Suno-published optimal prompt lengths. Suno determines the generated audio, so compliance with a text rule never proves an audible result.
+Workbench's Styles Compiler targets 800–975 characters with a 1,000-character hard cap (**Detailed**, the default), or 600–850 characters (**Tight**). The vocal description takes at most 25% of a Detailed prompt and 15% of a Tight one. These are **Workbench application constraints**, not Suno-published optimal prompt lengths. Suno determines the generated audio, so compliance with a text rule never proves an audible result.
 
 ## Quick Workflow: Generate or Repair Styles
 
@@ -44,6 +44,29 @@ Its four evidence labels are **Text Matched**, **Explicit Difference**, **Not De
 In Fix Mode, an optional **Original Intent / Brief** lets you compare both the pre-Fix prompt and fixed output against that same earlier source. Without that separate brief, Workbench cannot determine whether the original pre-Fix prompt already diverged from the user's true intentions. Reports can be exported locally in JSON format.
 
 Read **Prompt Fidelity Inspector — v5.3 Field Guide** and the repository [methodology](https://github.com/iamsevnth/suno-workbench/blob/main/docs/PROMPT_FIDELITY_METHODOLOGY.md).
+
+### v5.8.0: Tempo-Named Genres, Prompt Length, Research Wording and Rephrase
+
+- **Tempo-named genres.** Any two of **140**, **UKG** and **Dubstep** written together form one phrase, always written in full as **"140 UKG Dubstep"**. Its number is the prompt's tempo, so the prompt names no separate BPM.
+  - With no tempo in the brief, the first prompt is 140 and sibling prompts vary between 135 and 145.
+  - **"140 Bass"**, **"Deep 140"** and **"Wubby 140"** follow the same rule.
+  - A tempo in the brief always wins. Outside 135–145 the name drops its number ("UKG", "UK bass") and the prompt writes the BPM.
+  - Only the first tempo-named genre carries the number.
+- **Prompt Length.**
+  - **Detailed**: 800–975 characters, the default.
+  - **Tight**: 600–850 characters.
+  - The vocal description takes at most 25% (Detailed) or 15% (Tight) of the characters.
+  - Each result reports its length and vocal share.
+- **Research wording.**
+  - Bass-music prompts pair the hook and the bass as call and response.
+  - An arc with a drop says what the final drop changes.
+  - Prompts carry two or three mix priorities.
+  - When a prompt is trimmed, decoration goes before the groove, the hook-and-bass relationship and the drop progression.
+- **Rephrase · no AI.** This button gives new wording for the same plan from the Workbench engine. The wording is shown only if it passes the checks.
+- **Reword with your own AI assistant.** This works in any browser, including Brave and Edge.
+  - You copy a request into Brave Leo, Copilot, ChatGPT or another assistant, then paste its answer back.
+  - The answer is used only if it passes the Workbench checks, and it is labeled as AI wording.
+  - What you paste into an assistant goes to that company's service. The Workbench sends nothing.
 
 ### v5.7.1: AI Permission Fixes
 
@@ -110,7 +133,7 @@ The hosted site and offline application process creative material locally; there
 
 The standalone HTML includes the app, this full Guide and the searchable reference index. Open the file directly in a modern desktop browser. Links to external Suno documentation require internet access, but core Workbench functions do not.
 
-The **official v5.7.1 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.7.1.html`. The GitHub release is [v5.7.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
+The **official v5.8.0 release** includes a self-contained HTML file named `suno-workbench-sevnthlabs-v5.8.0.html`. The GitHub release is [v5.8.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.8.0), built from the validated `main` commit for that version. Verify the SHA-256 checksum before redistribution.
 
 ## Source Status and Official Documentation
 

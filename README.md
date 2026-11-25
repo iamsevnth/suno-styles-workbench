@@ -11,7 +11,7 @@ A free, browser-only toolkit for Suno v6. Suno Workbench creates detailed Styles
 
 **Live Site:** https://sunoworkbench.com  
 **Guide:** https://sunoworkbench.com/guide  
-**Official v5.7.1 Release:** [suno-workbench-sevnthlabs-v5.7.1](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1)  
+**Official v5.8.0 Release:** [suno-workbench-sevnthlabs-v5.8.0](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.8.0)  
 **Privacy Policy:** https://sunoworkbench.com/privacy-policy  
 **Security Policy:** [SECURITY.md](SECURITY.md)
 
@@ -70,16 +70,16 @@ dist/suno-workbench.html
 
 Open that file directly in a current desktop browser. The offline builder inlines the application assets and rewrites the Content Security Policy to permit only the exact inlined scripts and styles by SHA-256 hash.
 
-### Official v5.7.1 Standalone Download
+### Official v5.8.0 Standalone Download
 
-The official [GitHub v5.7.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1) is titled **suno-workbench-sevnthlabs-v5.7.1** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.7.0, v5.6.0, v5.5.0, v5.4.x and v5.3.x offline packages for current downloads.
+The official [GitHub v5.8.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.8.0) is titled **suno-workbench-sevnthlabs-v5.8.0** and includes the self-contained HTML as a direct **release asset**, not merely the source-code ZIP. It supersedes the immutable v5.7.1, v5.7.0, v5.6.0, v5.5.0, v5.4.x and v5.3.x offline packages for current downloads.
 
-- **[suno-workbench-sevnthlabs-v5.7.1.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.1/suno-workbench-sevnthlabs-v5.7.1.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
-- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.7.1/suno-workbench-sevnthlabs-v5.7.1.html.sha256)** — allows verification of the downloaded HTML.
+- **[suno-workbench-sevnthlabs-v5.8.0.html](https://github.com/iamsevnth/suno-workbench/releases/download/v5.8.0/suno-workbench-sevnthlabs-v5.8.0.html)** — one-file offline application with the Guide, compiler, Brief Check, Fidelity Inspector, Lyrics Arranger and phonetics.
+- **[SHA-256 checksum](https://github.com/iamsevnth/suno-workbench/releases/download/v5.8.0/suno-workbench-sevnthlabs-v5.8.0.html.sha256)** — allows verification of the downloaded HTML.
 
 The standalone file is rebuilt from the validated release commit with `npm run build`, the complete test suite, TypeScript checking and the offline Content Security Policy validator before publication. No installation or account is needed for core offline use; external links to Suno documentation need an internet connection.
 
-To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.7.1.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.7.1.html` and compare its digest with the checksum file.
+To verify on Linux, place both downloads in one directory and run `sha256sum -c suno-workbench-sevnthlabs-v5.8.0.html.sha256`. On macOS, run `shasum -a 256 suno-workbench-sevnthlabs-v5.8.0.html` and compare its digest with the checksum file.
 
 ## Usage and Examples
 
@@ -322,7 +322,9 @@ Security-sensitive changes should preserve:
 
 ## Version History
 
-The current package version is **5.7.1**. v5.7.1 fixes the AI permission flow: an AI setting saved by v5.5/v5.6 is no longer carried over without the new permission dialog, the model-download question is asked once rather than on every result, keyboard focus stays in the permission dialog, and AI Assist is also shown in Fix mode so AI can always be turned off. See the [v5.7.1 release notes](docs/releases/v5.7.1.md); the official **[v5.7.1 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.7.1)** is titled **suno-workbench-sevnthlabs-v5.7.1**.
+The current package version is **5.8.0**. v5.8.0 fixes the repeated "140": any two of 140, UKG and Dubstep are written as one phrase, "140 UKG Dubstep", with the tempo as its number (135–145) and no separate BPM; "140 Bass", "Deep 140", "140 Grime" and "140 Halftime" follow the same rule. It adds a **Prompt Length** choice (Detailed 800–975 or Tight 600–850, with vocals capped at 25% or 15% of the characters), **Rephrase · no AI** on every result, and **Reword with your own AI assistant**, a copy-and-paste flow for Brave Leo, Copilot or any assistant, checked before use. Prompts now follow the 2026-11-23 research wording: hook and bass as call and response, what the final drop changes, and two or three mix priorities. See the [v5.8.0 release notes](docs/releases/v5.8.0.md); the official **[v5.8.0 Release](https://github.com/iamsevnth/suno-workbench/releases/tag/v5.8.0)** is titled **suno-workbench-sevnthlabs-v5.8.0**.
+
+v5.7.1 fixed the AI permission flow: an AI setting saved by v5.5/v5.6 is no longer carried over without the new permission dialog, the model-download question is asked once rather than on every result, keyboard focus stays in the permission dialog, and AI Assist is also shown in Fix mode so AI can always be turned off. See the [v5.7.1 release notes](docs/releases/v5.7.1.md).
 
 v5.7.0 made AI use visible: an always-visible **AI Assist** section with its status, a permission dialog before AI turns on, a second prompt before Chrome downloads its model, and labels that say which prompts were written without AI and which wording came from AI. See the [v5.7.0 release notes](docs/releases/v5.7.0.md).
 

@@ -1,7 +1,10 @@
 import { conceptsOf, reconcileMoods } from "../blend.ts";
-import { MIN_CHARS, MAX_CHARS } from "../limits.ts";
+import { MIN_CHARS, MAX_CHARS, lengthWindow, vocalBudget } from "../limits.ts";
 import { phraseExcluded } from "../intent.ts";
 import { applyNativeIdentity } from "./identity.ts";
+import { applyTempoGenres, hasTempoGenre, inTempoWindow, windowTempo } from "../tempo-genre.ts";
+import { allowedDeltas, RELATIONAL, withDropDelta } from "../wording.ts";
+import { familyKeys, hasDrops } from "../families.ts";
 import { moodClash, nonEdmBleed } from "../consistency.ts";
 import { hashString, mulberry32 } from "../rng.ts";
 import { NativeRoute, NativeParts, ParsedInput, SonicPlan, VocalPreferences } from "../types.ts";
@@ -10,8 +13,8 @@ import { NativeSub } from "./types.ts";
 
 export const NATIVE_MIN = MIN_CHARS;
 export const NATIVE_MAX = MAX_CHARS;
-/** A production-detail target comfortably inside the 800–975-character window. */
-const NATIVE_FILL = 875;
+/** A production-detail target comfortably inside each window: 875 of 800–975, 735 of 600–850. */
+const NATIVE_FILL = { detailed: 875, tight: 735 } as const;
 
 const subById = (id: string): NativeSub => NATIVE_SUBS.find((s) => s.id === id) ?? GENERAL_SUB;
 
@@ -205,7 +208,7 @@ function styleOf(v: VocalPreferences | undefined, fallback: string | undefined):
   return v?.style ?? (asked ? "sung" : fallback);
 }
 
-function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean, fallbackStyle?: string): string {
+function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: boolean, fallbackStyle?: string, budget = Infinity): string {
   if (instrumental) return "";
   const v = parsed.vocals;
   const voice = voiceOf(v);
@@ -225,7 +228,14 @@ function vocalLine(parsed: ParsedInput, approaches: string[], instrumental: bool
   const processing = processingAll.filter((x) => !own.some((o) => o.toLowerCase().includes(x.toLowerCase().split(/[\s-]+/)[0].slice(0, 6)))).slice(0, detailed ? 3 : v?.processingFromBrief ? 1 : processingAll.length ? 1 : 0);
   const taken = wordsOf([subject, ...own, ...processing].join(" "));
   const approach = approaches.find((a) => ![...wordsOf(a)].some((w) => w.length > 3 && taken.has(w))) ?? approaches[0];
-  return [subject, ...own, ...processing, own.length || processing.length ? "" : approach].filter(Boolean).join(", ");
+  // Over the vocal share (25% Detailed, 15% Tight): the planned approach goes first, then the brief's own
+  // descriptors from the last, and the effects the brief asked for ("light autotune") go last of all.
+  const kept = { own: [...own], processing: [...processing], approach: own.length || processing.length ? "" : approach };
+  const line = () => [subject, ...kept.own, ...kept.processing, kept.approach].filter(Boolean).join(", ");
+  if (line().length > budget) kept.approach = "";
+  while (line().length > budget && kept.own.length) kept.own.pop();
+  while (line().length > budget && kept.processing.length > 1) kept.processing.pop();
+  return line();
 }
 
 const PROPER: [RegExp, string][] = [[/\brhodes\b/gi, "Rhodes"], [/\bwurlitzer\b/gi, "Wurlitzer"], [/\bhammond\b/gi, "Hammond"], [/\bfender\b/gi, "Fender"]];
@@ -273,6 +283,20 @@ function distinct(lists: string[][]): string[][] {
   });
 }
 
+/** Drops trailing comma parts of the vocal line, then trailing words, until it fits the budget. */
+function fitVocal(line: string, budget: number): string {
+  if (line.length <= budget) return line;
+  const parts = line.split(/,\s*/);
+  while (parts.length > 1 && parts.join(", ").length > budget) parts.pop();
+  let out = parts.join(", ");
+  if (out.length > budget) {
+    const words = out.split(/\s+/);
+    while (words.length > 2 && words.join(" ").length > budget) words.pop();
+    out = words.join(" ");
+  }
+  return out;
+}
+
 function nativeDetail(v: ParsedInput["vocals"]): "compact" | "detailed" {
   if (!v) return "compact";
   const traits = new Set([v.register, v.timbre, v.delivery, v.language, ...(v.descriptors ?? []), ...(v.processing ?? [])].filter(Boolean));
@@ -296,7 +320,7 @@ export function buildNativePlan(
     parsed.vocals?.present === false ||
     (!parsed.vocals?.present && !parsed.vocals?.presentation && !parsed.vocals?.style && primary.vocal === "none");
 
-  const bpm = Math.round(
+  let bpm = Math.round(
     parsed.bpm ?? (() => {
       const [lo, hi, mid] = primary.bpm;
       const jitter = (rng() - 0.5) * 0.4 * (hi - lo);
@@ -305,6 +329,10 @@ export function buildNativePlan(
       return Math.min(hi, Math.max(lo, slow + jitter * (slow === mid ? 1 : 0.5)));
     })()
   );
+
+  // A tempo-named genre ("UKG dubstep", "140 Bass") sets a tempo inside 135–145; siblings vary inside it.
+  const tempoNamed = hasTempoGenre([route.labels?.primary, route.labels?.secondary, route.labels?.tertiary, route.verbatim, primary.name, secondary?.name, tertiary?.name]);
+  if (tempoNamed && parsed.bpm == null) bpm = windowTempo(opts.diversityRank ?? opts.variantIndex ?? 0, rng);
 
   const bank = (key: keyof NativeSub): string[] => {
     const p = (primary[key] as string[] | undefined) ?? [];
@@ -371,7 +399,9 @@ export function buildNativePlan(
 
   const vocalStyle = styleOf(parsed.vocals, primary.vocalStyle);
   const approaches = vocalStyle && RAP_KIND[vocalStyle] && (primary.rapVocals?.length || secondary?.rapVocals?.length) ? bank("rapVocals") : bank("vocals");
-  const vocalSentence = proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle));
+  // The vocal clause ("with <vocal line>") keeps within its share of the prompt (25% Detailed, 15% Tight).
+  const budget = vocalBudget(parsed.length) - "with ".length;
+  const vocalSentence = fitVocal(proper(vocalLine(parsed, approaches, instrumental, primary.vocalStyle, budget)), budget);
   // A bass-music brief that already has "vocal chops" in its vocal line does not get them again as sound design.
   const noRepeatChops = (list: string[]) => (primary.edm && /\bchop/i.test(vocalSentence) ? list.filter((x) => !/\bchop/i.test(x)) : list);
   const [dLeads, dDrums, dBass, dHarmony, dTextures, dExtras] = distinct([
@@ -480,6 +510,8 @@ export function buildNativePlan(
     textures: briefTextures,
     variantAxes: ["lead", "vocal approach", "production era"],
     seed,
+    tempoGenre: tempoNamed && inTempoWindow(bpm),
+    length: parsed.length,
   };
 }
 
@@ -518,40 +550,75 @@ const GROW: (keyof Detail)[] = [
   "arrangement", "era", "textures", "mix", "extras", "ending", "harmony", "leads", "textures", "extras", "mix", "leads", "textures",
 ];
 
-function compose(plan: SonicPlan, d: Detail): string {
+/** Rotates a list by `by` places: the same phrases in a different order. */
+const rotate = (list: string[], by: number) => (list.length > 1 ? [...list.slice(by % list.length), ...list.slice(0, by % list.length)] : list);
+
+/** Sentence frames the Rephrase button cycles through; frame 0 is the original wording. */
+const LEAD_FRAMES = [
+  (leads: string, vocal: string) => (vocal ? `Led by ${leads}, with ${vocal}` : `Fully instrumental, led by ${leads}`),
+  (leads: string, vocal: string) => (vocal ? `The lead role goes to ${leads}, with ${vocal}` : `Fully instrumental, with the lead role on ${leads}`),
+  (leads: string, vocal: string) => (vocal ? `Front and center: ${leads}, with ${vocal}` : `Fully instrumental; front and center: ${leads}`),
+];
+const DRUM_HEADINGS = ["Drums", "Rhythm section", "Groove"];
+const PRODUCTION_HEADINGS = ["Production", "Mix and production", "Production priorities"];
+
+function compose(plan: SonicPlan, d: Detail, wording = 0): string {
   const n = plan.native as NativeParts;
   const s = n.sections;
   const out: string[] = [];
+  const vary = (list: string[]) => rotate(list, wording);
+  const frame = wording % LEAD_FRAMES.length;
 
-  const mood = plan.moodPhrase ? ` with ${article(plan.moodPhrase)} ${plan.moodPhrase} mood` : "";
+  // A genre name that carries the tempo ("137 UKG Dubstep") replaces "at 137 BPM"; a label that already
+  // says "with" takes the mood after a comma so the opening never reads "with ... with".
+  const carried = !!plan.tempoGenre && /\bwith\b/i.test(n.genreLabel);
+  const mood = plan.moodPhrase ? (carried ? `, ${article(plan.moodPhrase)} ${plan.moodPhrase} mood throughout` : ` with ${article(plan.moodPhrase)} ${plan.moodPhrase} mood`) : "";
   const scene = n.scenes.length ? `, evoking ${article(n.scenes[0])} ${listOf(n.scenes)} atmosphere` : "";
   const key = plan.key ? ` in ${plan.key}` : "";
   const meter = plan.meter ? `, ${plan.meter}` : "";
   const head = n.genreLabel ? `${n.genreLabel} at ${plan.bpm} BPM${meter}${key}` : `${plan.bpm} BPM${meter}${key}`;
   out.push(sentence(`${head}${mood}${scene}`));
 
-  const leads = listOf(take(s.leads, d.leads));
+  const leads = listOf(vary(take(s.leads, d.leads)));
   const vocal = s.vocal[0];
-  out.push(sentence(vocal ? `Led by ${leads}, with ${lowerFirst(vocal)}` : `Fully instrumental, led by ${leads}`));
+  out.push(sentence(LEAD_FRAMES[frame](leads, vocal ? lowerFirst(vocal) : "")));
 
-  if (d.drums && s.drums.length) out.push(sentence(`Drums: ${listOf(take(s.drums, d.drums))}`));
-  const low = [...take(s.bass, d.bass), ...take(s.harmony, d.harmony)];
+  if (d.drums && s.drums.length) out.push(sentence(`${DRUM_HEADINGS[frame]}: ${listOf(vary(take(s.drums, d.drums)))}`));
+  // Bass music: the first bass phrase answers the hook, so hook and bass read as call and response.
+  const drops = n.edm && hasDrops(familyKeys([plan.primaryGenre, plan.secondaryGenre, plan.accentGenre]));
+  const bassList = vary(take(s.bass, d.bass));
+  // Never with a word the brief excludes ("riddim, no hook").
+  const answering = `${bassList[0]} answering the hook in the gaps`;
+  if (drops && bassList[0] && leads && !RELATIONAL.test(bassList[0]) && !phraseExcluded(answering, plan.exclusions)) bassList[0] = answering;
+  const low = [...bassList, ...vary(take(s.harmony, d.harmony))];
   if (low.length) out.push(sentence(`${n.headings?.bass ?? "Bass and harmony"}: ${listOf(low)}`));
 
-  const tex = nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]);
+  // Near-duplicates are settled before the order varies, so a Rephrase keeps the same textures.
+  const tex = vary(nearDistinct([...take(s.textures, d.textures), ...take(s.extras, d.extras)]));
   if (tex.length) out.push(sentence(`${n.headings?.textures ?? "Textures"}: ${listOf(tex)}`));
 
-  const prod = [...take(s.era, d.era), ...take(s.mix, d.mix)];
-  if (prod.length) out.push(sentence(`Production: ${listOf(prod)}`));
+  // Two or three production priorities and no mastering buzzwords: a few consequential choices read better than a stack.
+  const mixes = take(s.mix.filter((x) => !/\bmaster/i.test(x)), Math.min(d.mix, 2));
+  const prod = [...take(s.era, d.era), ...vary(mixes)];
+  if (prod.length) out.push(sentence(`${PRODUCTION_HEADINGS[frame]}: ${listOf(prod)}`));
 
-  if (d.arrangement && s.arrangement.length) out.push(sentence(`Arrangement: ${listOf(take(s.arrangement, 1))}`));
+  if (d.arrangement && s.arrangement.length) {
+    const arc = listOf(take(s.arrangement, 1));
+    // The final-drop change is a musical choice, so it depends on the plan alone, never on the wording.
+    const deltas = allowedDeltas((x) => phraseExcluded(x, plan.exclusions));
+    const delta = deltas.length ? deltas[(plan.seed >>> 0) % deltas.length] : "";
+    out.push(sentence(`Arrangement: ${drops && delta ? withDropDelta(arc.split(/,\s*/), delta).join(", ") : arc}`));
+  }
   if (d.ending && s.ending.length) out.push(take(s.ending, 1)[0]);
 
-  return out.join(" ").replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  const text = out.join(" ").replace(/\s{2,}/g, " ").replace(/\s+([,.])/g, "$1").trim();
+  return applyTempoGenres(text, plan.bpm, !!plan.tempoGenre);
 }
 
-export function renderNative(plan: SonicPlan): string {
+export function renderNative(plan: SonicPlan, wording = 0): string {
   const n = plan.native as NativeParts;
+  const fill = NATIVE_FILL[plan.length ?? "detailed"];
+  const { max } = lengthWindow(plan.length);
   const d: Detail = {
     leads: 1,
     drums: 1,
@@ -568,14 +635,15 @@ export function renderNative(plan: SonicPlan): string {
   let text = compose(plan, d);
   // Sparse banks (jazz) need more than one pass; later passes also deepen drums and bass.
   for (const key of [...GROW, ...GROW, "drums", "bass", "drums", "bass", "harmony", "leads"] as (keyof Detail)[]) {
-    if (text.length >= NATIVE_FILL) break;
+    if (text.length >= fill) break;
     const trial = { ...d, [key]: Math.min(d[key] + 1, key === "arrangement" || key === "ending" || key === "era" ? 1 : 4) };
     if (trial[key] === d[key]) continue;
     const next = compose(plan, trial);
-    if (next.length <= NATIVE_MAX) {
+    if (next.length <= max) {
       Object.assign(d, trial);
       text = next;
     }
   }
-  return text;
+  // Rephrase: the detail chosen for the original wording, so the same phrases; only frames and order change.
+  return wording > 0 ? compose(plan, d, wording) : text;
 }

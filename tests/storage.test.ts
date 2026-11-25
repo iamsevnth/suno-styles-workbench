@@ -117,6 +117,22 @@ describe("history storage", () => {
     assert.equal(parsed[1].id, "id-3");
   });
 
+  it("keeps the Instrumental and Length settings saved with an entry, and ignores invalid ones (Codex review)", () => {
+    const parsed = parseHistory({
+      version: 2,
+      entries: [
+        { ...entry(1), instrumentalDefault: true, promptLength: "tight" },
+        { ...entry(2), instrumentalDefault: "yes", promptLength: "huge" },
+        entry(3),
+      ],
+    });
+    assert.equal(parsed[0].instrumentalDefault, true);
+    assert.equal(parsed[0].promptLength, "tight");
+    assert.equal("instrumentalDefault" in parsed[1], false);
+    assert.equal("promptLength" in parsed[1], false);
+    assert.equal("promptLength" in parsed[2], false);
+  });
+
   it("treats unreadable JSON as empty history", () => {
     const storage = new FakeStorage();
     storage.setItem(HISTORY_KEY, "{not json");
